@@ -1,0 +1,80 @@
+import { ForbiddenError, NotFoundError } from '../../shared/errors/app-error';
+import { IWorkOrderRepository } from './work-orders.repository';
+import { GuidGenerator } from '../../shared/utils/guid';
+import {
+  CreateWorkOrderInput,
+  ExitRegisterInput,
+  OrderStatus,
+  StatusHistoryEntry,
+  WorkOrder,
+} from './work-orders.types';
+
+export class WorkOrderService {
+  constructor(
+    private readonly repository: IWorkOrderRepository,
+    private readonly guid: GuidGenerator,
+  ) {}
+
+  async create(input: CreateWorkOrderInput): Promise<WorkOrder> {
+    const guideNumber = this.guid.generate().slice(0, 8).toUpperCase();
+    return WorkOrder.fromRow(await this.repository.create(input, guideNumber));
+  }
+
+  async getById(id: string): Promise<WorkOrder> {
+    const row = await this.repository.findById(id);
+    if (!row) throw new NotFoundError('Orden de servicio no encontrada');
+    return WorkOrder.fromRow(row);
+  }
+
+  async list(options: { status?: OrderStatus; technicianId?: string; page: number; pageSize: number }): Promise<{ items: WorkOrder[]; total: number }> {
+    const { rows, total } = await this.repository.list(options);
+    return { items: rows.map(WorkOrder.fromRow), total };
+  }
+
+  async transitionStatus(id: string, to: OrderStatus, userId: string): Promise<WorkOrder> {
+    const order = await this.getById(id);
+    if (!order.canTransitionTo(to)) {
+      throw new ForbiddenError(`Transición de estado inválida: ${order.currentStatus} -> ${to}`);
+    }
+    const row = await this.repository.transitionStatus(id, order.currentStatus, to, userId);
+    return WorkOrder.fromRow(row);
+  }
+
+  async getHistory(id: string): Promise<StatusHistoryEntry[]> {
+    await this.getById(id);
+    const rows = await this.repository.listHistory(id);
+    return rows.map((r) => ({
+      id: r.id,
+      fromStatus: r.from_status,
+      toStatus: r.to_status,
+      userId: r.user_id,
+      createdAt: r.created_at,
+    }));
+  }
+
+  async trackByGuide(guideNumber: string): Promise<{ order: WorkOrder; history: StatusHistoryEntry[] }> {
+    const row = await this.repository.findByGuideNumber(guideNumber);
+    if (!row) throw new NotFoundError('No se encontró ninguna orden con esa guía');
+    const history = await this.repository.listHistoryByGuide(guideNumber);
+    return {
+      order: WorkOrder.fromRow(row),
+      history: history.map((r) => ({
+        id: r.id,
+        fromStatus: r.from_status,
+        toStatus: r.to_status,
+        userId: r.user_id,
+        createdAt: r.created_at,
+      })),
+    };
+  }
+
+  async addPhoto(id: string, storagePath: string, kind: 'inicial' | 'final'): Promise<void> {
+    await this.getById(id);
+    await this.repository.addPhoto(id, storagePath, kind);
+  }
+
+  async registerExit(id: string, input: ExitRegisterInput): Promise<WorkOrder> {
+    const row = await this.repository.registerExit(id, input);
+    return WorkOrder.fromRow(row);
+  }
+}
