@@ -1,0 +1,185 @@
+@startuml WorkOrders_Architecture
+!define DIRECTION top to bottom
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam backgroundColor #FEFEFE
+
+title TechnoTaller - Arquitectura Interna: Modulo Work Orders (C4 L3)
+
+' ===== ACTORES =====
+actor admin as "Administrador"
+actor tecnico as "Tecnico"
+
+' ===== PRESENTATION LAYER =====
+package "Presentation Layer" {
+    class WorkOrderController {
+        + POST /work-orders
+        + GET /work-orders/:id
+        + PATCH /work-orders/:id/status
+        - validateInput()
+        - formatResponse()
+    }
+}
+
+' ===== BUSINESS LOGIC LAYER =====
+package "Business Logic Layer" {
+    class WorkOrderService {
+        - repository: IWorkOrderRepository
+        - validator: Validator
+        - stateMachine: StateMachine
+        + createWorkOrder()
+        + getWorkOrder()
+        + listWorkOrders()
+        + updateStatus()
+        + addPhoto()
+    }
+    
+    class StateMachine {
+        - states: WorkOrderStatus[]
+        + validateTransition()
+        - states: INGRESADO, EN_PROGRESO, DIAGNOSTICADO,
+                  PRESUPUESTO, APROBADO, EN_REPARACION, ENTREGADO
+    }
+    
+    class Validator {
+        + validateCreateInput()
+        + validateUpdateInput()
+        + checkBusinessRules()
+    }
+    
+    class AuditService {
+        + record()
+        + getHistory()
+    }
+    
+    class NotifierService {
+        + notify()
+        - notifiers: INotifier[]
+    }
+    
+    class AuthMiddleware {
+        + validateJWT()
+        + checkPermissions()
+    }
+}
+
+' ===== DATA ACCESS LAYER =====
+package "Data Access Layer" {
+    class WorkOrderRepository {
+        - connection: Database
+        + create()
+        + findById()
+        + list()
+        + update()
+        + delete()
+    }
+    
+    class EntityMapper {
+        + fromRow(): WorkOrder
+        + toRow(): WorkOrderRow
+    }
+}
+
+' ===== CROSS-CUTTING & EXTERNAL =====
+package "Infrastructure Services" {
+    class Logger {
+        + info()
+        + error()
+        + debug()
+    }
+    
+    class ErrorHandler {
+        + handle()
+        + format()
+    }
+}
+
+package "External Services" {
+    class EmailClient {
+        + send()
+    }
+    
+    class SMSClient {
+        + send()
+    }
+    
+    class PushClient {
+        + send()
+    }
+    
+    class StorageClient {
+        + upload()
+        + download()
+    }
+}
+
+package "Database" {
+    class PostgreSQL {
+        + work_orders
+        + work_order_history
+        + work_order_photos
+    }
+}
+
+' ===== RELACIONES =====
+
+' Actores
+admin --> WorkOrderController
+tecnico --> WorkOrderController
+
+' Controller -> Service
+WorkOrderController --> WorkOrderService
+
+' Service -> componentes internos
+WorkOrderService --> Validator
+WorkOrderService --> StateMachine
+WorkOrderService --> WorkOrderRepository
+WorkOrderService --> AuditService
+WorkOrderService --> NotifierService
+WorkOrderService --> AuthMiddleware
+WorkOrderService --> Logger
+
+' State Machine
+StateMachine --> Validator
+
+' Repository
+WorkOrderRepository --> EntityMapper
+WorkOrderRepository --> PostgreSQL
+EntityMapper --> PostgreSQL
+
+' Notifier
+NotifierService --> EmailClient
+NotifierService --> SMSClient
+NotifierService --> PushClient
+
+' Error Handling
+WorkOrderController --> ErrorHandler
+
+' Storage
+WorkOrderService --> StorageClient
+
+' Logger
+ErrorHandler --> Logger
+
+note right of StateMachine
+Transiciones validas:
+INGRESADO -> EN_PROGRESO
+-> DIAGNOSTICADO -> PRESUPUESTO
+-> APROBADO -> EN_REPARACION -> ENTREGADO
+end note
+
+note right of NotifierService
+Strategy Pattern
+Puede extenderse con:
+- Telegram
+- WhatsApp
+- Slack
+end note
+
+note right of WorkOrderService
+Orquesta todas las operaciones
+Implementa reglas de negocio
+Centraliza transacciones
+end note
+
+@enduml
