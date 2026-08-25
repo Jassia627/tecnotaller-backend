@@ -38,6 +38,17 @@ export class Part {
     if (quantity <= 0) throw new Error('La cantidad debe ser mayor a cero');
     this._stock += quantity;
   }
+
+  toJSON() {
+    return {
+      id: this.id,
+      name: this.name,
+      sku: this.sku,
+      stock: this._stock,
+      purchasePrice: this.purchasePrice,
+      salePrice: this.salePrice,
+    };
+  }
 }
 
 export const createPartSchema = z.object({
