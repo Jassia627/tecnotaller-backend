@@ -86,6 +86,22 @@ export class Product {
   deactivate(): void {
     this._active = false;
   }
+
+  toJSON() {
+    return {
+      id: this.id,
+      sku: this.sku,
+      name: this.name,
+      description: this.description,
+      imageUrl: this.imageUrl,
+      categoryId: this.categoryId,
+      purchasePrice: this.purchasePrice,
+      salePrice: this.salePrice,
+      stock: this._stock,
+      active: this._active,
+      available: this.available,
+    };
+  }
 }
 
 const emptyToNull = (v: unknown) => (v === '' ? null : v);

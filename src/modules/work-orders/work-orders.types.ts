@@ -100,6 +100,22 @@ export class WorkOrder {
     }
     this._currentStatus = next;
   }
+
+  toJSON() {
+    return {
+      id: this.id,
+      guideNumber: this.guideNumber,
+      customerId: this.customerId,
+      technicianId: this.technicianId,
+      deviceBrand: this.deviceBrand,
+      deviceModel: this.deviceModel,
+      deviceSerial: this.deviceSerial,
+      problemDescription: this.problemDescription,
+      accessories: this.accessories,
+      currentStatus: this._currentStatus,
+      createdAt: this.createdAt,
+    };
+  }
 }
 
 export const createWorkOrderSchema = z.object({

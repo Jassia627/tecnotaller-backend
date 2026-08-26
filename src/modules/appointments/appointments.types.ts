@@ -52,6 +52,18 @@ export class Appointment {
     if (this._status !== 'confirmada') throw new Error('Solo se puede completar una cita confirmada');
     this._status = 'completada';
   }
+
+  toJSON() {
+    return {
+      id: this.id,
+      serviceId: this.serviceId,
+      customerName: this.customerName,
+      phone: this.phone,
+      date: this.date.toISOString(),
+      status: this._status,
+      createdAt: this.createdAt.toISOString(),
+    };
+  }
 }
 
 export const createAppointmentSchema = z.object({

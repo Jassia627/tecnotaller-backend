@@ -33,6 +33,16 @@ export class TechnicalService {
   deactivate(): void {
     this._active = false;
   }
+
+  toJSON() {
+    return {
+      id: this.id,
+      name: this.name,
+      description: this.description,
+      price: this.price,
+      active: this._active,
+    };
+  }
 }
 
 export const createServiceSchema = z.object({

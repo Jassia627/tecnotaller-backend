@@ -1,0 +1,80 @@
+@startuml C4_Context_Containers_TechnoTaller
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title TechnoTaller - Sistema de Gestión de Taller (C4 - Niveles 1 y 2)
+
+' ==================== NIVEL 1: CONTEXTO ====================
+' Comentado para mostrar cómo se vería, descomenta para ver solo L1
+
+/' 
+@startuml C4_L1_Contexto
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title TechnoTaller - Sistema de Gestión de Taller (C4 - Nivel 1: Contexto)
+
+Person(cliente, "Cliente", "Usuario que solicita reparaciones")
+Person(tecnico, "Técnico", "Especialista que ejecuta reparaciones")
+Person(admin, "Administrador", "Gestor del sistema y coordinador")
+
+System(tecnotaller, "TechnoTaller Backend", "Sistema de gestión integral de taller de reparación electrónica")
+
+System_Ext(email, "Email Service", "Envía notificaciones por correo")
+System_Ext(sms, "SMS Service", "Envía notificaciones por SMS")
+System_Ext(push, "Push Notification Service", "Envía notificaciones push")
+
+Rel(cliente, tecnotaller, "Usa para agendar citas y consultar estado")
+Rel(tecnico, tecnotaller, "Usa para recibir órdenes y actualizar estado")
+Rel(admin, tecnotaller, "Usa para gestionar todo el sistema")
+Rel(tecnotaller, email, "Envía notificaciones de citas y estado")
+Rel(tecnotaller, sms, "Envía recordatorios por SMS")
+Rel(tecnotaller, push, "Envía notificaciones push en tiempo real")
+
+@enduml
+'/
+
+' ==================== NIVEL 2: CONTENEDORES ====================
+
+Person(cliente, "Cliente", "Usuario que solicita servicios de reparación")
+Person(tecnico, "Técnico", "Especialista que ejecuta reparaciones")
+Person(admin, "Administrador", "Coordinador y gestor del sistema")
+
+System_Boundary(tecnotaller_system, "TechnoTaller Backend") {
+    Container(web_api, "REST API", "Node.js + Express", "API RESTful que proporciona toda la funcionalidad del sistema")
+    Container(auth_service, "Auth Service", "Supabase Auth", "Gestiona autenticación y autorización de usuarios")
+    Container(database, "Base de Datos", "PostgreSQL + Supabase", "Almacena: órdenes, citas, técnicos, clientes, inventario, auditoría")
+    Container(realtime, "Realtime Engine", "Supabase Realtime", "Actualiza estado en tiempo real para técnicos y clientes")
+    Container(storage, "File Storage", "Supabase Storage", "Almacena fotos de reparaciones y documentos")
+}
+
+System_Ext(email_service, "Email Service", "SendGrid/Resend", "Envía notificaciones por email")
+System_Ext(sms_service, "SMS Service", "Twilio/Vonage", "Envía notificaciones por SMS")
+System_Ext(push_service, "Push Service", "Firebase Cloud Messaging", "Envía notificaciones push")
+
+' Relaciones del Cliente
+Rel(cliente, web_api, "1. Agenda cita, consulta órdenes (REST)")
+Rel(cliente, realtime, "2. Recibe actualizaciones en tiempo real (WebSocket)")
+
+' Relaciones del Técnico
+Rel(tecnico, web_api, "3. Recibe órdenes, actualiza estado (REST)")
+Rel(tecnico, realtime, "4. Recibe actualizaciones en tiempo real (WebSocket)")
+Rel(tecnico, storage, "5. Sube fotos de reparación")
+
+' Relaciones del Administrador
+Rel(admin, web_api, "6. Gestiona órdenes, técnicos, inventario (REST)")
+Rel(admin, realtime, "7. Monitorea en tiempo real (WebSocket)")
+
+' Relaciones Internas
+Rel(web_api, auth_service, "8. Valida tokens JWT")
+Rel(web_api, database, "9. CRUD operaciones (SQL)")
+Rel(web_api, realtime, "10. Emite eventos en tiempo real")
+Rel(web_api, storage, "11. Gestiona archivos")
+Rel(web_api, email_service, "12. Envía emails de confirmación")
+Rel(web_api, sms_service, "13. Envía SMS de recordatorio")
+Rel(web_api, push_service, "14. Envía notificaciones push")
+
+@enduml
