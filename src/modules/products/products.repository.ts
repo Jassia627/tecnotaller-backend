@@ -72,17 +72,21 @@ export class ProductRepository implements IProductRepository {
   }
 
   async update(id: string, input: UpdateProductInput): Promise<ProductRow> {
+    const patch = {
+      ...(input.sku !== undefined && { sku: input.sku }),
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.description !== undefined && { description: input.description }),
+      ...(input.imageUrl !== undefined && { image_url: input.imageUrl }),
+      ...(input.categoryId !== undefined && { category_id: input.categoryId }),
+      ...(input.purchasePrice !== undefined && { purchase_price: input.purchasePrice }),
+      ...(input.salePrice !== undefined && { sale_price: input.salePrice }),
+    };
+    if (Object.keys(patch).length === 0) {
+      throw new BadRequestError('No hay campos para actualizar');
+    }
     const { data, error } = await supabase
       .from('products')
-      .update({
-        ...(input.sku !== undefined && { sku: input.sku }),
-        ...(input.name !== undefined && { name: input.name }),
-        ...(input.description !== undefined && { description: input.description }),
-        ...(input.imageUrl !== undefined && { image_url: input.imageUrl }),
-        ...(input.categoryId !== undefined && { category_id: input.categoryId }),
-        ...(input.purchasePrice !== undefined && { purchase_price: input.purchasePrice }),
-        ...(input.salePrice !== undefined && { sale_price: input.salePrice }),
-      })
+      .update(patch)
       .eq('id', id)
       .select('*')
       .single();

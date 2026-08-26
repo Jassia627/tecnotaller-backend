@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase';
+import { BadRequestError } from '../../shared/errors/app-error';
 import { CreatePartInput, PartRow, UpdatePartInput } from './parts.types';
 
 export interface IPartRepository {
@@ -50,14 +51,18 @@ export class PartRepository implements IPartRepository {
   }
 
   async update(id: string, input: UpdatePartInput): Promise<PartRow> {
+    const patch = {
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.sku !== undefined && { sku: input.sku }),
+      ...(input.purchasePrice !== undefined && { purchase_price: input.purchasePrice }),
+      ...(input.salePrice !== undefined && { sale_price: input.salePrice }),
+    };
+    if (Object.keys(patch).length === 0) {
+      throw new BadRequestError('No hay campos para actualizar');
+    }
     const { data, error } = await supabase
       .from('parts')
-      .update({
-        ...(input.name !== undefined && { name: input.name }),
-        ...(input.sku !== undefined && { sku: input.sku }),
-        ...(input.purchasePrice !== undefined && { purchase_price: input.purchasePrice }),
-        ...(input.salePrice !== undefined && { sale_price: input.salePrice }),
-      })
+      .update(patch)
       .eq('id', id)
       .select('*')
       .single();

@@ -341,9 +341,28 @@ export const openapiSpec = {
       put: {
         tags: ['products'],
         summary: 'Modificar producto',
+        description: 'Actualiza uno o varios campos del producto. Al menos un campo debe enviarse.',
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
-        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  sku: { type: 'string' },
+                  name: { type: 'string' },
+                  description: { type: 'string' },
+                  imageUrl: { type: 'string', nullable: true },
+                  categoryId: { type: 'string', format: 'uuid', nullable: true },
+                  purchasePrice: { type: 'number', minimum: 0 },
+                  salePrice: { type: 'number', minimum: 0 },
+                },
+              },
+            },
+          },
+        },
         responses: { 200: { description: 'Producto actualizado', content: { 'application/json': { schema: { $ref: '#/components/schemas/Product' } } } } },
       },
     },
@@ -421,10 +440,24 @@ export const openapiSpec = {
       put: {
         tags: ['services'],
         summary: 'Modificar servicio',
+        description: 'Actualiza uno o varios campos del servicio. Al menos un campo debe enviarse.',
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
-        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
-        responses: { 200: { description: 'Servicio actualizado', content: { 'application/json': { schema: { $ref: '#/components/schemas/Service' } } } } },
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { name: { type: 'string' }, description: { type: 'string' }, price: { type: 'number', minimum: 0 } },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'Servicio actualizado', content: { 'application/json': { schema: { $ref: '#/components/schemas/Service' } } } },
+          400: { description: 'Sin campos para actualizar', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } },
+        },
       },
     },
     '/services/{id}/status': {
@@ -688,9 +721,20 @@ export const openapiSpec = {
       put: {
         tags: ['parts'],
         summary: 'Modificar repuesto',
+        description: 'Actualiza uno o varios campos del repuesto. Al menos un campo debe enviarse.',
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
-        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object' } } } },
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: { name: { type: 'string' }, sku: { type: 'string' }, purchasePrice: { type: 'number', minimum: 0 }, salePrice: { type: 'number', minimum: 0 } },
+              },
+            },
+          },
+        },
         responses: { 200: { description: 'Repuesto actualizado', content: { 'application/json': { schema: { $ref: '#/components/schemas/Part' } } } } },
       },
     },
