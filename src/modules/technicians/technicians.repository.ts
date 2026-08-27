@@ -5,18 +5,18 @@ import { RegisterTechnicianInput, Technician } from './technicians.types';
 interface TechnicianRow {
   id: string;
   full_name: string;
+  email: string;
   phone: string | null;
   role: string;
   active: boolean;
   created_at: string;
-  email?: string;
 }
 
 function mapRow(row: TechnicianRow): Technician {
   return {
     id: row.id,
     fullName: row.full_name,
-    email: row.email ?? '',
+    email: row.email || '',
     phone: row.phone,
     active: row.active,
     createdAt: row.created_at,
@@ -80,17 +80,14 @@ export class TechnicianRepository implements ITechnicianRepository {
   }
 
   async setActive(id: string, active: boolean): Promise<Technician> {
-    // serviceRoleKey ya bypassea RLS automáticamente
+    // Usar RPC function para obtener el email correctamente
     const { data, error } = await supabase
-      .from('profiles')
-      .update({ active })
-      .eq('id', id)
-      .eq('role', 'tecnico')
-      .select('id, full_name, phone, role, active, created_at')
-      .single();
+      .rpc('set_technician_active', { technician_id: id, is_active: active }, { head: false });
 
     if (error) throw error;
-    return mapRow(data as TechnicianRow);
+    if (!data || data.length === 0) throw new Error('Técnico no encontrado');
+    
+    return mapRow(data[0] as TechnicianRow);
   }
 
   async listWorkOrders(technicianId: string): Promise<{ id: string; guide_number: string; current_status: string }[]> {
