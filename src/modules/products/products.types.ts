@@ -10,6 +10,9 @@ export interface ProductRow {
   description: string;
   image_url: string | null;
   category_id: string | null;
+  brand: string;
+  color: string | null;
+  specs: Record<string, unknown>[] | null;
   purchase_price: number;
   sale_price: number;
   stock: number;
@@ -35,6 +38,9 @@ export class Product {
     readonly description: string,
     readonly imageUrl: string | null,
     readonly categoryId: string | null,
+    readonly brand: string,
+    readonly color: string | null,
+    readonly specs: Record<string, unknown>[] | null,
     readonly purchasePrice: number,
     readonly salePrice: number,
     private _stock: number,
@@ -49,6 +55,9 @@ export class Product {
       row.description,
       row.image_url,
       row.category_id,
+      row.brand,
+      row.color,
+      row.specs,
       row.purchase_price,
       row.sale_price,
       row.stock,
@@ -95,6 +104,9 @@ export class Product {
       description: this.description,
       imageUrl: this.imageUrl,
       categoryId: this.categoryId,
+      brand: this.brand,
+      color: this.color,
+      specs: this.specs,
       purchasePrice: this.purchasePrice,
       salePrice: this.salePrice,
       stock: this._stock,
@@ -112,6 +124,9 @@ export const createProductSchema = z.object({
   description: z.string().optional().default(''),
   imageUrl: z.preprocess(emptyToNull, z.string().url().nullable().optional()),
   categoryId: z.preprocess(emptyToNull, z.string().uuid().nullable().optional()),
+  brand: z.string().min(1).default('Genérico'),
+  color: z.string().nullable().optional(),
+  specs: z.array(z.object({ label: z.string(), value: z.string() })).nullable().optional(),
   purchasePrice: z.number().min(0),
   salePrice: z.number().min(0),
   stock: z.number().int().min(0),
