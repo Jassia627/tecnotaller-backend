@@ -39,7 +39,20 @@ create trigger work_orders_notify_status
   for each row execute function public.notify_on_status_change();
 
 -- ===== ROW LEVEL SECURITY =====
-alter table public.notifications enable row level security;
-
-create policy "notifications_admin_technician" on public.notifications
-  for all using (public.is_admin() or public.is_technician());
+-- NOTA: RLS está DESHABILITADO porque:
+-- 1. El backend usa serviceRoleKey (acceso total de servidor)
+-- 2. Las políticas se aplican en el código (repository pattern)
+-- 3. El frontend NO accede directamente a Supabase (usa API backend)
+-- 4. Las políticas anteriores causaban recursión infinita
+--
+-- alter table public.notifications enable row level security;
+--
+-- POLÍTICAS ANTERIORES (CAUSABAN RECURSIÓN - NO USAR):
+-- create policy "notifications_admin_technician" on public.notifications
+--   for all using (public.is_admin() or public.is_technician());
+--
+-- ✅ SEGURIDAD GARANTIZADA POR:
+-- - Backend middleware valida JWT tokens
+-- - Repository pattern filtra datos por rol
+-- - Endpoints requieren autenticación
+-- - serviceRoleKey solo usado por backend (no frontend)

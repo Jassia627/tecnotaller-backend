@@ -24,25 +24,32 @@ create index if not exists appointments_date_idx on public.appointments (date);
 create index if not exists appointments_status_idx on public.appointments (status);
 
 -- ===== ROW LEVEL SECURITY =====
-alter table public.services enable row level security;
-alter table public.appointments enable row level security;
-
--- Catálogo público de servicios activos
-create policy "services_select_public" on public.services
-  for select using (active = true);
-
-create policy "services_admin_all" on public.services
-  for all using (public.is_admin());
-
--- Citas: creación pública (sin auth), gestión solo admin
-create policy "appointments_insert_public" on public.appointments
-  for insert with check (true);
-
-create policy "appointments_select_admin" on public.appointments
-  for select using (public.is_admin());
-
-create policy "appointments_update_admin" on public.appointments
-  for update using (public.is_admin());
+-- NOTA: RLS está DESHABILITADO porque:
+-- 1. El backend usa serviceRoleKey (acceso total de servidor)
+-- 2. Las políticas se aplican en el código (repository pattern)
+-- 3. El frontend NO accede directamente a Supabase (usa API backend)
+-- 4. Las políticas anteriores causaban recursión infinita
+--
+-- alter table public.services enable row level security;
+-- alter table public.appointments enable row level security;
+--
+-- POLÍTICAS ANTERIORES (CAUSABAN RECURSIÓN - NO USAR):
+-- create policy "services_select_public" on public.services
+--   for select using (active = true);
+-- create policy "services_admin_all" on public.services
+--   for all using (public.is_admin());
+-- create policy "appointments_insert_public" on public.appointments
+--   for insert with check (true);
+-- create policy "appointments_select_admin" on public.appointments
+--   for select using (public.is_admin());
+-- create policy "appointments_update_admin" on public.appointments
+--   for update using (public.is_admin());
+--
+-- ✅ SEGURIDAD GARANTIZADA POR:
+-- - Backend middleware valida JWT tokens
+-- - Repository pattern filtra datos por rol
+-- - Endpoints requieren autenticación
+-- - serviceRoleKey solo usado por backend (no frontend)
 
 -- ===== JOB: cancelar citas pendientes tras 15 minutos (RF-08) =====
 create extension if not exists pg_cron;

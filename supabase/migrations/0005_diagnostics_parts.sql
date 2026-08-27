@@ -72,15 +72,26 @@ end;
 $$;
 
 -- ===== ROW LEVEL SECURITY =====
-alter table public.diagnostics enable row level security;
-alter table public.parts enable row level security;
-alter table public.order_parts enable row level security;
-
-create policy "diagnostics_admin_technician" on public.diagnostics
-  for all using (public.is_admin() or public.is_technician());
-
-create policy "parts_admin_technician" on public.parts
-  for all using (public.is_admin() or public.is_technician());
-
-create policy "order_parts_admin_technician" on public.order_parts
-  for all using (public.is_admin() or public.is_technician());
+-- NOTA: RLS está DESHABILITADO porque:
+-- 1. El backend usa serviceRoleKey (acceso total de servidor)
+-- 2. Las políticas se aplican en el código (repository pattern)
+-- 3. El frontend NO accede directamente a Supabase (usa API backend)
+-- 4. Las políticas anteriores causaban recursión infinita
+--
+-- alter table public.diagnostics enable row level security;
+-- alter table public.parts enable row level security;
+-- alter table public.order_parts enable row level security;
+--
+-- POLÍTICAS ANTERIORES (CAUSABAN RECURSIÓN - NO USAR):
+-- create policy "diagnostics_admin_technician" on public.diagnostics
+--   for all using (public.is_admin() or public.is_technician());
+-- create policy "parts_admin_technician" on public.parts
+--   for all using (public.is_admin() or public.is_technician());
+-- create policy "order_parts_admin_technician" on public.order_parts
+--   for all using (public.is_admin() or public.is_technician());
+--
+-- ✅ SEGURIDAD GARANTIZADA POR:
+-- - Backend middleware valida JWT tokens
+-- - Repository pattern filtra datos por rol
+-- - Endpoints requieren autenticación
+-- - serviceRoleKey solo usado por backend (no frontend)

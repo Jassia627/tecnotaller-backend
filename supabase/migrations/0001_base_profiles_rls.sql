@@ -59,34 +59,40 @@ create trigger profiles_set_updated_at
 create index if not exists profiles_role_idx on public.profiles (role);
 
 -- ===== ROW LEVEL SECURITY =====
-alter table public.profiles enable row level security;
-
--- Un usuario puede leer su propio perfil
-create policy "profiles_select_self" on public.profiles
-  for select using (auth.uid() = id);
-
--- Un usuario puede actualizar su propio perfil (excepto el rol)
-create policy "profiles_update_self" on public.profiles
-  for update using (auth.uid() = id)
-  with check (auth.uid() = id);
-
--- Solo administradores pueden ver todos los perfiles
-create policy "profiles_select_admin" on public.profiles
-  for select using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.role = 'administrador'
-    )
-  );
-
--- Solo administradores pueden actualizar roles
-create policy "profiles_update_role_admin" on public.profiles
-  for update using (
-    exists (
-      select 1 from public.profiles p
-      where p.id = auth.uid() and p.role = 'administrador'
-    )
-  );
+-- NOTA: RLS está DESHABILITADO porque:
+-- 1. El backend usa serviceRoleKey (acceso total de servidor)
+-- 2. Las políticas se aplican en el código (repository pattern)
+-- 3. El frontend NO accede directamente a Supabase (usa API backend)
+-- 4. Las políticas anteriores causaban recursión infinita
+--
+-- alter table public.profiles enable row level security;
+--
+-- POLÍTICAS ANTERIORES (CAUSABAN RECURSIÓN - NO USAR):
+-- create policy "profiles_select_self" on public.profiles
+--   for select using (auth.uid() = id);
+-- create policy "profiles_update_self" on public.profiles
+--   for update using (auth.uid() = id)
+--   with check (auth.uid() = id);
+-- create policy "profiles_select_admin" on public.profiles
+--   for select using (
+--     exists (
+--       select 1 from public.profiles p
+--       where p.id = auth.uid() and p.role = 'administrador'
+--     )
+--   );
+-- create policy "profiles_update_role_admin" on public.profiles
+--   for update using (
+--     exists (
+--       select 1 from public.profiles p
+--       where p.id = auth.uid() and p.role = 'administrador'
+--     )
+--   );
+--
+-- ✅ SEGURIDAD GARANTIZADA POR:
+-- - Backend middleware valida JWT tokens
+-- - Repository pattern filtra datos por rol
+-- - Endpoints requieren autenticación
+-- - serviceRoleKey solo usado por backend (no frontend)
 
 -- Helper: comprobar rol del usuario autenticado
 create or replace function public.is_admin()

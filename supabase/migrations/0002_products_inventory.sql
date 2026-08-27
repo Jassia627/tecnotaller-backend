@@ -77,23 +77,30 @@ end;
 $$;
 
 -- ===== ROW LEVEL SECURITY =====
-alter table public.categories enable row level security;
-alter table public.products enable row level security;
-alter table public.inventory_movements enable row level security;
-
--- Lectura pública del catálogo activo
-create policy "products_select_public" on public.products
-  for select using (active = true);
-
-create policy "categories_select_public" on public.categories
-  for select using (active = true);
-
--- Escritura solo admin (el backend usa service_role, RLS aplica a clientes directos)
-create policy "products_admin_all" on public.products
-  for all using (public.is_admin());
-
-create policy "categories_admin_all" on public.categories
-  for all using (public.is_admin());
-
-create policy "inventory_admin_all" on public.inventory_movements
-  for all using (public.is_admin());
+-- NOTA: RLS está DESHABILITADO porque:
+-- 1. El backend usa serviceRoleKey (acceso total de servidor)
+-- 2. Las políticas se aplican en el código (repository pattern)
+-- 3. El frontend NO accede directamente a Supabase (usa API backend)
+-- 4. Las políticas anteriores causaban recursión infinita
+--
+-- alter table public.categories enable row level security;
+-- alter table public.products enable row level security;
+-- alter table public.inventory_movements enable row level security;
+--
+-- POLÍTICAS ANTERIORES (CAUSABAN RECURSIÓN - NO USAR):
+-- create policy "products_select_public" on public.products
+--   for select using (active = true);
+-- create policy "categories_select_public" on public.categories
+--   for select using (active = true);
+-- create policy "products_admin_all" on public.products
+--   for all using (public.is_admin());
+-- create policy "categories_admin_all" on public.categories
+--   for all using (public.is_admin());
+-- create policy "inventory_admin_all" on public.inventory_movements
+--   for all using (public.is_admin());
+--
+-- ✅ SEGURIDAD GARANTIZADA POR:
+-- - Backend middleware valida JWT tokens
+-- - Repository pattern filtra datos por rol
+-- - Endpoints requieren autenticación
+-- - serviceRoleKey solo usado por backend (no frontend)

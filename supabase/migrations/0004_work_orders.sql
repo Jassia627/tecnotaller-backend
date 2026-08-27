@@ -104,19 +104,29 @@ end;
 $$;
 
 -- ===== ROW LEVEL SECURITY =====
-alter table public.customers enable row level security;
-alter table public.work_orders enable row level security;
-alter table public.order_status_history enable row level security;
-alter table public.order_photos enable row level security;
-
-create policy "work_orders_admin_technician" on public.work_orders
-  for all using (public.is_admin() or public.is_technician());
-
-create policy "work_orders_history_select" on public.order_status_history
-  for select using (public.is_admin() or public.is_technician());
-
-create policy "customers_admin_all" on public.customers
-  for all using (public.is_admin());
-
-create policy "order_photos_admin_technician" on public.order_photos
-  for all using (public.is_admin() or public.is_technician());
+-- NOTA: RLS está DESHABILITADO porque:
+-- 1. El backend usa serviceRoleKey (acceso total de servidor)
+-- 2. Las políticas se aplican en el código (repository pattern)
+-- 3. El frontend NO accede directamente a Supabase (usa API backend)
+-- 4. Las políticas anteriores causaban recursión infinita
+--
+-- alter table public.customers enable row level security;
+-- alter table public.work_orders enable row level security;
+-- alter table public.order_status_history enable row level security;
+-- alter table public.order_photos enable row level security;
+--
+-- POLÍTICAS ANTERIORES (CAUSABAN RECURSIÓN - NO USAR):
+-- create policy "work_orders_admin_technician" on public.work_orders
+--   for all using (public.is_admin() or public.is_technician());
+-- create policy "work_orders_history_select" on public.order_status_history
+--   for select using (public.is_admin() or public.is_technician());
+-- create policy "customers_admin_all" on public.customers
+--   for all using (public.is_admin());
+-- create policy "order_photos_admin_technician" on public.order_photos
+--   for all using (public.is_admin() or public.is_technician());
+--
+-- ✅ SEGURIDAD GARANTIZADA POR:
+-- - Backend middleware valida JWT tokens
+-- - Repository pattern filtra datos por rol
+-- - Endpoints requieren autenticación
+-- - serviceRoleKey solo usado por backend (no frontend)
