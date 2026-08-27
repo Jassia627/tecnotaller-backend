@@ -1,0 +1,50 @@
+@startuml C4_Nivel3_Componentes
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title TechnoTaller - Nivel 3: Componentes del MVP (Módulo Work Orders)
+
+Person(admin, "Administrador")
+Person(tecnico, "Técnico")
+
+System_Boundary(work_orders_api, "REST API - Work Orders") {
+    Component(controller, "WorkOrder Controller", "Express Handler", "Maneja HTTP requests")
+    Component(service, "WorkOrder Service", "Logica Negocio", "Orquesta operaciones")
+    Component(state_machine, "State Machine", "State Pattern", "Valida transiciones de estado")
+    Component(validator, "Validator", "Validacion", "Valida datos de entrada")
+    Component(repository, "Repository", "Data Access", "CRUD operations")
+    Component(mapper, "Entity Mapper", "Factory Pattern", "Mapea BD a dominio")
+    Component(audit, "Audit Service", "Observer Pattern", "Registra cambios")
+    Component(notifier, "Notifier Service", "Strategy Pattern", "Envía notificaciones")
+    Component(auth_mw, "Auth Middleware", "JWT", "Valida permisos")
+}
+
+System_Boundary(infra, "Infrastructure") {
+    Component(database, "PostgreSQL", "Supabase", "Persiste datos")
+    Component(email, "Email Client", "SendGrid", "Notificaciones")
+    Component(sms, "SMS Client", "Twilio", "Notificaciones")
+    Component(logger, "Logger", "Winston", "Logging")
+}
+
+Rel(admin, controller, "POST/GET/PATCH")
+Rel(tecnico, controller, "GET/PATCH")
+
+Rel(controller, service, "createWorkOrder()")
+Rel(controller, auth_mw, "validateToken()")
+
+Rel(service, validator, "validate()")
+Rel(service, state_machine, "canTransition()")
+Rel(service, repository, "persist()")
+Rel(service, audit, "record()")
+Rel(service, notifier, "notify()")
+Rel(service, logger, "log()")
+
+Rel(repository, mapper, "mapToEntity()")
+Rel(mapper, database, "SQL")
+Rel(repository, database, "SQL")
+
+Rel(notifier, email, "sendEmail()")
+Rel(notifier, sms, "sendSMS()")
+
+@enduml
