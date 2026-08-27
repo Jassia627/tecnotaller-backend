@@ -37,11 +37,11 @@ export class PhotoService {
 
   async getInitialPhoto(workOrderId: string): Promise<Photo | null> {
     const photos = await this.repository.listByWorkOrderAndKind(workOrderId, 'inicial');
-    return photos.length > 0 ? photos[0] : null;
+    return photos.length > 0 ? photos[0]! : null;
   }
 
   async getFinalPhoto(workOrderId: string): Promise<Photo | null> {
     const photos = await this.repository.listByWorkOrderAndKind(workOrderId, 'final');
-    return photos.length > 0 ? photos[0] : null;
+    return photos.length > 0 ? photos[0]! : null;
   }
 }

@@ -76,3 +76,4 @@ export class WorkOrderController {
     const activities = await this.activityService.listByWorkOrder(req.params.id!);
     res.json({ items: activities });
   }
+}

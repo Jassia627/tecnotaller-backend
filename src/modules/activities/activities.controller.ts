@@ -6,7 +6,7 @@ export class ActivityController {
   constructor(private readonly service: ActivityService) {}
 
   async create(req: Request, res: Response): Promise<void> {
-    const workOrderId = req.params.id;
+    const workOrderId = req.params.id!;
     const input = createActivitySchema.parse(req.body);
 
     const activity = await this.service.create(workOrderId, req.user!.id, input);
@@ -14,7 +14,7 @@ export class ActivityController {
   }
 
   async listByWorkOrder(req: Request, res: Response): Promise<void> {
-    const workOrderId = req.params.id;
+    const workOrderId = req.params.id!;
     const activities = await this.service.listByWorkOrder(workOrderId);
     res.json({ items: activities });
   }
