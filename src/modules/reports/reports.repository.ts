@@ -35,9 +35,10 @@ export class ReportRepository implements IReportRepository {
   }
 
   async ordersByStatus(filters: DateRange): Promise<{ status: string; count: number }[]> {
+    // Obtener todas las órdenes con su estado
     let query = supabase
       .from('work_orders')
-      .select('current_status, count', { count: 'exact' });
+      .select('current_status');
 
     if (filters.from) query = query.gte('created_at', filters.from);
     if (filters.to) query = query.lte('created_at', filters.to);
@@ -45,6 +46,7 @@ export class ReportRepository implements IReportRepository {
     const { data, error } = await query;
     if (error) throw error;
 
+    // Agrupar por estado en código
     const counts = new Map<string, number>();
     for (const row of (data as { current_status: string }[]) ?? []) {
       counts.set(row.current_status, (counts.get(row.current_status) ?? 0) + 1);
