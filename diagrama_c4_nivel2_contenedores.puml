@@ -1,0 +1,37 @@
+@startuml C4_Nivel2_Contenedores
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title TechnoTaller - Nivel 2: Contenedores del Sistema
+
+Person(cliente, "Cliente", "Usuario que solicita servicios")
+Person(tecnico, "Técnico", "Especialista que ejecuta reparaciones")
+Person(admin, "Administrador", "Gestor del sistema")
+
+System_Boundary(tecnotaller_system, "TechnoTaller Backend") {
+    Container(web_api, "REST API", "Node.js + Express", "API RESTful que proporciona toda la funcionalidad del sistema")
+    Container(auth_service, "Auth Service", "Supabase Auth", "Gestiona autenticación y autorización de usuarios")
+    Container(database, "Base de Datos", "PostgreSQL + Supabase", "Almacena: órdenes, citas, técnicos, clientes, inventario, auditoría")
+    Container(realtime, "Realtime Engine", "Supabase Realtime", "Actualiza estado en tiempo real (WebSocket)")
+    Container(storage, "File Storage", "Supabase Storage", "Almacena fotos de reparaciones y documentos")
+}
+
+System_Ext(email_service, "Email Service", "SendGrid API")
+System_Ext(sms_service, "SMS Service", "Twilio API")
+System_Ext(push_service, "Push Service", "Firebase API")
+
+Rel(cliente, web_api, "REST requests + WebSocket")
+Rel(tecnico, web_api, "REST requests + WebSocket")
+Rel(admin, web_api, "REST requests + WebSocket")
+
+Rel(web_api, auth_service, "Valida JWT tokens")
+Rel(web_api, database, "CRUD SQL queries")
+Rel(web_api, realtime, "Emite eventos")
+Rel(web_api, storage, "Gestiona archivos")
+
+Rel(web_api, email_service, "Envía emails")
+Rel(web_api, sms_service, "Envía SMS")
+Rel(web_api, push_service, "Envía push")
+
+@enduml

@@ -1,0 +1,26 @@
+@startuml C4_Nivel1_Contexto
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title TechnoTaller - Nivel 1: Contexto del Sistema
+
+Person(cliente, "Cliente", "Usuario que solicita servicios de reparación")
+Person(tecnico, "Técnico", "Especialista que ejecuta reparaciones")
+Person(admin, "Administrador", "Coordinador y gestor del sistema")
+
+System(tecnotaller, "TechnoTaller Backend", "Sistema de gestión integral de taller de reparación electrónica")
+
+System_Ext(email, "Email Service", "SendGrid/Resend")
+System_Ext(sms, "SMS Service", "Twilio/Vonage")
+System_Ext(push, "Push Service", "Firebase Cloud Messaging")
+
+Rel(cliente, tecnotaller, "Agenda citas, consulta órdenes, ve garantías")
+Rel(tecnico, tecnotaller, "Recibe órdenes, actualiza estado, sube fotos")
+Rel(admin, tecnotaller, "Gestiona todo el sistema")
+
+Rel(tecnotaller, email, "Envía notificaciones por email")
+Rel(tecnotaller, sms, "Envía recordatorios por SMS")
+Rel(tecnotaller, push, "Envía notificaciones push")
+
+@enduml
