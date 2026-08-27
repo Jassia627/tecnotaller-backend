@@ -33,9 +33,8 @@ export interface ITechnicianRepository {
 
 export class TechnicianRepository implements ITechnicianRepository {
   async list(): Promise<Technician[]> {
-    // Usar service role para evitar RLS recursion
-    const serviceSupabase = supabase.rls(false);
-    const { data, error } = await serviceSupabase
+    // serviceRoleKey ya bypassea RLS automáticamente
+    const { data, error } = await supabase
       .from('profiles')
       .select('id, full_name, phone, role, active, created_at')
       .eq('role', 'tecnico')
@@ -46,9 +45,8 @@ export class TechnicianRepository implements ITechnicianRepository {
   }
 
   async findById(id: string): Promise<Technician | null> {
-    // Usar service role para evitar RLS recursion
-    const serviceSupabase = supabase.rls(false);
-    const { data, error } = await serviceSupabase
+    // serviceRoleKey ya bypassea RLS automáticamente
+    const { data, error } = await supabase
       .from('profiles')
       .select('id, full_name, phone, role, active, created_at')
       .eq('id', id)
@@ -87,9 +85,8 @@ export class TechnicianRepository implements ITechnicianRepository {
   }
 
   async setActive(id: string, active: boolean): Promise<Technician> {
-    // Usar service role para evitar RLS recursion
-    const serviceSupabase = supabase.rls(false);
-    const { data, error } = await serviceSupabase
+    // serviceRoleKey ya bypassea RLS automáticamente
+    const { data, error } = await supabase
       .from('profiles')
       .update({ active })
       .eq('id', id)
