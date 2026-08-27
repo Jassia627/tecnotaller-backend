@@ -1,4 +1,18 @@
--- Migración 0009: RPC functions para técnicos (evita RLS recursiva)
+-- Migración 0009: Actividades de reparación + RPC functions para técnicos
+-- Tabla para registrar pasos/actividades durante la reparación
+
+create table if not exists public.work_order_activities (
+  id uuid primary key default gen_random_uuid(),
+  work_order_id uuid not null references public.work_orders (id) on delete cascade,
+  technician_id uuid not null references public.profiles (id) on delete set null,
+  description text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists work_order_activities_work_order_idx 
+  on public.work_order_activities (work_order_id, created_at);
+
+-- RPC functions para técnicos (evita RLS recursiva)
 -- Estas funciones se ejecutan con security definer, evitando RLS
 
 create or replace function public.get_technicians()

@@ -1,9 +1,17 @@
 import { Request, Response } from 'express';
 import { WorkOrderService } from './work-orders.service';
 import { OrderStatus, createWorkOrderSchema, exitRegisterSchema, transitionStatusSchema } from './work-orders.types';
+import { ActivityService } from '../activities/activities.service';
+import { ActivityRepository } from '../activities/activities.repository';
+import { createActivitySchema } from '../activities/activities.types';
 
 export class WorkOrderController {
-  constructor(private readonly service: WorkOrderService) {}
+  private readonly activityService: ActivityService;
+
+  constructor(private readonly service: WorkOrderService) {
+    const activityRepository = new ActivityRepository();
+    this.activityService = new ActivityService(activityRepository);
+  }
 
   async create(req: Request, res: Response): Promise<void> {
     const input = createWorkOrderSchema.parse(req.body);
@@ -51,4 +59,14 @@ export class WorkOrderController {
     const order = await this.service.registerExit(req.params.id!, input);
     res.json(order);
   }
-}
+
+  async createActivity(req: Request, res: Response): Promise<void> {
+    const input = createActivitySchema.parse(req.body);
+    const activity = await this.activityService.create(req.params.id!, req.user!.id, input);
+    res.status(201).json(activity);
+  }
+
+  async listActivities(req: Request, res: Response): Promise<void> {
+    const activities = await this.activityService.listByWorkOrder(req.params.id!);
+    res.json({ items: activities });
+  }

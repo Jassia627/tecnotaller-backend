@@ -27,6 +27,8 @@ export function createWorkOrdersRouter(): Router {
   router.get('/:id/history', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO, ROLES.CLIENTE), asyncHandler(controller.getHistory.bind(controller)));
   router.post('/:id/photos', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.addPhoto.bind(controller)));
   router.post('/:id/exit-register', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.registerExit.bind(controller)));
+  router.post('/:id/activities', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.createActivity.bind(controller)));
+  router.get('/:id/activities', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.listActivities.bind(controller)));
 
   return router;
 }
