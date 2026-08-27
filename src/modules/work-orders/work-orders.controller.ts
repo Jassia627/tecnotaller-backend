@@ -22,8 +22,14 @@ export class WorkOrderController {
   async list(req: Request, res: Response): Promise<void> {
     const page = Number(req.query.page ?? 1);
     const pageSize = Number(req.query.pageSize ?? 20);
-    const { status, technicianId } = req.query as { status?: OrderStatus; technicianId?: string };
-    const result = await this.service.list({ status, technicianId, page, pageSize });
+    const { status, technicianId, fromDate, toDate, searchText } = req.query as {
+      status?: OrderStatus;
+      technicianId?: string;
+      fromDate?: string;
+      toDate?: string;
+      searchText?: string;
+    };
+    const result = await this.service.list({ status, technicianId, fromDate, toDate, searchText, page, pageSize });
     res.json(result);
   }
 

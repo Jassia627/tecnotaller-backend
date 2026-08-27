@@ -26,7 +26,15 @@ export class WorkOrderService {
     return WorkOrder.fromRow(row);
   }
 
-  async list(options: { status?: OrderStatus; technicianId?: string; page: number; pageSize: number }): Promise<{ items: WorkOrder[]; total: number }> {
+  async list(options: {
+    status?: OrderStatus;
+    technicianId?: string;
+    fromDate?: string;
+    toDate?: string;
+    searchText?: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ items: WorkOrder[]; total: number }> {
     const { rows, total } = await this.repository.list(options);
     return { items: rows.map(WorkOrder.fromRow), total };
   }

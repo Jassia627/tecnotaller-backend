@@ -37,14 +37,43 @@ export class WorkOrderRepository implements IWorkOrderRepository {
     return data as WorkOrderRow;
   }
 
-  async list(options: { status?: OrderStatus; technicianId?: string; page: number; pageSize: number }): Promise<{ rows: WorkOrderRow[]; total: number }> {
+  async list(options: {
+    status?: OrderStatus;
+    technicianId?: string;
+    fromDate?: string;
+    toDate?: string;
+    searchText?: string;
+    page: number;
+    pageSize: number;
+  }): Promise<{ rows: WorkOrderRow[]; total: number }> {
     const { page, pageSize } = options;
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
     let query = supabase.from('work_orders').select('*', { count: 'exact' });
+
+    // Aplicar filtros
     if (options.status) query = query.eq('current_status', options.status);
     if (options.technicianId) query = query.eq('technician_id', options.technicianId);
+
+    // Filtro por rango de fechas
+    if (options.fromDate) {
+      query = query.gte('created_at', options.fromDate);
+    }
+    if (options.toDate) {
+      // Agregar 1 día al toDate para incluir todo el día
+      const endOfDay = new Date(options.toDate);
+      endOfDay.setDate(endOfDay.getDate() + 1);
+      query = query.lt('created_at', endOfDay.toISOString());
+    }
+
+    // Búsqueda por texto (en device_brand, device_model, device_serial, problem_description, guide_number)
+    if (options.searchText) {
+      const searchPattern = `%${options.searchText}%`;
+      query = query.or(
+        `device_brand.ilike.${searchPattern},device_model.ilike.${searchPattern},device_serial.ilike.${searchPattern},problem_description.ilike.${searchPattern},guide_number.ilike.${searchPattern}`
+      );
+    }
 
     const { data, count, error } = await query
       .order('created_at', { ascending: false })
