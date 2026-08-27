@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { TechnicianService } from './technicians.service';
-import { registerTechnicianSchema, setActiveTechnicianSchema } from './technicians.types';
+import { registerTechnicianSchema, setActiveTechnicianSchema, updateTechnicianSchema } from './technicians.types';
 
 export class TechnicianController {
   constructor(private readonly service: TechnicianService) {}
@@ -16,10 +16,21 @@ export class TechnicianController {
     res.status(201).json(technician);
   }
 
+  async update(req: Request, res: Response): Promise<void> {
+    const input = updateTechnicianSchema.parse(req.body);
+    const technician = await this.service.update(req.params.id!, input);
+    res.json(technician);
+  }
+
   async setActive(req: Request, res: Response): Promise<void> {
     const { active } = setActiveTechnicianSchema.parse(req.body);
     const technician = await this.service.setActive(req.params.id!, active);
     res.json(technician);
+  }
+
+  async delete(req: Request, res: Response): Promise<void> {
+    await this.service.delete(req.params.id!);
+    res.status(204).send();
   }
 
   async listWorkOrders(req: Request, res: Response): Promise<void> {

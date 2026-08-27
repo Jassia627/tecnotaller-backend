@@ -52,4 +52,10 @@ export class ProductController {
     const product = await this.service.registerMovement(req.params.id!, input, req.user!.id);
     res.status(201).json(product);
   }
+
+  async listLowStock(req: Request, res: Response): Promise<void> {
+    const threshold = Number(req.query.threshold ?? 10);
+    const result = await this.service.listLowStock(threshold);
+    res.json(result);
+  }
 }

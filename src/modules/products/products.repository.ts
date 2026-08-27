@@ -17,6 +17,7 @@ export interface IProductRepository {
   setActive(id: string, active: boolean): Promise<ProductRow>;
   listMovements(productId: string): Promise<InventoryMovement[]>;
   registerMovement(productId: string, input: InventoryMovementInput, userId: string): Promise<ProductRow>;
+  findByStockThreshold(threshold: number): Promise<ProductRow[]>;
 }
 
 export class ProductRepository implements IProductRepository {
@@ -156,5 +157,17 @@ export class ProductRepository implements IProductRepository {
     const updated = await this.findById(productId);
     if (!updated) throw new NotFoundError('Producto no encontrado');
     return updated;
+  }
+
+  async findByStockThreshold(threshold: number): Promise<ProductRow[]> {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .lte('stock', threshold)
+      .eq('active', true)
+      .order('stock', { ascending: true });
+
+    if (error) throw error;
+    return (data as ProductRow[]) ?? [];
   }
 }

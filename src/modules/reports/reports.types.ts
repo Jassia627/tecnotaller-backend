@@ -9,4 +9,4 @@ export interface ReportGenerator {
   generate(filters: DateRange): Promise<unknown>;
 }
 
-export type ReportType = 'services' | 'inventory' | 'orders-by-status';
+export type ReportType = 'services' | 'inventory' | 'orders-by-status' | 'sales' | 'revenue' | 'trends';

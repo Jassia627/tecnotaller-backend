@@ -5,6 +5,9 @@ import {
   InventoryReportGenerator,
   OrdersByStatusReportGenerator,
   ServicesReportGenerator,
+  SalesReportGenerator,
+  RevenueReportGenerator,
+  TrendsReportGenerator,
 } from './reports.generators';
 
 export class ReportService {
@@ -15,6 +18,9 @@ export class ReportService {
       ['services', new ServicesReportGenerator(repository)],
       ['inventory', new InventoryReportGenerator(repository)],
       ['orders-by-status', new OrdersByStatusReportGenerator(repository)],
+      ['sales', new SalesReportGenerator(repository)],
+      ['revenue', new RevenueReportGenerator(repository)],
+      ['trends', new TrendsReportGenerator(repository)],
     ]);
   }
 

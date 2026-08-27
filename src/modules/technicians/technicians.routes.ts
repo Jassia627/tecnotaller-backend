@@ -19,7 +19,9 @@ export function createTechniciansRouter(): Router {
 
   router.get('/', asyncHandler(controller.list.bind(controller)));
   router.post('/', asyncHandler(controller.register.bind(controller)));
+  router.patch('/:id', asyncHandler(controller.update.bind(controller)));
   router.patch('/:id/status', asyncHandler(controller.setActive.bind(controller)));
+  router.delete('/:id', asyncHandler(controller.delete.bind(controller)));
   router.get('/:id/work-orders', asyncHandler(controller.listWorkOrders.bind(controller)));
 
   return router;

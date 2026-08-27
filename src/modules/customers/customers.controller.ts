@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { CustomerService } from './customers.service';
-import { createCustomerSchema } from './customers.types';
+import { createCustomerSchema, updateCustomerSchema } from './customers.types';
 
 export class CustomerController {
   constructor(private readonly service: CustomerService) {}
@@ -21,6 +21,17 @@ export class CustomerController {
     const input = createCustomerSchema.parse(req.body);
     const customer = await this.service.create(input);
     res.status(201).json(customer);
+  }
+
+  async update(req: Request, res: Response): Promise<void> {
+    const input = updateCustomerSchema.parse(req.body);
+    const customer = await this.service.update(req.params.id!, input);
+    res.json(customer);
+  }
+
+  async delete(req: Request, res: Response): Promise<void> {
+    await this.service.delete(req.params.id!);
+    res.status(204).send();
   }
 
   async listWorkOrders(req: Request, res: Response): Promise<void> {

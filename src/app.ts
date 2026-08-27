@@ -18,6 +18,8 @@ import { createWarrantiesRouter } from './modules/warranties/warranties.routes';
 import { createReportsRouter } from './modules/reports/reports.routes';
 import { createAuditRouter } from './modules/audit/audit.routes';
 import { createNotificationsRouter } from './modules/notifications/notifications.routes';
+import { createTechnicianAvailabilityRouter } from './modules/technician-availability/technician-availability.routes';
+import { createPurchaseRequestsRouter } from './modules/purchase-requests/purchase-requests.routes';
 
 export function createApp(): Express {
   const app = express();
@@ -55,6 +57,8 @@ export function createApp(): Express {
   app.use('/api/v1/reports', createReportsRouter());
   app.use('/api/v1/audit', createAuditRouter());
   app.use('/api/v1', createNotificationsRouter());
+  app.use('/api/v1/technicians', createTechnicianAvailabilityRouter());
+  app.use('/api/v1/purchase-requests', createPurchaseRequestsRouter());
 
   app.use((_req, res) => {
     res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Ruta no encontrada' } });

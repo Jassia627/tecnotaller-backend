@@ -55,4 +55,9 @@ export class ProductService {
     const row = await this.repository.registerMovement(productId, input, userId);
     return Product.fromRow(row);
   }
+
+  async listLowStock(threshold: number): Promise<{ items: Product[] }> {
+    const rows = await this.repository.findByStockThreshold(threshold);
+    return { items: rows.map(Product.fromRow) };
+  }
 }

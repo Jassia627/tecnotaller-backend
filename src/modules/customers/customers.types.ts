@@ -32,4 +32,11 @@ export const createCustomerSchema = z.object({
   phone: z.string().nullable().optional(),
 });
 
+export const updateCustomerSchema = z.object({
+  email: z.string().email().nullable().optional(),
+  fullName: z.string().min(1).optional(),
+  phone: z.string().nullable().optional(),
+});
+
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
+export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;

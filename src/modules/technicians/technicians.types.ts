@@ -20,5 +20,11 @@ export const setActiveTechnicianSchema = z.object({
   active: z.boolean().describe('Estado activo/inactivo del técnico'),
 });
 
+export const updateTechnicianSchema = z.object({
+  fullName: z.string().min(1).optional(),
+  phone: z.string().nullable().optional(),
+});
+
 export type RegisterTechnicianInput = z.infer<typeof registerTechnicianSchema>;
 export type SetActiveTechnicianInput = z.infer<typeof setActiveTechnicianSchema>;
+export type UpdateTechnicianInput = z.infer<typeof updateTechnicianSchema>;

@@ -1,6 +1,6 @@
 import { supabase } from '../../config/supabase';
 import { ConflictError } from '../../shared/errors/app-error';
-import { RegisterTechnicianInput, Technician } from './technicians.types';
+import { RegisterTechnicianInput, Technician, UpdateTechnicianInput } from './technicians.types';
 
 interface TechnicianRow {
   id: string;
@@ -49,7 +49,9 @@ export interface ITechnicianRepository {
   list(): Promise<Technician[]>;
   findById(id: string): Promise<Technician | null>;
   register(input: RegisterTechnicianInput): Promise<Technician>;
+  update(id: string, input: UpdateTechnicianInput): Promise<Technician>;
   setActive(id: string, active: boolean): Promise<Technician>;
+  delete(id: string): Promise<void>;
   listWorkOrders(technicianId: string): Promise<{ id: string; guide_number: string; current_status: string }[]>;
 }
 
@@ -118,6 +120,39 @@ export class TechnicianRepository implements ITechnicianRepository {
     const authUser = authData?.users?.find((u) => u.id === id);
 
     return mapRow(profile as TechnicianRow, authUser?.email || '');
+  }
+
+  async update(id: string, input: UpdateTechnicianInput): Promise<Technician> {
+    const updateData: Record<string, unknown> = {};
+    if (input.fullName !== undefined) updateData.full_name = input.fullName;
+    if (input.phone !== undefined) updateData.phone = input.phone ?? null;
+
+    const { data: profile, error: updateError } = await supabase
+      .from('profiles')
+      .update(updateData)
+      .eq('id', id)
+      .eq('role', 'tecnico')
+      .select('id, full_name, phone, role, active, created_at')
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Obtener email desde auth.users
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUser = authData?.users?.find((u) => u.id === id);
+
+    return mapRow(profile as TechnicianRow, authUser?.email || '');
+  }
+
+  async delete(id: string): Promise<void> {
+    // Marcar como inactivo en lugar de borrar
+    const { error } = await supabase
+      .from('profiles')
+      .update({ active: false })
+      .eq('id', id)
+      .eq('role', 'tecnico');
+
+    if (error) throw error;
   }
 
   async listWorkOrders(technicianId: string): Promise<{ id: string; guide_number: string; current_status: string }[]> {

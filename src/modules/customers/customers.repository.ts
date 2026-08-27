@@ -1,10 +1,12 @@
 import { supabase } from '../../config/supabase';
-import { CreateCustomerInput, CustomerRow } from './customers.types';
+import { CreateCustomerInput, UpdateCustomerInput, CustomerRow } from './customers.types';
 
 export interface ICustomerRepository {
   list(options: { page: number; pageSize: number }): Promise<{ rows: CustomerRow[]; total: number }>;
   findById(id: string): Promise<CustomerRow | null>;
   create(input: CreateCustomerInput): Promise<CustomerRow>;
+  update(id: string, input: UpdateCustomerInput): Promise<CustomerRow>;
+  delete(id: string): Promise<void>;
   listWorkOrders(customerId: string): Promise<{ id: string; guide_number: string; current_status: string }[]>;
 }
 
@@ -44,6 +46,27 @@ export class CustomerRepository implements ICustomerRepository {
       .single();
     if (error) throw error;
     return data as CustomerRow;
+  }
+
+  async update(id: string, input: UpdateCustomerInput): Promise<CustomerRow> {
+    const updateData: Record<string, unknown> = {};
+    if (input.email !== undefined) updateData.email = input.email ?? null;
+    if (input.fullName !== undefined) updateData.full_name = input.fullName;
+    if (input.phone !== undefined) updateData.phone = input.phone ?? null;
+
+    const { data, error } = await supabase
+      .from('customers')
+      .update(updateData)
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    return data as CustomerRow;
+  }
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from('customers').delete().eq('id', id);
+    if (error) throw error;
   }
 
   async listWorkOrders(customerId: string): Promise<{ id: string; guide_number: string; current_status: string }[]> {

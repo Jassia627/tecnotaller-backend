@@ -35,6 +35,12 @@ export function createCustomersRouter(): Router {
       next(err);
     }
   }));
+
+  // Editar cliente - solo admin
+  router.patch('/:id', authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.update.bind(controller)));
+
+  // Eliminar cliente - solo admin
+  router.delete('/:id', authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.delete.bind(controller)));
   
   // Ver órdenes del cliente - solo admin o el cliente autenticado
   router.get('/:id/work-orders', asyncHandler(async (req, res, next) => {

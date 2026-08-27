@@ -27,3 +27,30 @@ export class OrdersByStatusReportGenerator implements ReportGenerator {
     return this.repository.ordersByStatus(filters);
   }
 }
+
+export class SalesReportGenerator implements ReportGenerator {
+  readonly type: ReportType = 'sales';
+  constructor(private readonly repository: IReportRepository) {}
+
+  async generate(filters: DateRange): Promise<unknown> {
+    return this.repository.salesReport(filters);
+  }
+}
+
+export class RevenueReportGenerator implements ReportGenerator {
+  readonly type: ReportType = 'revenue';
+  constructor(private readonly repository: IReportRepository) {}
+
+  async generate(filters: DateRange): Promise<unknown> {
+    return this.repository.revenueReport(filters);
+  }
+}
+
+export class TrendsReportGenerator implements ReportGenerator {
+  readonly type: ReportType = 'trends';
+  constructor(private readonly repository: IReportRepository) {}
+
+  async generate(filters: DateRange): Promise<unknown> {
+    return this.repository.trendsReport(filters);
+  }
+}

@@ -1,6 +1,6 @@
 import { NotFoundError } from '../../shared/errors/app-error';
 import { ITechnicianRepository } from './technicians.repository';
-import { RegisterTechnicianInput, Technician } from './technicians.types';
+import { RegisterTechnicianInput, Technician, UpdateTechnicianInput } from './technicians.types';
 
 export class TechnicianService {
   constructor(private readonly repository: ITechnicianRepository) {}
@@ -13,9 +13,19 @@ export class TechnicianService {
     return this.repository.register(input);
   }
 
+  async update(id: string, input: UpdateTechnicianInput): Promise<Technician> {
+    await this.getById(id);
+    return this.repository.update(id, input);
+  }
+
   async setActive(id: string, active: boolean): Promise<Technician> {
     await this.getById(id);
     return this.repository.setActive(id, active);
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.getById(id);
+    await this.repository.delete(id);
   }
 
   async listWorkOrders(technicianId: string): Promise<{ id: string; guide_number: string; current_status: string }[]> {
