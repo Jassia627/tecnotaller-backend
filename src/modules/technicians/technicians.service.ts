@@ -1,4 +1,4 @@
-import { NotFoundError } from '../../shared/errors/app-error';
+import { NotFoundError, ConflictError } from '../../shared/errors/app-error';
 import { ITechnicianRepository } from './technicians.repository';
 import { RegisterTechnicianInput, Technician, UpdateTechnicianInput } from './technicians.types';
 
@@ -25,6 +25,13 @@ export class TechnicianService {
 
   async delete(id: string): Promise<void> {
     await this.getById(id);
+    
+    // Validar que el técnico no tiene órdenes activas
+    const workOrders = await this.repository.listWorkOrders(id);
+    if (workOrders && workOrders.length > 0) {
+      throw new ConflictError('No se puede eliminar un técnico con órdenes de trabajo activas');
+    }
+
     await this.repository.delete(id);
   }
 

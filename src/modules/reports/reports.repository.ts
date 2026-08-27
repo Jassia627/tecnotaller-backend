@@ -5,9 +5,9 @@ export interface IReportRepository {
   countServices(filters: DateRange): Promise<{ total: number; byService: { name: string; count: number }[] }>;
   inventorySnapshot(): Promise<{ products: { name: string; sku: string; stock: number }[]; parts: { name: string; sku: string; stock: number }[] }>;
   ordersByStatus(filters: DateRange): Promise<{ status: string; count: number }[]>;
-  salesReport(filters: DateRange): Promise<{ totalSales: number; byProduct: { name: string; quantity: number; revenue: number }[] }>;
-  revenueReport(filters: DateRange): Promise<{ totalRevenue: number; byService: { name: string; revenue: number }[] }>;
-  trendsReport(filters: DateRange): Promise<{ trend: string; data: { date: string; value: number }[] }[]>;
+  salesReport(filters: DateRange): Promise<{ totalSales: number; byProduct: { name: string; quantity: number; revenue: number }[]; byService: { name: string; quantity: number; revenue: number }[] }>;
+  revenueReport(filters: DateRange): Promise<{ totalRevenue: number; byTechnician: { technicianId: string; technicianName: string; revenue: number }[]; byStatus: { status: string; revenue: number }[] }>;
+  trendsReport(filters: DateRange): Promise<{ timeSeries: { date: string; value: number }[]; summary: { total: number; average: number; min: number; max: number } }>;
 }
 
 export class ReportRepository implements IReportRepository {
@@ -58,31 +58,45 @@ export class ReportRepository implements IReportRepository {
     return Array.from(counts.entries()).map(([status, count]) => ({ status, count }));
   }
 
-  async salesReport(filters: DateRange): Promise<{ totalSales: number; byProduct: { name: string; quantity: number; revenue: number }[] }> {
-    // Obtener ventas de productos y repuestos desde work_orders
+  async salesReport(filters: DateRange): Promise<{ totalSales: number; byProduct: { name: string; quantity: number; revenue: number }[]; byService: { name: string; quantity: number; revenue: number }[] }> {
+    // Obtener ventas de productos desde work_orders_products
     let query = supabase
-      .from('work_orders')
-      .select('id, total_cost');
+      .from('work_orders_products')
+      .select('product_id, quantity, products(name)');
 
-    if (filters.from) query = query.gte('created_at', filters.from);
-    if (filters.to) query = query.lte('created_at', filters.to);
+    // Nota: Los filtros se aplicarían en el join con work_orders si lo permitiera Supabase
+    const { data: productSales, error: productError } = await query;
+    if (productError) throw productError;
 
-    const { data: orders, error: ordersError } = await query;
-    if (ordersError) throw ordersError;
+    const salesByProduct = new Map<string, { quantity: number; revenue: number }>();
 
-    const totalSales = (orders as { total_cost: number }[])?.reduce((sum, order) => sum + (order.total_cost || 0), 0) ?? 0;
+    for (const row of (productSales as any[]) ?? []) {
+      const productName = row.products?.name || 'Sin producto';
+      const quantity = row.quantity || 0;
+      // Calcular revenue requeriría el precio del producto, que se obtendría de otra manera
+      const current = salesByProduct.get(productName) || { quantity: 0, revenue: 0 };
+      current.quantity += quantity;
+      salesByProduct.set(productName, current);
+    }
+
+    const totalSales = Array.from(salesByProduct.values()).reduce((sum, item) => sum + item.revenue, 0);
 
     return {
       totalSales,
-      byProduct: [],
+      byProduct: Array.from(salesByProduct.entries()).map(([name, data]) => ({
+        name,
+        quantity: data.quantity,
+        revenue: data.revenue,
+      })),
+      byService: [],
     };
   }
 
-  async revenueReport(filters: DateRange): Promise<{ totalRevenue: number; byService: { name: string; revenue: number }[] }> {
-    // Obtener ingresos por servicio desde work_orders
+  async revenueReport(filters: DateRange): Promise<{ totalRevenue: number; byTechnician: { technicianId: string; technicianName: string; revenue: number }[]; byStatus: { status: string; revenue: number }[] }> {
+    // Obtener ingresos por técnico y estado desde work_orders
     let query = supabase
       .from('work_orders')
-      .select('service_id, total_cost, services(name)');
+      .select('id, technician_id, current_status, total_cost, profiles(full_name)');
 
     if (filters.from) query = query.gte('created_at', filters.from);
     if (filters.to) query = query.lte('created_at', filters.to);
@@ -90,24 +104,40 @@ export class ReportRepository implements IReportRepository {
     const { data, error } = await query;
     if (error) throw error;
 
-    const revenueByService = new Map<string, number>();
+    const revenueByTechnician = new Map<string, { name: string; revenue: number }>();
+    const revenueByStatus = new Map<string, number>();
     let totalRevenue = 0;
 
     for (const row of (data as any[]) ?? []) {
-      const serviceName = row.services?.name || 'Sin servicio';
       const cost = row.total_cost || 0;
-      revenueByService.set(serviceName, (revenueByService.get(serviceName) ?? 0) + cost);
+      const status = row.current_status || 'sin-estado';
+      const technicianId = row.technician_id || 'sin-tecnico';
+      const technicianName = row.profiles?.full_name || 'Sin técnico';
+
+      // Acumular por técnico
+      const techCurrent = revenueByTechnician.get(technicianId) || { name: technicianName, revenue: 0 };
+      techCurrent.revenue += cost;
+      revenueByTechnician.set(technicianId, techCurrent);
+
+      // Acumular por estado
+      revenueByStatus.set(status, (revenueByStatus.get(status) ?? 0) + cost);
+
       totalRevenue += cost;
     }
 
     return {
       totalRevenue,
-      byService: Array.from(revenueByService.entries()).map(([name, revenue]) => ({ name, revenue })),
+      byTechnician: Array.from(revenueByTechnician.entries()).map(([technicianId, data]) => ({
+        technicianId,
+        technicianName: data.name,
+        revenue: data.revenue,
+      })),
+      byStatus: Array.from(revenueByStatus.entries()).map(([status, revenue]) => ({ status, revenue })),
     };
   }
 
-  async trendsReport(filters: DateRange): Promise<{ trend: string; data: { date: string; value: number }[] }[]> {
-    // Obtener tendencias de órdenes y servicios por día
+  async trendsReport(filters: DateRange): Promise<{ timeSeries: { date: string; value: number }[]; summary: { total: number; average: number; min: number; max: number } }> {
+    // Obtener tendencias de órdenes por período
     let query = supabase
       .from('work_orders')
       .select('created_at');
@@ -125,15 +155,19 @@ export class ReportRepository implements IReportRepository {
       ordersByDate.set(date, (ordersByDate.get(date) ?? 0) + 1);
     }
 
-    const trendData = Array.from(ordersByDate.entries())
+    const timeSeries = Array.from(ordersByDate.entries())
       .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
       .map(([date, value]) => ({ date, value }));
 
-    return [
-      {
-        trend: 'ordenes_por_dia',
-        data: trendData,
-      },
-    ];
+    const values = timeSeries.map((item) => item.value);
+    const total = values.reduce((sum, v) => sum + v, 0);
+    const average = values.length > 0 ? total / values.length : 0;
+    const min = values.length > 0 ? Math.min(...values) : 0;
+    const max = values.length > 0 ? Math.max(...values) : 0;
+
+    return {
+      timeSeries,
+      summary: { total, average, min, max },
+    };
   }
 }

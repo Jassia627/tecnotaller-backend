@@ -28,3 +28,7 @@ export const updateTechnicianSchema = z.object({
 export type RegisterTechnicianInput = z.infer<typeof registerTechnicianSchema>;
 export type SetActiveTechnicianInput = z.infer<typeof setActiveTechnicianSchema>;
 export type UpdateTechnicianInput = z.infer<typeof updateTechnicianSchema>;
+
+export interface DeleteTechnicianResponse {
+  success: boolean;
+}

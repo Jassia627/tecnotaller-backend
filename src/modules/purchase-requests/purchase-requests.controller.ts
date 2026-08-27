@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PurchaseRequestService } from './purchase-requests.service';
 import { createPurchaseRequestSchema, updatePurchaseRequestStatusSchema } from './purchase-requests.types';
+import { BadRequestError } from '../../shared/errors/app-error';
 
 export class PurchaseRequestController {
   constructor(private readonly service: PurchaseRequestService) {}
@@ -8,6 +9,11 @@ export class PurchaseRequestController {
   async list(req: Request, res: Response): Promise<void> {
     const page = Number(req.query.page ?? 1);
     const pageSize = Number(req.query.pageSize ?? 20);
+    
+    if (isNaN(page) || isNaN(pageSize) || page < 1 || pageSize < 1) {
+      throw new BadRequestError('page y pageSize deben ser números positivos');
+    }
+
     const result = await this.service.list({ page, pageSize });
     res.json(result);
   }

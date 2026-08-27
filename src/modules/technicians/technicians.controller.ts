@@ -30,7 +30,7 @@ export class TechnicianController {
 
   async delete(req: Request, res: Response): Promise<void> {
     await this.service.delete(req.params.id!);
-    res.status(204).send();
+    res.json({ success: true });
   }
 
   async listWorkOrders(req: Request, res: Response): Promise<void> {
