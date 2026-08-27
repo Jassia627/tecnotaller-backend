@@ -33,31 +33,26 @@ export interface ITechnicianRepository {
 
 export class TechnicianRepository implements ITechnicianRepository {
   async list(): Promise<Technician[]> {
-    // serviceRoleKey ya bypassea RLS automáticamente
+    // Usar RPC function para evitar RLS recursiva
     const { data, error } = await supabase
-      .from('profiles')
-      .select('id, full_name, phone, role, active, created_at')
-      .eq('role', 'tecnico')
-      .order('created_at', { ascending: false });
+      .rpc('get_technicians', {}, { head: false });
 
     if (error) throw error;
     return (data as TechnicianRow[]).map(mapRow);
   }
 
   async findById(id: string): Promise<Technician | null> {
-    // serviceRoleKey ya bypassea RLS automáticamente
+    // Usar RPC function para evitar RLS recursiva
     const { data, error } = await supabase
-      .from('profiles')
-      .select('id, full_name, phone, role, active, created_at')
-      .eq('id', id)
-      .eq('role', 'tecnico')
-      .single();
+      .rpc('get_technician_by_id', { technician_id: id }, { head: false });
 
     if (error) {
       if (error.code === 'PGRST116') return null;
       throw error;
     }
-    return mapRow(data as TechnicianRow);
+
+    if (!data || data.length === 0) return null;
+    return mapRow(data[0] as TechnicianRow);
   }
 
   async register(input: RegisterTechnicianInput): Promise<Technician> {
@@ -100,10 +95,7 @@ export class TechnicianRepository implements ITechnicianRepository {
 
   async listWorkOrders(technicianId: string): Promise<{ id: string; guide_number: string; current_status: string }[]> {
     const { data, error } = await supabase
-      .from('work_orders')
-      .select('id, guide_number, current_status')
-      .eq('technician_id', technicianId)
-      .order('created_at', { ascending: false });
+      .rpc('get_technician_work_orders', { technician_id: technicianId }, { head: false });
 
     if (error) throw error;
     return (data as { id: string; guide_number: string; current_status: string }[]) ?? [];
