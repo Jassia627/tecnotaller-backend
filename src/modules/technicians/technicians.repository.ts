@@ -5,18 +5,40 @@ import { RegisterTechnicianInput, Technician } from './technicians.types';
 interface TechnicianRow {
   id: string;
   full_name: string;
-  email: string;
   phone: string | null;
   role: string;
   active: boolean;
   created_at: string;
 }
 
-function mapRow(row: TechnicianRow): Technician {
+interface AuthUser {
+  id: string;
+  email: string;
+}
+
+async function getTechnicianWithEmail(id: string): Promise<Technician | null> {
+  // Obtener perfil de técnico
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, full_name, phone, role, active, created_at')
+    .eq('id', id)
+    .eq('role', 'tecnico')
+    .single();
+
+  if (profileError || !profile) return null;
+
+  // Obtener email desde auth.users usando admin API
+  const { data: authUsers } = await supabase.auth.admin.listUsers();
+  const authUser = authUsers?.users?.find((u) => u.id === id);
+
+  return mapRow(profile as TechnicianRow, authUser?.email || '');
+}
+
+function mapRow(row: TechnicianRow, email: string = ''): Technician {
   return {
     id: row.id,
     fullName: row.full_name,
-    email: row.email || '',
+    email: email,
     phone: row.phone,
     active: row.active,
     createdAt: row.created_at,
@@ -33,26 +55,26 @@ export interface ITechnicianRepository {
 
 export class TechnicianRepository implements ITechnicianRepository {
   async list(): Promise<Technician[]> {
-    // Usar RPC function para evitar RLS recursiva
-    const { data, error } = await supabase
-      .rpc('get_technicians', {}, { head: false });
+    // Obtener todos los técnicos de profiles
+    const { data: profiles, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, full_name, phone, role, active, created_at')
+      .eq('role', 'tecnico')
+      .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return (data as TechnicianRow[]).map(mapRow);
+    if (profileError) throw profileError;
+    if (!profiles) return [];
+
+    // Obtener todos los usuarios de auth.users
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const userEmailMap = new Map(authData?.users?.map((u) => [u.id, u.email]) ?? []);
+
+    // Mapear perfiles con sus emails
+    return profiles.map((p) => mapRow(p as TechnicianRow, userEmailMap.get(p.id) || ''));
   }
 
   async findById(id: string): Promise<Technician | null> {
-    // Usar RPC function para evitar RLS recursiva
-    const { data, error } = await supabase
-      .rpc('get_technician_by_id', { technician_id: id }, { head: false });
-
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw error;
-    }
-
-    if (!data || data.length === 0) return null;
-    return mapRow(data[0] as TechnicianRow);
+    return getTechnicianWithEmail(id);
   }
 
   async register(input: RegisterTechnicianInput): Promise<Technician> {
@@ -80,14 +102,22 @@ export class TechnicianRepository implements ITechnicianRepository {
   }
 
   async setActive(id: string, active: boolean): Promise<Technician> {
-    // Usar RPC function para obtener el email correctamente
-    const { data, error } = await supabase
-      .rpc('set_technician_active', { technician_id: id, is_active: active }, { head: false });
+    // Actualizar perfil
+    const { data: profile, error: updateError } = await supabase
+      .from('profiles')
+      .update({ active })
+      .eq('id', id)
+      .eq('role', 'tecnico')
+      .select('id, full_name, phone, role, active, created_at')
+      .single();
 
-    if (error) throw error;
-    if (!data || data.length === 0) throw new Error('Técnico no encontrado');
-    
-    return mapRow(data[0] as TechnicianRow);
+    if (updateError) throw updateError;
+
+    // Obtener email desde auth.users
+    const { data: authData } = await supabase.auth.admin.listUsers();
+    const authUser = authData?.users?.find((u) => u.id === id);
+
+    return mapRow(profile as TechnicianRow, authUser?.email || '');
   }
 
   async listWorkOrders(technicianId: string): Promise<{ id: string; guide_number: string; current_status: string }[]> {
