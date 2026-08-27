@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase';
+import { BadRequestError } from '../../shared/errors/app-error';
 import {
   CreateServiceInput,
   ServiceRow,
@@ -42,13 +43,17 @@ export class ServiceRepository implements IServiceRepository {
   }
 
   async update(id: string, input: UpdateServiceInput): Promise<ServiceRow> {
+    const patch = {
+      ...(input.name !== undefined && { name: input.name }),
+      ...(input.description !== undefined && { description: input.description }),
+      ...(input.price !== undefined && { price: input.price }),
+    };
+    if (Object.keys(patch).length === 0) {
+      throw new BadRequestError('No hay campos para actualizar');
+    }
     const { data, error } = await supabase
       .from('services')
-      .update({
-        ...(input.name !== undefined && { name: input.name }),
-        ...(input.description !== undefined && { description: input.description }),
-        ...(input.price !== undefined && { price: input.price }),
-      })
+      .update(patch)
       .eq('id', id)
       .select('*')
       .single();
