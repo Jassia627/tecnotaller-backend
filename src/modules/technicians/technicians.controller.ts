@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { TechnicianService } from './technicians.service';
-import { registerTechnicianSchema } from './technicians.types';
+import { registerTechnicianSchema, setActiveTechnicianSchema } from './technicians.types';
 
 export class TechnicianController {
   constructor(private readonly service: TechnicianService) {}
@@ -17,7 +17,7 @@ export class TechnicianController {
   }
 
   async setActive(req: Request, res: Response): Promise<void> {
-    const { active } = req.body as { active: boolean };
+    const { active } = setActiveTechnicianSchema.parse(req.body);
     const technician = await this.service.setActive(req.params.id!, active);
     res.json(technician);
   }

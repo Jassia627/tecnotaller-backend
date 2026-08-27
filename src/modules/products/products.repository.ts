@@ -1,5 +1,5 @@
 import { supabase } from '../../config/supabase';
-import { BadRequestError, NotFoundError } from '../../shared/errors/app-error';
+import { BadRequestError, NotFoundError, ConflictError } from '../../shared/errors/app-error';
 import {
   CreateProductInput,
   InventoryMovement,
@@ -67,7 +67,13 @@ export class ProductRepository implements IProductRepository {
       .select('*')
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // Supabase retorna código 23505 para violación de única
+      if (error.code === '23505' && error.message?.includes('sku')) {
+        throw new ConflictError('El SKU ya existe');
+      }
+      throw error;
+    }
     return data as ProductRow;
   }
 

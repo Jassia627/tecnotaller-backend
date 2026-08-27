@@ -14,7 +14,7 @@ export function createProductsRouter(): Router {
 
   const router = Router();
 
-  router.get('/admin/all', authMiddleware, asyncHandler(controller.listAll.bind(controller)));
+  router.get('/admin/all', authMiddleware, authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.listAll.bind(controller)));
 
   router.get('/', asyncHandler(controller.listPublic.bind(controller)));
   router.get('/:id', asyncHandler(controller.getById.bind(controller)));
