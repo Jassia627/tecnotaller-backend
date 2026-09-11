@@ -59,27 +59,66 @@ export class ReportRepository implements IReportRepository {
   }
 
   async salesReport(filters: DateRange): Promise<{ totalSales: number; byProduct: { name: string; quantity: number; revenue: number }[]; byService: { name: string; quantity: number; revenue: number }[] }> {
-    // Obtener ventas de productos desde work_orders_products
+    // Obtener ventas de productos y servicios desde work_orders con joins
     let query = supabase
-      .from('work_orders_products')
-      .select('product_id, quantity, products(name)');
+      .from('work_orders')
+      .select(`
+        id,
+        created_at,
+        work_orders_products(
+          quantity,
+          product_id,
+          products(id, name, price)
+        ),
+        work_orders_services(
+          quantity,
+          service_id,
+          services(id, name, price)
+        )
+      `);
 
-    // Nota: Los filtros se aplicarían en el join con work_orders si lo permitiera Supabase
-    const { data: productSales, error: productError } = await query;
-    if (productError) throw productError;
+    // Aplicar filtros de fecha
+    if (filters.from) query = query.gte('created_at', filters.from);
+    if (filters.to) query = query.lte('created_at', filters.to);
+
+    const { data: workOrders, error } = await query;
+    if (error) throw error;
 
     const salesByProduct = new Map<string, { quantity: number; revenue: number }>();
+    const salesByService = new Map<string, { quantity: number; revenue: number }>();
+    let totalSales = 0;
 
-    for (const row of (productSales as any[]) ?? []) {
-      const productName = row.products?.name || 'Sin producto';
-      const quantity = row.quantity || 0;
-      // Calcular revenue requeriría el precio del producto, que se obtendría de otra manera
-      const current = salesByProduct.get(productName) || { quantity: 0, revenue: 0 };
-      current.quantity += quantity;
-      salesByProduct.set(productName, current);
+    // Procesar productos
+    for (const order of (workOrders as any[]) ?? []) {
+      for (const item of order.work_orders_products ?? []) {
+        const productName = item.products?.name || 'Sin producto';
+        const quantity = item.quantity || 0;
+        const price = item.products?.price || 0;
+        const revenue = quantity * price;
+
+        const current = salesByProduct.get(productName) || { quantity: 0, revenue: 0 };
+        current.quantity += quantity;
+        current.revenue += revenue;
+        salesByProduct.set(productName, current);
+
+        totalSales += revenue;
+      }
+
+      // Procesar servicios
+      for (const item of order.work_orders_services ?? []) {
+        const serviceName = item.services?.name || 'Sin servicio';
+        const quantity = item.quantity || 0;
+        const price = item.services?.price || 0;
+        const revenue = quantity * price;
+
+        const current = salesByService.get(serviceName) || { quantity: 0, revenue: 0 };
+        current.quantity += quantity;
+        current.revenue += revenue;
+        salesByService.set(serviceName, current);
+
+        totalSales += revenue;
+      }
     }
-
-    const totalSales = Array.from(salesByProduct.values()).reduce((sum, item) => sum + item.revenue, 0);
 
     return {
       totalSales,
@@ -88,15 +127,21 @@ export class ReportRepository implements IReportRepository {
         quantity: data.quantity,
         revenue: data.revenue,
       })),
-      byService: [],
+      byService: Array.from(salesByService.entries()).map(([name, data]) => ({
+        name,
+        quantity: data.quantity,
+        revenue: data.revenue,
+      })),
     };
   }
 
   async revenueReport(filters: DateRange): Promise<{ totalRevenue: number; byTechnician: { technicianId: string; technicianName: string; revenue: number }[]; byStatus: { status: string; revenue: number }[] }> {
     // Obtener ingresos por técnico y estado desde work_orders
+    // CRÍTICO: Filtrar solo órdenes ENTREGADAS
     let query = supabase
       .from('work_orders')
-      .select('id, technician_id, current_status, total_cost, profiles(full_name)');
+      .select('id, technician_id, current_status, total_cost, profiles(full_name)')
+      .eq('current_status', 'ENTREGADO');
 
     if (filters.from) query = query.gte('created_at', filters.from);
     if (filters.to) query = query.lte('created_at', filters.to);
@@ -119,7 +164,7 @@ export class ReportRepository implements IReportRepository {
       techCurrent.revenue += cost;
       revenueByTechnician.set(technicianId, techCurrent);
 
-      // Acumular por estado
+      // Acumular por estado (ahora solo ENTREGADO)
       revenueByStatus.set(status, (revenueByStatus.get(status) ?? 0) + cost);
 
       totalRevenue += cost;
