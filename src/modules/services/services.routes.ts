@@ -22,6 +22,7 @@ export function createServicesRouter(): Router {
   router.post('/', authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.create.bind(controller)));
   router.put('/:id', authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.update.bind(controller)));
   router.patch('/:id/status', authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.changeStatus.bind(controller)));
+  router.delete('/:id', authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.delete.bind(controller)));
 
   return router;
 }

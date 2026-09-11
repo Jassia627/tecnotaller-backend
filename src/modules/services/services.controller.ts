@@ -32,4 +32,10 @@ export class ServiceController {
     const service = await this.service.changeStatus(req.params.id!, active);
     res.json(service);
   }
+
+  async delete(req: Request, res: Response): Promise<void> {
+    // Soft-delete: desactiva el servicio temporalmente (active: false)
+    const service = await this.service.changeStatus(req.params.id!, false);
+    res.json(service);
+  }
 }
