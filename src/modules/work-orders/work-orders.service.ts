@@ -34,7 +34,14 @@ export class WorkOrderService {
     searchText?: string;
     page: number;
     pageSize: number;
+    userTechnicianId?: string;
+    userRole?: string;
   }): Promise<{ items: WorkOrder[]; total: number }> {
+    // Validar ownership: si es técnico, solo ver sus órdenes
+    if (options.userRole === 'tecnico' && !options.technicianId) {
+      options.technicianId = options.userTechnicianId;
+    }
+
     const { rows, total } = await this.repository.list(options);
     return { items: rows.map(WorkOrder.fromRow), total };
   }
@@ -60,9 +67,15 @@ export class WorkOrderService {
     }));
   }
 
-  async trackByGuide(guideNumber: string): Promise<{ order: WorkOrder; history: StatusHistoryEntry[] }> {
+  async trackByGuide(guideNumber: string, customerId?: string): Promise<{ order: WorkOrder; history: StatusHistoryEntry[] }> {
     const row = await this.repository.findByGuideNumber(guideNumber);
     if (!row) throw new NotFoundError('No se encontró ninguna orden con esa guía');
+    
+    // Si se proporciona customerId, validar que coincida (para clientes)
+    if (customerId && row.customer_id !== customerId) {
+      throw new ForbiddenError('No tienes permiso para rastrear esta orden');
+    }
+    
     const history = await this.repository.listHistoryByGuide(guideNumber);
     return {
       order: WorkOrder.fromRow(row),
@@ -82,6 +95,16 @@ export class WorkOrderService {
   }
 
   async registerExit(id: string, input: ExitRegisterInput): Promise<WorkOrder> {
+    // Obtener la orden actual para validar su estado
+    const order = await this.getById(id);
+    
+    // Validar que la orden esté en LISTO_PARA_ENTREGA
+    if (order.currentStatus !== 'LISTO_PARA_ENTREGA') {
+      throw new ForbiddenError(
+        `No se puede registrar salida. La orden debe estar en estado LISTO_PARA_ENTREGA, pero está en ${order.currentStatus}`
+      );
+    }
+
     const row = await this.repository.registerExit(id, input);
     return WorkOrder.fromRow(row);
   }

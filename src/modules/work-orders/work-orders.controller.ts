@@ -29,7 +29,18 @@ export class WorkOrderController {
       toDate?: string;
       searchText?: string;
     };
-    const result = await this.service.list({ status, technicianId, fromDate, toDate, searchText, page, pageSize });
+    // Pasar userTechnicianId y userRole para validación de ownership
+    const result = await this.service.list({ 
+      status, 
+      technicianId, 
+      fromDate, 
+      toDate, 
+      searchText, 
+      page, 
+      pageSize,
+      userTechnicianId: req.user!.id,
+      userRole: req.user!.role,
+    });
     res.json(result);
   }
 
@@ -50,7 +61,9 @@ export class WorkOrderController {
   }
 
   async trackByGuide(req: Request, res: Response): Promise<void> {
-    const result = await this.service.trackByGuide(req.params.guideNumber!);
+    // Pasar customerId si es cliente autenticado
+    const customerId = req.user?.role === 'cliente' ? req.user?.id : undefined;
+    const result = await this.service.trackByGuide(req.params.guideNumber!, customerId);
     res.json(result);
   }
 

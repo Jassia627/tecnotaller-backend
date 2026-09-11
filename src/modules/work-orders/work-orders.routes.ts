@@ -16,10 +16,11 @@ export function createWorkOrdersRouter(): Router {
 
   const router = Router();
 
-  // Seguimiento público por guía (RF-15)
-  router.get('/track/:guideNumber', asyncHandler(controller.trackByGuide.bind(controller)));
-
   router.use(authMiddleware);
+
+  // Seguimiento por guía (RF-15) - Requiere autenticación
+  // Cliente puede ver sus órdenes, técnico/admin todas
+  router.get('/track/:guideNumber', asyncHandler(controller.trackByGuide.bind(controller)));
 
   router.post('/', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.create.bind(controller)));
   router.get('/', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.list.bind(controller)));
