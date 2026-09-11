@@ -7,6 +7,7 @@ export interface DiagnosticRow {
   observations: string;
   faults: string;
   recommended_actions: string;
+  active: boolean;
   created_at: string;
 }
 
@@ -17,13 +18,17 @@ export interface Diagnostic {
   observations: string;
   faults: string;
   recommendedActions: string;
+  active: boolean;
   createdAt: string;
 }
 
 export const createDiagnosticSchema = z.object({
-  observations: z.string().min(1),
-  faults: z.string().min(1),
-  recommendedActions: z.string().min(1),
+  observations: z.string().min(1).max(1000),
+  faults: z.string().min(1).max(1000),
+  recommendedActions: z.string().min(1).max(1000),
 });
 
+export const updateDiagnosticSchema = createDiagnosticSchema.partial();
+
 export type CreateDiagnosticInput = z.infer<typeof createDiagnosticSchema>;
+export type UpdateDiagnosticInput = z.infer<typeof updateDiagnosticSchema>;

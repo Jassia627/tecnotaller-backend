@@ -17,9 +17,22 @@ export function createDiagnosticsRouter(): Router {
   const router = Router({ mergeParams: true });
 
   router.use(authMiddleware);
+  router.use(authorizeRoles(ROLES.TECNICO, ROLES.ADMINISTRADOR));
 
-  router.post('/work-orders/:id/diagnostics', authorizeRoles(ROLES.TECNICO, ROLES.ADMINISTRADOR), asyncHandler(controller.create.bind(controller)));
-  router.get('/work-orders/:id/diagnostics', authorizeRoles(ROLES.TECNICO, ROLES.ADMINISTRADOR), asyncHandler(controller.list.bind(controller)));
+  // Listar diagnósticos de una orden
+  router.get('/work-orders/:id/diagnostics', asyncHandler(controller.list.bind(controller)));
+
+  // Crear diagnóstico
+  router.post('/work-orders/:id/diagnostics', asyncHandler(controller.create.bind(controller)));
+
+  // Obtener diagnóstico por ID
+  router.get('/work-orders/:id/diagnostics/:diagnosticId', asyncHandler(controller.getById.bind(controller)));
+
+  // Actualizar diagnóstico
+  router.put('/work-orders/:id/diagnostics/:diagnosticId', asyncHandler(controller.update.bind(controller)));
+
+  // Eliminar diagnóstico (soft-delete)
+  router.delete('/work-orders/:id/diagnostics/:diagnosticId', asyncHandler(controller.delete.bind(controller)));
 
   return router;
 }
