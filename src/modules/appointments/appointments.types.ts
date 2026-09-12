@@ -73,7 +73,7 @@ const normalizeDate = (val: unknown): unknown => {
 
   // Si viene en formato DD-MM-YYYY o DD/MM/YYYY (ej: "05-06-2027")
   const parts = str.split(/[-/]/);
-  if (parts.length === 3 && parts[2].length === 4) {
+  if (parts.length === 3 && parts[0] && parts[1] && parts[2] && parts[2].length === 4) {
     const formatted = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
     const d = new Date(formatted);
     if (d instanceof Date && !isNaN(d.getTime())) {
