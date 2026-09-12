@@ -7,7 +7,7 @@ export interface DiagnosticRow {
   observations: string;
   faults: string;
   recommended_actions: string;
-  active: boolean;
+  active?: boolean;
   created_at: string;
 }
 

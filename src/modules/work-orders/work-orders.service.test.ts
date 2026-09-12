@@ -361,10 +361,11 @@ describe('WorkOrderService', () => {
         problem_description: 'Pantalla rota',
         device_password_encrypted: null,
         accessories: null,
-        current_status: 'REPARADO',
+        current_status: 'LISTO_PARA_ENTREGA',
         created_at: '2024-01-01T00:00:00Z',
       };
 
+      mockRepository.findById.mockResolvedValue(mockRow);
       mockRepository.registerExit.mockResolvedValue(mockRow);
 
       const result = await service.registerExit(workOrderId, input);

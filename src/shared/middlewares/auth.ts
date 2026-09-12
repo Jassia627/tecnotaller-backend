@@ -29,6 +29,19 @@ export async function authMiddleware(
     }
 
     const token = authHeader.slice(7);
+
+    // Soporte para tokens de desarrollo local (ej: Bearer dev-admin-token o Bearer dev-tecnico-token)
+    if (process.env.NODE_ENV === 'development' && token.startsWith('dev-')) {
+      const role = token.includes('admin') ? 'administrador' : token.includes('tecnico') ? 'tecnico' : 'cliente';
+      req.user = {
+        id: '00000000-0000-0000-0000-000000000000',
+        email: 'dev@tecnotaller.local',
+        role,
+      };
+      next();
+      return;
+    }
+
     const { data, error } = await supabase.auth.getUser(token);
 
     if (error || !data.user) {

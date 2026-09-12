@@ -45,7 +45,7 @@ export class ProductRepository implements IProductRepository {
   async findById(id: string): Promise<ProductRow | null> {
     const { data, error } = await supabase.from('products').select('*').eq('id', id).single();
     if (error) {
-      if (error.code === 'PGRST116') return null;
+      if (error.code === 'PGRST116' || error.code === '22P02') return null;
       throw error;
     }
     return data as ProductRow;
@@ -127,7 +127,10 @@ export class ProductRepository implements IProductRepository {
       .eq('product_id', productId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === '22P02' || error.code === 'PGRST116') return [];
+      throw error;
+    }
     return (data ?? []).map((m) => ({
       id: m.id,
       productId: m.product_id,
@@ -140,29 +143,74 @@ export class ProductRepository implements IProductRepository {
   }
 
   async registerMovement(productId: string, input: InventoryMovementInput, userId: string): Promise<ProductRow> {
-    // RPC transaccional: actualiza stock + inserta movimiento atómicamente (RNF-14)
-    const { data, error } = await supabase.rpc('register_inventory_movement', {
+    const validUserId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId) ? userId : null;
+
+    // 1. Intentar RPC transaccional (register_inventory_movement)
+    const { error } = await supabase.rpc('register_inventory_movement', {
       p_product_id: productId,
       p_type: input.type,
       p_quantity: input.quantity,
       p_reason: input.reason,
-      p_user_id: userId,
+      p_user_id: validUserId,
     });
 
-    if (error) {
-      const msg = error.message ?? '';
-      if (msg.includes('insuficiente') || msg.includes('insufficient')) {
-        throw new BadRequestError('Stock insuficiente para la salida solicitada');
-      }
-      if (msg.includes('Producto no encontrado')) {
-        throw new NotFoundError('Producto no encontrado');
-      }
-      throw error;
+    if (!error) {
+      const updated = await this.findById(productId);
+      if (!updated) throw new NotFoundError('Producto no encontrado');
+      return updated;
     }
 
-    const updated = await this.findById(productId);
-    if (!updated) throw new NotFoundError('Producto no encontrado');
-    return updated;
+    const msg = error.message ?? '';
+    if (msg.includes('insuficiente') || msg.includes('insufficient')) {
+      throw new BadRequestError('Stock insuficiente para la salida solicitada');
+    }
+    if (msg.includes('Producto no encontrado')) {
+      throw new NotFoundError('Producto no encontrado');
+    }
+
+    // 2. Fallback si el RPC no está creado aún en Supabase (código PGRST202 o 42883)
+    if (error.code === 'PGRST202' || error.code === '42883') {
+      const product = await this.findById(productId);
+      if (!product) throw new NotFoundError('Producto no encontrado');
+
+      let newStock = product.stock;
+      if (input.type === 'OUT') {
+        if (product.stock < input.quantity) {
+          throw new BadRequestError('Stock insuficiente para la salida solicitada');
+        }
+        newStock -= input.quantity;
+      } else if (input.type === 'IN') {
+        newStock += input.quantity;
+      } else {
+        throw new BadRequestError('Tipo de movimiento inválido');
+      }
+
+      const { data: updatedProduct, error: updateError } = await supabase
+        .from('products')
+        .update({ stock: newStock })
+        .eq('id', productId)
+        .select('*')
+        .single();
+
+      if (updateError) throw updateError;
+
+      // Insertar en historial de movimientos si la tabla existe
+      const { error: insertError } = await supabase.from('inventory_movements').insert({
+        product_id: productId,
+        type: input.type,
+        quantity: input.quantity,
+        reason: input.reason,
+        user_id: validUserId,
+      });
+
+      if (insertError) {
+        console.warn('No se pudo guardar el registro en inventory_movements:', insertError.message);
+      }
+
+      return updatedProduct as ProductRow;
+    }
+
+    throw error;
   }
 
   async findByStockThreshold(threshold: number): Promise<ProductRow[]> {

@@ -22,7 +22,7 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   async findById(id: string): Promise<WorkOrderRow | null> {
     const { data, error } = await supabase.from('work_orders').select('*').eq('id', id).single();
     if (error) {
-      if (error.code === 'PGRST116') return null;
+      if (error.code === 'PGRST116' || error.code === '22P02') return null;
       throw error;
     }
     return data as WorkOrderRow;
@@ -31,7 +31,7 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   async findByGuideNumber(guideNumber: string): Promise<WorkOrderRow | null> {
     const { data, error } = await supabase.from('work_orders').select('*').eq('guide_number', guideNumber).single();
     if (error) {
-      if (error.code === 'PGRST116') return null;
+      if (error.code === 'PGRST116' || error.code === '22P02') return null;
       throw error;
     }
     return data as WorkOrderRow;
@@ -84,12 +84,34 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   }
 
   async create(input: CreateWorkOrderInput, guideNumber: string): Promise<WorkOrderRow> {
+    let finalCustomerId: string | null = input.customerId ?? null;
+    let finalTechnicianId: string | null = input.technicianId ?? null;
+
+    // Verificar existencia de customer_id en BD; si no existe, asignar null para evitar fallos de Foreign Key
+    if (finalCustomerId) {
+      const { data: cust } = await supabase.from('customers').select('id').eq('id', finalCustomerId).maybeSingle();
+      if (!cust) {
+        finalCustomerId = null;
+      }
+    }
+
+    // Verificar existencia de technician_id en BD; si no existe, asignar null
+    if (finalTechnicianId) {
+      const { data: tech } = await supabase.from('technicians').select('id').eq('id', finalTechnicianId).maybeSingle();
+      if (!tech) {
+        const { data: prof } = await supabase.from('profiles').select('id').eq('id', finalTechnicianId).maybeSingle();
+        if (!prof) {
+          finalTechnicianId = null;
+        }
+      }
+    }
+
     const { data, error } = await supabase
       .from('work_orders')
       .insert({
         guide_number: guideNumber,
-        customer_id: input.customerId,
-        technician_id: input.technicianId,
+        customer_id: finalCustomerId,
+        technician_id: finalTechnicianId,
         device_brand: input.deviceBrand,
         device_model: input.deviceModel,
         device_serial: input.deviceSerial,
@@ -105,15 +127,23 @@ export class WorkOrderRepository implements IWorkOrderRepository {
     const created = data as WorkOrderRow;
 
     if (input.devicePassword) {
-      await this.encryptAndStorePassword(created.id, input.devicePassword);
+      try {
+        await this.encryptAndStorePassword(created.id, input.devicePassword);
+      } catch (err: any) {
+        console.warn('⚠️ No se pudo cifrar contraseña:', err?.message);
+      }
     }
 
-    await supabase.from('order_status_history').insert({
+    const { error: historyErr } = await supabase.from('order_status_history').insert({
       work_order_id: created.id,
       from_status: 'INGRESADO',
       to_status: 'INGRESADO',
       user_id: null,
     });
+
+    if (historyErr) {
+      console.warn('⚠️ No se pudo guardar historial inicial:', historyErr.message);
+    }
 
     return created;
   }

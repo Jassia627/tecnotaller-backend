@@ -17,7 +17,7 @@ export class DiagnosticService {
       observations: row.observations,
       faults: row.faults,
       recommendedActions: row.recommended_actions,
-      active: row.active,
+      active: row.active ?? true,
       createdAt: row.created_at,
     };
   }

@@ -1,19 +1,30 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { DiagnosticRepository } from './diagnostics.repository';
 import { CreateDiagnosticInput } from './diagnostics.types';
+import { supabase } from '../../config/supabase';
 
 /**
  * INTEGRATION TESTS - Requiere acceso a Supabase con service role key
  */
 
-describe('DiagnosticRepository - Integration Tests', () => {
+describe('DiagnosticRepository - Integration Tests', { timeout: 15000 }, () => {
   let repository: DiagnosticRepository;
   const testDiagnosticIds: string[] = [];
-  const testWorkOrderId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479'; // UUID válido
-  const testTechnicianId = 'f47ac10b-58cc-4372-a567-0e02b2c3d480'; // UUID válido
+  let testWorkOrderId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479'; // Fallback
+  let testTechnicianId: string | null = null;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     repository = new DiagnosticRepository();
+    const { data: order } = await supabase.from('work_orders').select('id').limit(1).maybeSingle();
+    if (order) {
+      testWorkOrderId = order.id;
+    }
+  });
+
+  afterAll(async () => {
+    if (testDiagnosticIds.length > 0) {
+      await supabase.from('diagnostics').delete().in('id', testDiagnosticIds);
+    }
   });
 
   describe('create', () => {

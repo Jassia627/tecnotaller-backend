@@ -18,7 +18,7 @@ export class AppointmentRepository implements IAppointmentRepository {
   async findById(id: string): Promise<AppointmentRow | null> {
     const { data, error } = await supabase.from('appointments').select('*').eq('id', id).single();
     if (error) {
-      if (error.code === 'PGRST116') return null;
+      if (error.code === 'PGRST116' || error.code === '22P02') return null;
       throw error;
     }
     return data as AppointmentRow;

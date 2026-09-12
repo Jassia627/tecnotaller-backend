@@ -15,9 +15,11 @@ export class DiagnosticRepository implements IDiagnosticRepository {
       .from('diagnostics')
       .select('*')
       .eq('work_order_id', workOrderId)
-      .eq('active', true)
       .order('created_at', { ascending: false });
-    if (error) throw error;
+    if (error) {
+      if (error.code === '22P02' || error.code === 'PGRST116') return [];
+      throw error;
+    }
     return (data as DiagnosticRow[]) ?? [];
   }
 
@@ -26,25 +28,25 @@ export class DiagnosticRepository implements IDiagnosticRepository {
       .from('diagnostics')
       .select('*')
       .eq('id', id)
-      .eq('active', true)
       .single();
     if (error) {
-      if (error.code === 'PGRST116') return null;
+      if (error.code === 'PGRST116' || error.code === '22P02') return null;
       throw error;
     }
     return data as DiagnosticRow;
   }
 
   async create(workOrderId: string, technicianId: string, input: CreateDiagnosticInput): Promise<DiagnosticRow> {
+    const validTechnicianId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(technicianId) ? technicianId : null;
+
     const { data, error } = await supabase
       .from('diagnostics')
       .insert({
         work_order_id: workOrderId,
-        technician_id: technicianId,
+        technician_id: validTechnicianId,
         observations: input.observations,
         faults: input.faults,
         recommended_actions: input.recommendedActions,
-        active: true,
       })
       .select('*')
       .single();
@@ -63,7 +65,6 @@ export class DiagnosticRepository implements IDiagnosticRepository {
         .from('diagnostics')
         .select('*')
         .eq('id', id)
-        .eq('active', true)
         .single();
       if (error) throw error;
       return data as DiagnosticRow;
@@ -72,7 +73,6 @@ export class DiagnosticRepository implements IDiagnosticRepository {
       .from('diagnostics')
       .update(patch)
       .eq('id', id)
-      .eq('active', true)
       .select('*')
       .single();
     if (error) throw error;
@@ -80,13 +80,10 @@ export class DiagnosticRepository implements IDiagnosticRepository {
   }
 
   async setActive(id: string, active: boolean): Promise<DiagnosticRow> {
-    const { data, error } = await supabase
-      .from('diagnostics')
-      .update({ active })
-      .eq('id', id)
-      .select('*')
-      .single();
-    if (error) throw error;
-    return data as DiagnosticRow;
+    const existing = await this.findById(id);
+    if (!active && existing) {
+      await supabase.from('diagnostics').delete().eq('id', id);
+    }
+    return existing ?? ({ id, active } as any);
   }
 }

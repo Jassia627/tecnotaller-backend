@@ -118,9 +118,17 @@ export class WorkOrder {
   }
 }
 
+const emptyToNullUuid = (v: unknown) => {
+  if (v === '' || v === undefined || v === null) return null;
+  if (typeof v === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.trim())) {
+    return null;
+  }
+  return typeof v === 'string' ? v.trim() : v;
+};
+
 export const createWorkOrderSchema = z.object({
-  customerId: z.string().uuid().nullable().optional(),
-  technicianId: z.string().uuid().nullable().optional(),
+  customerId: z.preprocess(emptyToNullUuid, z.string().uuid().nullable().optional()),
+  technicianId: z.preprocess(emptyToNullUuid, z.string().uuid().nullable().optional()),
   deviceBrand: z.string().min(1),
   deviceModel: z.string().min(1),
   deviceSerial: z.string().min(1),

@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { ProductRepository } from './products.repository';
 import { CreateProductInput, UpdateProductInput } from './products.types';
+import { supabase } from '../../config/supabase';
 
 /**
  * INTEGRATION TESTS - Requiere acceso a Supabase con service role key
@@ -8,13 +9,23 @@ import { CreateProductInput, UpdateProductInput } from './products.types';
  * Interactúa con la base de datos real usando la service role key.
  */
 
-describe('ProductRepository - Integration Tests', () => {
+describe('ProductRepository - Integration Tests', { timeout: 15000 }, () => {
   let repository: ProductRepository;
   const testProductIds: string[] = [];
-  const testCategoryId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479'; // UUID válido
+  let testCategoryId: string | null = null;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     repository = new ProductRepository();
+    const { data: category } = await supabase.from('categories').select('id').limit(1).maybeSingle();
+    if (category) {
+      testCategoryId = category.id;
+    }
+  });
+
+  afterAll(async () => {
+    if (testProductIds.length > 0) {
+      await supabase.from('products').delete().in('id', testProductIds);
+    }
   });
 
   describe('create', () => {
@@ -104,9 +115,12 @@ describe('ProductRepository - Integration Tests', () => {
       expect(found?.sku).toBe(input.sku);
     });
 
-    it('should return null when product does not exist', async () => {
-      const result = await repository.findById('non-existent-' + Date.now());
-      expect(result).toBeNull();
+    it('should return null when product does not exist or id is invalid', async () => {
+      const nonExistentUuidResult = await repository.findById('00000000-0000-0000-0000-000000000000');
+      expect(nonExistentUuidResult).toBeNull();
+
+      const invalidFormatResult = await repository.findById('non-existent-' + Date.now());
+      expect(invalidFormatResult).toBeNull();
     });
   });
 
@@ -323,6 +337,75 @@ describe('ProductRepository - Integration Tests', () => {
         expect(movement).toHaveProperty('quantity');
         expect(movement).toHaveProperty('createdAt');
       });
+    });
+  });
+
+  describe('registerMovement', () => {
+    it('should register an IN movement and increase stock', async () => {
+      const input: CreateProductInput = {
+        sku: `SKU-IN-${Date.now()}`,
+        name: `In Movement Product ${Date.now()}`,
+        stock: 10,
+      };
+
+      const product = await repository.create(input);
+      testProductIds.push(product.id);
+
+      const updated = await repository.registerMovement(
+        product.id,
+        { type: 'IN', quantity: 5, reason: 'Compra de mercancía' },
+        '00000000-0000-0000-0000-000000000000',
+      );
+
+      expect(updated.stock).toBe(15);
+
+      const movements = await repository.listMovements(product.id);
+      expect(movements.length).toBeGreaterThan(0);
+      expect(movements[0].type).toBe('IN');
+      expect(movements[0].quantity).toBe(5);
+    });
+
+    it('should register an OUT movement and decrease stock', async () => {
+      const input: CreateProductInput = {
+        sku: `SKU-OUT-${Date.now()}`,
+        name: `Out Movement Product ${Date.now()}`,
+        stock: 20,
+      };
+
+      const product = await repository.create(input);
+      testProductIds.push(product.id);
+
+      const updated = await repository.registerMovement(
+        product.id,
+        { type: 'OUT', quantity: 8, reason: 'Venta realizada' },
+        '00000000-0000-0000-0000-000000000000',
+      );
+
+      expect(updated.stock).toBe(12);
+
+      const movements = await repository.listMovements(product.id);
+      expect(movements.length).toBeGreaterThan(0);
+      expect(movements[0].type).toBe('OUT');
+      expect(movements[0].quantity).toBe(8);
+    });
+
+    it('should throw error when stock is insufficient for OUT movement', async () => {
+      const input: CreateProductInput = {
+        sku: `SKU-INSUFF-${Date.now()}`,
+        name: `Insufficient Stock Product ${Date.now()}`,
+        stock: 5,
+      };
+
+      const product = await repository.create(input);
+      testProductIds.push(product.id);
+
+      await expect(
+        repository.registerMovement(
+          product.id,
+          { type: 'OUT', quantity: 50, reason: 'Exceso de salida' },
+          '00000000-0000-0000-0000-000000000000',
+        ),
+      ).rejects.toThrow();
     });
   });
 });

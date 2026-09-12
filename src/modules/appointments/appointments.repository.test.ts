@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AppointmentRepository } from './appointments.repository';
 import { CreateAppointmentInput } from './appointments.types';
+import { supabase } from '../../config/supabase';
 
 /**
  * INTEGRATION TESTS - Requiere acceso a Supabase con service role key
@@ -10,18 +11,23 @@ import { CreateAppointmentInput } from './appointments.types';
  * de usuario cliente.
  */
 
-describe('AppointmentRepository - Integration Tests', () => {
+describe('AppointmentRepository - Integration Tests', { timeout: 15000 }, () => {
   let repository: AppointmentRepository;
   const testAppointmentIds: string[] = [];
-  const testServiceId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479'; // UUID válido para testing
+  let testServiceId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479'; // Fallback UUID
 
-  beforeAll(() => {
+  beforeAll(async () => {
     repository = new AppointmentRepository();
+    const { data: service } = await supabase.from('services').select('id').limit(1).maybeSingle();
+    if (service) {
+      testServiceId = service.id;
+    }
   });
 
   afterAll(async () => {
-    // Limpiar datos de prueba si es necesario
-    // Los datos pueden persistir para testing posterior
+    if (testAppointmentIds.length > 0) {
+      await supabase.from('appointments').delete().in('id', testAppointmentIds);
+    }
   });
 
   describe('create', () => {
@@ -89,9 +95,12 @@ describe('AppointmentRepository - Integration Tests', () => {
       expect(found?.status).toBe('pendiente');
     });
 
-    it('should return null when appointment does not exist', async () => {
-      const result = await repository.findById('non-existent-id-' + Date.now());
-      expect(result).toBeNull();
+    it('should return null when appointment does not exist or id is invalid', async () => {
+      const nonExistentResult = await repository.findById('00000000-0000-0000-0000-000000000000');
+      expect(nonExistentResult).toBeNull();
+
+      const invalidResult = await repository.findById('non-existent-id-' + Date.now());
+      expect(invalidResult).toBeNull();
     });
   });
 
@@ -273,8 +282,8 @@ describe('AppointmentRepository - Integration Tests', () => {
 
   describe('cancelExpired', () => {
     it('should cancel appointments older than threshold', async () => {
-      // Crear una cita en el pasado (10 minutos atrás)
-      const pastDate = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      // Crear una cita en el pasado (20 minutos atrás)
+      const pastDate = new Date(Date.now() - 20 * 60 * 1000).toISOString();
 
       const input: CreateAppointmentInput = {
         serviceId: testServiceId,

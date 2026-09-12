@@ -1,19 +1,32 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WorkOrderRepository } from './work-orders.repository';
 import { CreateWorkOrderInput } from './work-orders.types';
+import { supabase } from '../../config/supabase';
 
 /**
  * INTEGRATION TESTS - Requiere acceso a Supabase con service role key
  */
 
-describe('WorkOrderRepository - Integration Tests', () => {
+describe('WorkOrderRepository - Integration Tests', { timeout: 15000 }, () => {
   let repository: WorkOrderRepository;
   const testWorkOrderIds: string[] = [];
-  const testCustomerId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479'; // UUID válido
-  const testTechnicianId = 'f47ac10b-58cc-4372-a567-0e02b2c3d480'; // UUID válido
+  let testCustomerId: string | null = null;
+  let testTechnicianId: string | null = null;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     repository = new WorkOrderRepository();
+
+    const { data: customer } = await supabase.from('customers').select('id').limit(1).maybeSingle();
+    if (customer) testCustomerId = customer.id;
+
+    const { data: technician } = await supabase.from('technicians').select('id').limit(1).maybeSingle();
+    if (technician) testTechnicianId = technician.id;
+  });
+
+  afterAll(async () => {
+    if (testWorkOrderIds.length > 0) {
+      await supabase.from('work_orders').delete().in('id', testWorkOrderIds);
+    }
   });
 
   describe('create', () => {
@@ -98,9 +111,12 @@ describe('WorkOrderRepository - Integration Tests', () => {
       expect(found?.guide_number).toBe(guideNumber);
     });
 
-    it('should return null when work order does not exist', async () => {
-      const result = await repository.findById('non-existent-' + Date.now());
-      expect(result).toBeNull();
+    it('should return null when work order does not exist or id is invalid', async () => {
+      const nonExistentUuidResult = await repository.findById('00000000-0000-0000-0000-000000000000');
+      expect(nonExistentUuidResult).toBeNull();
+
+      const invalidResult = await repository.findById('non-existent-' + Date.now());
+      expect(invalidResult).toBeNull();
     });
   });
 

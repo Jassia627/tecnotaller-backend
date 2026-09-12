@@ -15,7 +15,10 @@ export class NotificationRepository implements INotificationRepository {
       .eq('work_order_id', workOrderId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === '22P02' || error.code === 'PGRST116') return [];
+      throw error;
+    }
     return (data as NotificationRow[]) ?? [];
   }
 
