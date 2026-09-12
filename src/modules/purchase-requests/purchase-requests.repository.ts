@@ -76,6 +76,7 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
       product_id: item.productId ?? null,
       part_id: item.partId ?? null,
       quantity: item.quantity,
+      unit_price: item.unitPrice,
     }));
 
     const { error: itemsError } = await supabase.from('purchase_request_items').insert(itemsToInsert);

@@ -16,6 +16,7 @@ export interface PurchaseRequestItemRow {
   product_id: string | null;
   part_id: string | null;
   quantity: number;
+  unit_price: number;
   created_at: string;
 }
 
@@ -36,6 +37,7 @@ export interface PurchaseRequestItem {
   productId: string | null;
   partId: string | null;
   quantity: number;
+  unitPrice: number;
   createdAt: string;
 }
 
@@ -62,6 +64,7 @@ export function mapPurchaseRequestItemRow(row: PurchaseRequestItemRow): Purchase
     productId: row.product_id,
     partId: row.part_id,
     quantity: row.quantity,
+    unitPrice: row.unit_price,
     createdAt: row.created_at,
   };
 }
@@ -70,6 +73,7 @@ export const createPurchaseRequestItemSchema = z.object({
   productId: z.string().uuid().nullable().optional(),
   partId: z.string().uuid().nullable().optional(),
   quantity: z.number().int().positive(),
+  unitPrice: z.number().positive(),
 });
 
 export const createPurchaseRequestSchema = z.object({
