@@ -16,6 +16,9 @@ export function createWorkOrdersRouter(): Router {
 
   const router = Router();
 
+  // Endpoint público para que clientes creen órdenes (requiere autenticación como cliente)
+  router.post('/client/create', authMiddleware, asyncHandler(controller.createAsClient.bind(controller)));
+
   router.use(authMiddleware);
 
   // Seguimiento por guía (RF-15) - Requiere autenticación

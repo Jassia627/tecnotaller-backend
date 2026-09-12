@@ -19,6 +19,18 @@ export class WorkOrderController {
     res.status(201).json(order);
   }
 
+  async createAsClient(req: Request, res: Response): Promise<void> {
+    const input = createWorkOrderSchema.parse(req.body);
+    // Auto-asignar customerId al cliente autenticado
+    const inputWithCustomer = {
+      ...input,
+      customerId: req.user!.id,
+      technicianId: null, // El cliente no puede asignar técnico
+    };
+    const order = await this.service.create(inputWithCustomer);
+    res.status(201).json(order);
+  }
+
   async list(req: Request, res: Response): Promise<void> {
     const page = Number(req.query.page ?? 1);
     const pageSize = Number(req.query.pageSize ?? 20);
