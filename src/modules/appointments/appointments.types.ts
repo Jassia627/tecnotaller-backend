@@ -76,14 +76,14 @@ const normalizeDate = (val: unknown): unknown => {
   if (parts.length === 3 && parts[2].length === 4) {
     const formatted = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
     const d = new Date(formatted);
-    if (!isNaN(d.getTime())) {
+    if (d instanceof Date && !isNaN(d.getTime())) {
       return d.toISOString();
     }
   }
 
   // Si se puede parsear directamente como fecha válida (ej: "2027-06-05" o ISO datetime)
   const d = new Date(str);
-  if (!isNaN(d.getTime())) {
+  if (d instanceof Date && !isNaN(d.getTime())) {
     return d.toISOString();
   }
 
