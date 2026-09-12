@@ -5,7 +5,9 @@ import {
   CreatePurchaseRequestInput,
   UpdatePurchaseRequestStatusInput,
   CreatePurchaseRequestItemInput,
+  PURCHASE_STATUS_TRANSITIONS,
 } from './purchase-requests.types';
+import { BadRequestError } from '../../shared/errors/app-error';
 
 export interface IPurchaseRequestRepository {
   list(options: { page: number; pageSize: number }): Promise<{ rows: PurchaseRequestRow[]; total: number }>;
@@ -13,6 +15,7 @@ export interface IPurchaseRequestRepository {
   findItemsById(purchaseRequestId: string): Promise<PurchaseRequestItemRow[]>;
   create(input: CreatePurchaseRequestInput, userId: string): Promise<PurchaseRequestRow>;
   updateStatus(id: string, input: UpdatePurchaseRequestStatusInput): Promise<PurchaseRequestRow>;
+  markAsReceived(id: string): Promise<PurchaseRequestRow>;
 }
 
 export class PurchaseRequestRepository implements IPurchaseRequestRepository {
@@ -56,12 +59,18 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
   }
 
   async create(input: CreatePurchaseRequestInput, userId: string): Promise<PurchaseRequestRow> {
+    // Calcular totales
+    const totalAmount = input.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+
     // Crear la solicitud de compra
     const { data: purchaseRequest, error: prError } = await supabase
       .from('purchase_requests')
       .insert({
+        supplier_id: input.supplierId ?? null,
         status: 'PENDIENTE',
         total_items: input.items.length,
+        subtotal: totalAmount,
+        total: totalAmount, // Por ahora subtotal = total (sin impuestos/envío)
         notes: input.notes ?? null,
         created_by: userId,
       })
@@ -87,6 +96,17 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
   }
 
   async updateStatus(id: string, input: UpdatePurchaseRequestStatusInput): Promise<PurchaseRequestRow> {
+    const current = await this.findById(id);
+    if (!current) throw new Error('Compra no encontrada');
+
+    // Validar transición
+    const validNextStates = PURCHASE_STATUS_TRANSITIONS[current.status];
+    if (!validNextStates.includes(input.status)) {
+      throw new BadRequestError(
+        `Transición inválida: ${current.status} -> ${input.status}`,
+      );
+    }
+
     const { data, error } = await supabase
       .from('purchase_requests')
       .update({ status: input.status })
@@ -96,5 +116,77 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
 
     if (error) throw error;
     return data as PurchaseRequestRow;
+  }
+
+  async markAsReceived(id: string): Promise<PurchaseRequestRow> {
+    // Obtener la compra y sus items
+    const purchase = await this.findById(id);
+    if (!purchase) throw new Error('Compra no encontrada');
+
+    const items = await this.findItemsById(id);
+
+    // Actualizar stock para cada item
+    for (const item of items) {
+      if (item.product_id) {
+        // Actualizar stock de producto
+        const currentProduct = await supabase
+          .from('products')
+          .select('stock')
+          .eq('id', item.product_id)
+          .single();
+
+        if (!currentProduct.error && currentProduct.data) {
+          const newStock = (currentProduct.data.stock || 0) + item.quantity;
+          
+          await supabase
+            .from('products')
+            .update({
+              stock: newStock,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', item.product_id);
+        }
+
+        // Registrar movimiento de inventario
+        await supabase.from('inventory_movements').insert({
+          product_id: item.product_id,
+          type: 'IN',
+          quantity: item.quantity,
+          reason: `Compra recibida: ${id}`,
+          user_id: purchase.created_by,
+        });
+      } else if (item.part_id) {
+        // Actualizar stock de repuesto
+        const currentPart = await supabase
+          .from('parts')
+          .select('stock')
+          .eq('id', item.part_id)
+          .single();
+
+        if (!currentPart.error && currentPart.data) {
+          const newStock = (currentPart.data.stock || 0) + item.quantity;
+          
+          await supabase
+            .from('parts')
+            .update({
+              stock: newStock,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', item.part_id);
+        }
+
+        // Registrar movimiento de inventario para repuestos
+        await supabase.from('inventory_movements_parts').insert({
+          part_id: item.part_id,
+          type: 'IN',
+          quantity: item.quantity,
+          reason: `Compra recibida: ${id}`,
+          user_id: purchase.created_by,
+        });
+      }
+    }
+
+    // Cambiar estado a RECIBIDO
+    return this.updateStatus(id, { status: 'RECIBIDO' });
   }
 }

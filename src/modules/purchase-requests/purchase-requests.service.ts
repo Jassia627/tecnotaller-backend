@@ -33,13 +33,7 @@ export class PurchaseRequestService {
   }
 
   async create(input: CreatePurchaseRequestInput, userId: string): Promise<PurchaseRequest> {
-    // Validar que al menos un producto o repuesto esté presente en cada item
-    for (const item of input.items) {
-      if (!item.productId && !item.partId) {
-        throw new BadRequestError('Cada item debe tener un productId o partId');
-      }
-    }
-
+    // Validación XOR ya realizada por Zod en schema
     const row = await this.repository.create(input, userId);
     const itemRows = await this.repository.findItemsById(row.id);
     return mapPurchaseRequestRow(row, itemRows.map(mapPurchaseRequestItemRow));
@@ -48,6 +42,16 @@ export class PurchaseRequestService {
   async updateStatus(id: string, input: UpdatePurchaseRequestStatusInput): Promise<PurchaseRequest> {
     await this.getById(id);
     const row = await this.repository.updateStatus(id, input);
+    const itemRows = await this.repository.findItemsById(id);
+    return mapPurchaseRequestRow(row, itemRows.map(mapPurchaseRequestItemRow));
+  }
+
+  async receive(id: string): Promise<PurchaseRequest> {
+    // Verificar que existe
+    await this.getById(id);
+    
+    // Marcar como recibida (actualiza stock y crea movimientos)
+    const row = await this.repository.markAsReceived(id);
     const itemRows = await this.repository.findItemsById(id);
     return mapPurchaseRequestRow(row, itemRows.map(mapPurchaseRequestItemRow));
   }

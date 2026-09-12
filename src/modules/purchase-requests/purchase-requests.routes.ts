@@ -29,5 +29,8 @@ export function createPurchaseRequestsRouter(): Router {
   // PATCH /api/v1/purchase-requests/:id/status - Actualizar estado
   router.patch('/:id/status', asyncHandler(controller.updateStatus.bind(controller)));
 
+  // POST /api/v1/purchase-requests/:id/receive - Recibir compra y actualizar stock
+  router.post('/:id/receive', asyncHandler(controller.receive.bind(controller)));
+
   return router;
 }

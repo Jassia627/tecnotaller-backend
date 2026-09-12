@@ -34,4 +34,8 @@ export class PurchaseRequestController {
     const purchaseRequest = await this.service.updateStatus(req.params.id!, input);
     res.json(purchaseRequest);
   }
-}
+
+  async receive(req: Request, res: Response): Promise<void> {
+    const purchaseRequest = await this.service.receive(req.params.id!);
+    res.json(purchaseRequest);
+  }
