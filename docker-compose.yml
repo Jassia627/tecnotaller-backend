@@ -6,20 +6,20 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        PORT: 5000
+        PORT: 3000
     container_name: tecnotaller-backend
     ports:
-      - "5000:5000"
+      - "3000:3000"
     environment:
       - NODE_ENV=production
-      - PORT=5000
+      - PORT=3000
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/healthcheck', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/healthcheck', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -62,37 +62,46 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
     // Calcular totales
     const totalAmount = input.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
-    // Crear la solicitud de compra
-    const { data: purchaseRequest, error: prError } = await supabase
-      .from('purchase_requests')
-      .insert({
-        supplier_id: input.supplierId ?? null,
-        status: 'PENDIENTE',
-        total_items: input.items.length,
-        subtotal: totalAmount,
-        total: totalAmount, // Por ahora subtotal = total (sin impuestos/envío)
-        notes: input.notes ?? null,
-        created_by: userId,
-      })
-      .select('*')
-      .single();
+    try {
+      // PASO 1: Crear la solicitud de compra
+      const { data: purchaseRequest, error: prError } = await supabase
+        .from('purchase_requests')
+        .insert({
+          supplier_id: input.supplierId ?? null,
+          status: 'PENDIENTE',
+          total_items: input.items.length,
+          subtotal: totalAmount,
+          total: totalAmount,
+          notes: input.notes ?? null,
+          created_by: userId,
+        })
+        .select('*')
+        .single();
 
-    if (prError) throw prError;
+      if (prError) throw prError;
+      if (!purchaseRequest) throw new Error('Error al crear compra');
 
-    // Crear los items
-    const itemsToInsert = input.items.map((item) => ({
-      purchase_request_id: purchaseRequest.id,
-      product_id: item.productId ?? null,
-      part_id: item.partId ?? null,
-      quantity: item.quantity,
-      unit_price: item.unitPrice,
-    }));
+      // PASO 2: Crear los items
+      const itemsToInsert = input.items.map((item) => ({
+        purchase_request_id: purchaseRequest.id,
+        product_id: item.productId ?? null,
+        part_id: item.partId ?? null,
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+      }));
 
-    const { error: itemsError } = await supabase.from('purchase_request_items').insert(itemsToInsert);
+      const { error: itemsError } = await supabase.from('purchase_request_items').insert(itemsToInsert);
 
-    if (itemsError) throw itemsError;
+      if (itemsError) {
+        // ROLLBACK: Eliminar compra si falla inserción de items
+        await supabase.from('purchase_requests').delete().eq('id', purchaseRequest.id);
+        throw itemsError;
+      }
 
-    return purchaseRequest as PurchaseRequestRow;
+      return purchaseRequest as PurchaseRequestRow;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async updateStatus(id: string, input: UpdatePurchaseRequestStatusInput): Promise<PurchaseRequestRow> {
@@ -119,74 +128,122 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
   }
 
   async markAsReceived(id: string): Promise<PurchaseRequestRow> {
-    // Obtener la compra y sus items
+    // PASO 1: Validaciones previas
     const purchase = await this.findById(id);
     if (!purchase) throw new Error('Compra no encontrada');
 
+    // Validar que no esté ya RECIBIDA (idempotencia)
+    if (purchase.status === 'RECIBIDO') {
+      throw new BadRequestError('Compra ya fue recibida. No se puede recibir dos veces.');
+    }
+
+    // Validar que está en estado ORDENADO
+    if (purchase.status !== 'ORDENADO') {
+      throw new BadRequestError(
+        `No se puede recibir una compra en estado ${purchase.status}. Debe estar en ORDENADO.`,
+      );
+    }
+
     const items = await this.findItemsById(id);
+    if (!items || items.length === 0) {
+      throw new BadRequestError('Compra sin items. No se puede recibir.');
+    }
 
-    // Actualizar stock para cada item
-    for (const item of items) {
-      if (item.product_id) {
-        // Actualizar stock de producto
-        const currentProduct = await supabase
-          .from('products')
-          .select('stock')
-          .eq('id', item.product_id)
-          .single();
+    // PASO 2: Actualizar estado a RECIBIDO primero (marcar transacción iniciada)
+    const { data: updatedPurchase, error: statusError } = await supabase
+      .from('purchase_requests')
+      .update({ status: 'RECIBIDO' })
+      .eq('id', id)
+      .select('*')
+      .single();
 
-        if (!currentProduct.error && currentProduct.data) {
-          const newStock = (currentProduct.data.stock || 0) + item.quantity;
-          
-          await supabase
+    if (statusError) throw statusError;
+
+    // PASO 3: Actualizar stock para cada item (con validaciones)
+    try {
+      for (const item of items) {
+        if (item.product_id) {
+          // Obtener producto actual
+          const { data: product, error: productError } = await supabase
+            .from('products')
+            .select('id, stock')
+            .eq('id', item.product_id)
+            .single();
+
+          if (productError || !product) {
+            throw new Error(`Producto ${item.product_id} no encontrado`);
+          }
+
+          const newStock = product.stock + item.quantity;
+
+          // Actualizar stock de producto
+          const { error: updateError } = await supabase
             .from('products')
             .update({
               stock: newStock,
               updated_at: new Date().toISOString(),
             })
             .eq('id', item.product_id);
-        }
 
-        // Registrar movimiento de inventario
-        await supabase.from('inventory_movements').insert({
-          product_id: item.product_id,
-          type: 'IN',
-          quantity: item.quantity,
-          reason: `Compra recibida: ${id}`,
-          user_id: purchase.created_by,
-        });
-      } else if (item.part_id) {
-        // Actualizar stock de repuesto
-        const currentPart = await supabase
-          .from('parts')
-          .select('stock')
-          .eq('id', item.part_id)
-          .single();
+          if (updateError) throw updateError;
 
-        if (!currentPart.error && currentPart.data) {
-          const newStock = (currentPart.data.stock || 0) + item.quantity;
-          
-          await supabase
+          // Registrar movimiento de inventario
+          const { error: movementError } = await supabase.from('inventory_movements').insert({
+            product_id: item.product_id,
+            type: 'IN',
+            quantity: item.quantity,
+            reason: `Compra recibida: ${id}`,
+            user_id: purchase.created_by,
+          });
+
+          if (movementError) throw movementError;
+        } else if (item.part_id) {
+          // Obtener repuesto actual
+          const { data: part, error: partError } = await supabase
+            .from('parts')
+            .select('id, stock')
+            .eq('id', item.part_id)
+            .single();
+
+          if (partError || !part) {
+            throw new Error(`Repuesto ${item.part_id} no encontrado`);
+          }
+
+          const newStock = part.stock + item.quantity;
+
+          // Actualizar stock de repuesto
+          const { error: updateError } = await supabase
             .from('parts')
             .update({
               stock: newStock,
               updated_at: new Date().toISOString(),
             })
             .eq('id', item.part_id);
+
+          if (updateError) throw updateError;
+
+          // Registrar movimiento de inventario para repuestos
+          const { error: movementError } = await supabase.from('inventory_movements_parts').insert({
+            part_id: item.part_id,
+            type: 'IN',
+            quantity: item.quantity,
+            reason: `Compra recibida: ${id}`,
+            user_id: purchase.created_by,
+          });
+
+          if (movementError) throw movementError;
         }
-
-        // Registrar movimiento de inventario para repuestos
-        await supabase.from('inventory_movements_parts').insert({
-          part_id: item.part_id,
-          type: 'IN',
-          quantity: item.quantity,
-          reason: `Compra recibida: ${id}`,
-          user_id: purchase.created_by,
-        });
       }
-    }
 
-    // Cambiar estado a RECIBIDO
-    return this.updateStatus(id, { status: 'RECIBIDO' });
+      return updatedPurchase as PurchaseRequestRow;
+    } catch (error) {
+      // ROLLBACK: Revertir estado a ORDENADO si algo falla
+      await supabase
+        .from('purchase_requests')
+        .update({ status: 'ORDENADO' })
+        .eq('id', id);
+
+      throw error;
+    }
   }
 }

@@ -39,3 +39,4 @@ export class PurchaseRequestController {
     const purchaseRequest = await this.service.receive(req.params.id!);
     res.json(purchaseRequest);
   }
+}
