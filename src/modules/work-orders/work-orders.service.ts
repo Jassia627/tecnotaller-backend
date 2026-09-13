@@ -15,9 +15,9 @@ export class WorkOrderService {
     private readonly guid: GuidGenerator,
   ) {}
 
-  async create(input: CreateWorkOrderInput): Promise<WorkOrder> {
+  async create(input: CreateWorkOrderInput, initialStatus: 'PENDIENTE' | 'ACEPTADA' = 'ACEPTADA'): Promise<WorkOrder> {
     const guideNumber = this.guid.generate().slice(0, 8).toUpperCase();
-    return WorkOrder.fromRow(await this.repository.create(input, guideNumber));
+    return WorkOrder.fromRow(await this.repository.create(input, guideNumber, initialStatus));
   }
 
   async getById(id: string): Promise<WorkOrder> {

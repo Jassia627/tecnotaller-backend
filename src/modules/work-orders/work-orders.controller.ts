@@ -15,19 +15,21 @@ export class WorkOrderController {
 
   async create(req: Request, res: Response): Promise<void> {
     const input = createWorkOrderSchema.parse(req.body);
-    const order = await this.service.create(input);
+    // Cuando admin/técnico crea desde panel: estado ACEPTADA directamente
+    const order = await this.service.create(input, 'ACEPTADA');
     res.status(201).json(order);
   }
 
   async createAsClient(req: Request, res: Response): Promise<void> {
     const input = createWorkOrderSchema.parse(req.body);
     // Auto-asignar customerId al cliente autenticado
+    // Estado: PENDIENTE (pendiente de aceptación por admin/técnico)
     const inputWithCustomer = {
       ...input,
       customerId: req.user!.id,
       technicianId: null, // El cliente no puede asignar técnico
     };
-    const order = await this.service.create(inputWithCustomer);
+    const order = await this.service.create(inputWithCustomer, 'PENDIENTE');
     res.status(201).json(order);
   }
 

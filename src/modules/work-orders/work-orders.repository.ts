@@ -83,7 +83,7 @@ export class WorkOrderRepository implements IWorkOrderRepository {
     return { rows: (data as WorkOrderRow[]) ?? [], total: count ?? 0 };
   }
 
-  async create(input: CreateWorkOrderInput, guideNumber: string): Promise<WorkOrderRow> {
+  async create(input: CreateWorkOrderInput, guideNumber: string, initialStatus: 'PENDIENTE' | 'ACEPTADA' = 'ACEPTADA'): Promise<WorkOrderRow> {
     let finalCustomerId: string | null = input.customerId ?? null;
     let finalTechnicianId: string | null = input.technicianId ?? null;
 
@@ -117,7 +117,9 @@ export class WorkOrderRepository implements IWorkOrderRepository {
         device_serial: input.deviceSerial,
         problem_description: input.problemDescription,
         accessories: input.accessories ?? null,
-        current_status: 'INGRESADO',
+        scheduled_time: input.scheduledTime ?? null,
+        assigned_time: null,
+        current_status: initialStatus,
       })
       .select('*')
       .single();

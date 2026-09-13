@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 export const ORDER_STATUSES = [
-  'INGRESADO',
+  'PENDIENTE',
+  'ACEPTADA',
   'EN_REVISION',
   'ESPERANDO_REPUESTO',
   'EN_REPARACION',
@@ -14,7 +15,8 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 // Máquina de estados: transiciones válidas (OCP: se extiende sin tocar lógica existente)
 export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  INGRESADO: ['EN_REVISION'],
+  PENDIENTE: ['ACEPTADA'],
+  ACEPTADA: ['EN_REVISION'],
   EN_REVISION: ['ESPERANDO_REPUESTO', 'EN_REPARACION'],
   ESPERANDO_REPUESTO: ['EN_REPARACION'],
   EN_REPARACION: ['REPARADO'],
@@ -34,6 +36,8 @@ export interface WorkOrderRow {
   problem_description: string;
   device_password_encrypted: string | null;
   accessories: string | null;
+  scheduled_time: string | null;
+  assigned_time: string | null;
   current_status: OrderStatus;
   created_at: string;
 }
@@ -66,6 +70,8 @@ export class WorkOrder {
     readonly deviceSerial: string,
     readonly problemDescription: string,
     readonly accessories: string | null,
+    readonly scheduledTime: string | null,
+    readonly assignedTime: string | null,
     private _currentStatus: OrderStatus,
     readonly createdAt: string,
   ) {}
@@ -81,6 +87,8 @@ export class WorkOrder {
       row.device_serial,
       row.problem_description,
       row.accessories,
+      row.scheduled_time,
+      row.assigned_time,
       row.current_status,
       row.created_at,
     );
@@ -112,6 +120,8 @@ export class WorkOrder {
       deviceSerial: this.deviceSerial,
       problemDescription: this.problemDescription,
       accessories: this.accessories,
+      scheduledTime: this.scheduledTime,
+      assignedTime: this.assignedTime,
       currentStatus: this._currentStatus,
       createdAt: this.createdAt,
     };
@@ -135,6 +145,7 @@ export const createWorkOrderSchema = z.object({
   problemDescription: z.string().min(1),
   devicePassword: z.string().optional(),
   accessories: z.string().optional(),
+  scheduledTime: z.string().datetime().nullable().optional(),
 });
 
 export type CreateWorkOrderInput = z.infer<typeof createWorkOrderSchema>;
