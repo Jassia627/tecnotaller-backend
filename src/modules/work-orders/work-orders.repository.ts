@@ -9,8 +9,8 @@ import {
 export interface IWorkOrderRepository {
   findById(id: string): Promise<WorkOrderRow | null>;
   findByGuideNumber(guideNumber: string): Promise<WorkOrderRow | null>;
-  list(options: { status?: OrderStatus; technicianId?: string; page: number; pageSize: number }): Promise<{ rows: WorkOrderRow[]; total: number }>;
-  create(input: CreateWorkOrderInput, guideNumber: string): Promise<WorkOrderRow>;
+  list(options: { status?: OrderStatus; technicianId?: string; customerId?: string; fromDate?: string; toDate?: string; searchText?: string; page: number; pageSize: number }): Promise<{ rows: WorkOrderRow[]; total: number }>;
+  create(input: CreateWorkOrderInput, guideNumber: string, initialStatus: 'PENDIENTE' | 'ACEPTADA'): Promise<WorkOrderRow>;
   transitionStatus(id: string, from: OrderStatus, to: OrderStatus, userId: string): Promise<WorkOrderRow>;
   listHistory(id: string): Promise<StatusHistoryRow[]>;
   listHistoryByGuide(guideNumber: string): Promise<StatusHistoryRow[]>;
@@ -40,6 +40,7 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   async list(options: {
     status?: OrderStatus;
     technicianId?: string;
+    customerId?: string;
     fromDate?: string;
     toDate?: string;
     searchText?: string;
@@ -55,6 +56,7 @@ export class WorkOrderRepository implements IWorkOrderRepository {
     // Aplicar filtros
     if (options.status) query = query.eq('current_status', options.status);
     if (options.technicianId) query = query.eq('technician_id', options.technicianId);
+    if (options.customerId) query = query.eq('customer_id', options.customerId);
 
     // Filtro por rango de fechas
     if (options.fromDate) {
