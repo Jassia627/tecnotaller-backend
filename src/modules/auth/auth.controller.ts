@@ -1,18 +1,20 @@
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import { loginSchema, registerSchema } from './auth.types';
+import { RegisterInput, LoginInput } from './auth.types';
 
 export class AuthController {
   constructor(private readonly service: AuthService) {}
 
   async register(req: Request, res: Response): Promise<void> {
-    const input = registerSchema.parse(req.body);
+    // Datos ya validados por middleware
+    const input = req.validatedData as RegisterInput;
     const user = await this.service.register(input);
     res.status(201).json({ user });
   }
 
   async login(req: Request, res: Response): Promise<void> {
-    const input = loginSchema.parse(req.body);
+    // Datos ya validados por middleware
+    const input = req.validatedData as LoginInput;
     const session = await this.service.login(input);
     res.json(session);
   }

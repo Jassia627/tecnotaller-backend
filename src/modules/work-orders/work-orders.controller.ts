@@ -36,23 +36,26 @@ export class WorkOrderController {
   async list(req: Request, res: Response): Promise<void> {
     const page = Number(req.query.page ?? 1);
     const pageSize = Number(req.query.pageSize ?? 20);
-    const { status, technicianId, fromDate, toDate, searchText } = req.query as {
+    const { status, technicianId, customerId, fromDate, toDate, searchText } = req.query as {
       status?: OrderStatus;
       technicianId?: string;
+      customerId?: string;
       fromDate?: string;
       toDate?: string;
       searchText?: string;
     };
-    // Pasar userTechnicianId y userRole para validación de ownership
+    // Pasar userTechnicianId, userCustomerId y userRole para validación de ownership
     const result = await this.service.list({ 
       status, 
-      technicianId, 
+      technicianId,
+      customerId,
       fromDate, 
       toDate, 
       searchText, 
       page, 
       pageSize,
       userTechnicianId: req.user!.id,
+      userCustomerId: req.user!.id,
       userRole: req.user!.role,
     });
     res.json(result);

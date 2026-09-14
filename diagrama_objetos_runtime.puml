@@ -1,0 +1,432 @@
+@startuml TechnoTaller Diagrama de Objetos Completo
+
+title Diagrama de Objetos: Instancias del Sistema TecnoTaller Backend
+
+' ============ OBJETOS DE CONFIGURACIÓN ============
+
+object "authFilterFactory: AuthorizationFilterFactory" as authFactory {
+    role = "cliente"
+}
+
+object "technicianFilter: TechnicianAuthorizationFilter" as techFilter {
+    applyFilter() = {auto-asigna technicianId}
+}
+
+object "adminFilter: AdminAuthorizationFilter" as adminFilter {
+    applyFilter() = {sin restricciones}
+}
+
+object "clientFilter: ClientAuthorizationFilter" as clientFilter {
+    applyFilter() = {filtra por customerId}
+}
+
+object "validatorMiddleware: ValidateRequestMiddleware" as validator {
+    schema = "registerSchema, loginSchema, etc"
+}
+
+' ============ SERVICIOS ============
+
+object "workOrderService: WorkOrderService" as woService {
+    repository = workOrderRepo
+    guid = guidGenerator
+}
+
+object "authService: AuthService" as authService {
+    repository = authRepo
+}
+
+object "purchaseService: PurchaseRequestService" as purchaseService {
+    repository = purchaseRepo
+}
+
+object "activityService: ActivityService" as activityService {
+    repository = activityRepo
+}
+
+' ============ REPOSITORIOS ============
+
+object "workOrderRepo: WorkOrderRepository" as workOrderRepo {
+    supabase = supabaseClient
+}
+
+object "authRepo: AuthRepository" as authRepo {
+    supabase = supabaseClient
+}
+
+object "purchaseRepo: PurchaseRequestRepository" as purchaseRepo {
+    supabase = supabaseClient
+}
+
+object "activityRepo: ActivityRepository" as activityRepo {
+    supabase = supabaseClient
+}
+
+' ============ CONTROLADORES ============
+
+object "workOrderController: WorkOrderController" as woController {
+    service = woService
+    activityService = activityService
+}
+
+object "authController: AuthController" as authController {
+    service = authService
+}
+
+' ============ ENTIDADES DE DOMINIO - ÓRDENES DE TRABAJO ============
+
+object "wo001: WorkOrder" as wo001 {
+    id = "5083ceb-1234"
+    guideNumber = "WO-1789166462584"
+    customerId = "cust-001"
+    technicianId = null
+    deviceBrand = "Samsung"
+    deviceModel = "Galaxy S21"
+    deviceSerial = "SERIAL-001"
+    problemDescription = "No enciende"
+    _currentStatus = "PENDIENTE"
+    scheduledTime = "2026-09-15 14:00:00"
+    assignedTime = null
+    createdAt = "2026-09-13 14:30:00"
+}
+
+object "wo002: WorkOrder" as wo002 {
+    id = "ad6de68-5678"
+    guideNumber = "WO-1789200000001"
+    customerId = "cust-002"
+    technicianId = "tech-001"
+    deviceBrand = "Apple"
+    deviceModel = "iPhone 14"
+    deviceSerial = "SERIAL-002"
+    problemDescription = "Pantalla rota"
+    _currentStatus = "EN_REPARACION"
+    scheduledTime = "2026-09-14 10:00:00"
+    assignedTime = "2026-09-14 11:00:00"
+    createdAt = "2026-09-12 09:20:00"
+}
+
+' ============ HISTORIAL DE ÓRDENES ============
+
+object "sh001: StatusHistoryEntry" as sh001 {
+    id = "hist-001"
+    fromStatus = "INGRESADO"
+    toStatus = "PENDIENTE"
+    userId = "cust-001"
+    createdAt = "2026-09-13 14:30:00"
+}
+
+object "sh002: StatusHistoryEntry" as sh002 {
+    id = "hist-002"
+    fromStatus = "PENDIENTE"
+    toStatus = "ACEPTADA"
+    userId = "admin-001"
+    createdAt = "2026-09-13 15:00:00"
+}
+
+object "sh003: StatusHistoryEntry" as sh003 {
+    id = "hist-003"
+    fromStatus = "ACEPTADA"
+    toStatus = "EN_REPARACION"
+    userId = "tech-001"
+    createdAt = "2026-09-14 11:00:00"
+}
+
+' ============ DIAGNÓSTICOS ============
+
+object "diag001: Diagnostic" as diag001 {
+    id = "diag-001"
+    workOrderId = "5083ceb-1234"
+    technicianId = "tech-001"
+    observations = "Batería descargada"
+    faults = "No enciende, batería al 0%"
+    recommendedActions = "Cambiar batería"
+    createdAt = "2026-09-14 11:15:00"
+}
+
+object "diag002: Diagnostic" as diag002 {
+    id = "diag-002"
+    workOrderId = "ad6de68-5678"
+    technicianId = "tech-001"
+    observations = "Pantalla OLED dañada"
+    faults = "Fisura en pantalla, no responde touch"
+    recommendedActions = "Reemplazar pantalla"
+    createdAt = "2026-09-14 10:30:00"
+}
+
+' ============ GARANTÍAS ============
+
+object "war001: Warranty" as war001 {
+    id = "war-001"
+    workOrderId = "5083ceb-1234"
+    periodDays = 90
+    expiresAt = "2026-12-13"
+    status = "VIGENTE"
+    createdAt = "2026-09-13 16:00:00"
+}
+
+' ============ USUARIOS ============
+
+object "user001: AuthUser" as user001 {
+    id = "cust-001"
+    email = "juan.perez@email.com"
+    role = "cliente"
+    fullName = "Juan Pérez"
+    phone = "+573051234567"
+}
+
+object "user002: AuthUser" as user002 {
+    id = "tech-001"
+    email = "carlos.tech@tecnotaller.com"
+    role = "tecnico"
+    fullName = "Carlos Mendoza"
+    phone = "+573019876543"
+}
+
+object "user003: AuthUser" as user003 {
+    id = "admin-001"
+    email = "admin@tecnotaller.com"
+    role = "administrador"
+    fullName = "Administrador Sistema"
+    phone = "+573055555555"
+}
+
+' ============ CLIENTES Y TÉCNICOS ============
+
+object "cust001: Customer" as cust001 {
+    id = "cust-001"
+    email = "juan.perez@email.com"
+    fullName = "Juan Pérez"
+    phone = "+573051234567"
+    createdAt = "2026-08-01 10:00:00"
+}
+
+object "cust002: Customer" as cust002 {
+    id = "cust-002"
+    email = "maria.garcia@email.com"
+    fullName = "María García"
+    phone = "+573059876543"
+    createdAt = "2026-07-15 14:30:00"
+}
+
+object "tech001: Technician" as tech001 {
+    id = "tech-001"
+    fullName = "Carlos Mendoza"
+    email = "carlos.tech@tecnotaller.com"
+    phone = "+573019876543"
+    active = true
+    createdAt = "2026-01-10 09:00:00"
+}
+
+' ============ COMPRAS Y PROVEEDORES ============
+
+object "supp001: Supplier" as supp001 {
+    id = "supp-001"
+    name = "Samsung Parts Latin America"
+    contactEmail = "sales@samsung-latam.com"
+    phone = "+573008888888"
+    active = true
+    createdAt = "2026-06-01 12:00:00"
+}
+
+object "pr001: PurchaseRequest" as pr001 {
+    id = "pr-001"
+    supplierId = "supp-001"
+    productId = null
+    partId = "part-001"
+    quantity = 2
+    unitPrice = 85000
+    subtotal = 170000
+    total = 170000
+    _status = "RECIBIDO"
+    createdAt = "2026-09-12 14:00:00"
+}
+
+object "pr002: PurchaseRequest" as pr002 {
+    id = "pr-002"
+    supplierId = "supp-001"
+    productId = "prod-001"
+    partId = null
+    quantity = 5
+    unitPrice = 150000
+    subtotal = 750000
+    total = 750000
+    _status = "ORDENADO"
+    createdAt = "2026-09-13 10:00:00"
+}
+
+' ============ PRODUCTOS Y REPUESTOS ============
+
+object "prod001: Product" as prod001 {
+    id = "prod-001"
+    sku = "BATT-SAMSUNG-001"
+    name = "Batería Samsung Galaxy S21"
+    description = "Batería de litio 4000mAh"
+    imageUrl = "https://..."
+    categoryId = "cat-001"
+    purchasePrice = 85000
+    salePrice = 120000
+    _stock = 15
+    _active = true
+}
+
+object "part001: Part" as part001 {
+    id = "part-001"
+    name = "Screen Display Samsung S21"
+    sku = "SCREEN-S21-001"
+    _stock = 8
+    purchasePrice = 120000
+    salePrice = 180000
+}
+
+' ============ MOVIMIENTOS DE INVENTARIO ============
+
+object "inv001: InventoryMovement" as inv001 {
+    id = "inv-001"
+    productId = "prod-001"
+    partId = null
+    type = "IN"
+    quantity = 2
+    reason = "Recepción de compra PR-001"
+    userId = "admin-001"
+    createdAt = "2026-09-12 14:30:00"
+}
+
+object "inv002: InventoryMovement" as inv002 {
+    id = "inv-002"
+    productId = null
+    partId = "part-001"
+    type = "OUT"
+    quantity = 1
+    reason = "Uso en reparación WO-001"
+    userId = "tech-001"
+    createdAt = "2026-09-14 11:30:00"
+}
+
+' ============ SERVICIOS TÉCNICOS ============
+
+object "svc001: TechnicalService" as svc001 {
+    id = "svc-001"
+    name = "Cambio de Batería"
+    description = "Remplazo de batería en dispositivos móviles"
+    price = 50000
+    _active = true
+}
+
+object "svc002: TechnicalService" as svc002 {
+    id = "svc-002"
+    name = "Reparación de Pantalla"
+    description = "Remplazo de pantalla LCD/OLED"
+    price = 120000
+    _active = true
+}
+
+' ============ CITAS ============
+
+object "appt001: Appointment" as appt001 {
+    id = "appt-001"
+    serviceId = "svc-001"
+    customerName = "Juan Pérez"
+    phone = "+573051234567"
+    date = "2026-09-15 14:00:00"
+    _status = "CONFIRMADA"
+    createdAt = "2026-09-10 10:00:00"
+}
+
+object "appt002: Appointment" as appt002 {
+    id = "appt-002"
+    serviceId = "svc-002"
+    customerName = "María García"
+    phone = "+573059876543"
+    date = "2026-09-16 10:00:00"
+    _status = "PENDIENTE"
+    createdAt = "2026-09-11 15:30:00"
+}
+
+' ============ ACTIVIDADES ============
+
+object "act001: Activity" as act001 {
+    id = "act-001"
+    workOrderId = "5083ceb-1234"
+    technicianId = "tech-001"
+    description = "Diagnóstico inicial completado"
+    createdAt = "2026-09-14 11:15:00"
+}
+
+object "act002: Activity" as act002 {
+    id = "act-002"
+    workOrderId = "ad6de68-5678"
+    technicianId = "tech-001"
+    description = "Pedida batería de repuesto"
+    createdAt = "2026-09-14 12:00:00"
+}
+
+' ============ RELACIONES - ÓRDENES DE TRABAJO ============
+
+wo001 --> cust001 : "pertenece a"
+wo001 --> sh001 : "historial"
+wo001 --> sh002 : "historial"
+wo001 --> diag001 : "contiene"
+wo001 --> war001 : "tiene garantía"
+wo001 --> act001 : "actividades"
+
+wo002 --> cust002 : "pertenece a"
+wo002 --> tech001 : "asignado a"
+wo002 --> sh003 : "historial"
+wo002 --> diag002 : "contiene"
+wo002 --> act002 : "actividades"
+
+' ============ RELACIONES - DIAGNÓSTICOS Y ACTIVIDADES ============
+
+diag001 --> tech001 : "realizado por"
+diag002 --> tech001 : "realizado por"
+
+act001 --> tech001 : "creada por"
+act002 --> tech001 : "creada por"
+
+' ============ RELACIONES - USUARIOS ============
+
+user001 --> cust001 : "corresponde a"
+user002 --> tech001 : "corresponde a"
+user003 --> "admin-001" : "corresponde a"
+
+' ============ RELACIONES - COMPRAS E INVENTARIO ============
+
+pr001 --> supp001 : "de proveedor"
+pr001 --> part001 : "compra repuesto"
+pr001 --> inv001 : "genera movimiento"
+
+pr002 --> supp001 : "de proveedor"
+pr002 --> prod001 : "compra producto"
+
+inv001 --> prod001 : "afecta stock"
+inv002 --> part001 : "afecta stock"
+
+' ============ RELACIONES - CITAS Y SERVICIOS ============
+
+appt001 --> svc001 : "reserva"
+appt002 --> svc002 : "reserva"
+
+' ============ RELACIONES - FACTORY Y FILTROS ============
+
+authFactory --> techFilter : "crea para tecnico"
+authFactory --> adminFilter : "crea para admin"
+authFactory --> clientFilter : "crea para cliente"
+
+' ============ RELACIONES - SERVICIOS Y REPOSITORIOS ============
+
+woService --> workOrderRepo : "usa"
+authService --> authRepo : "usa"
+purchaseService --> purchaseRepo : "usa"
+activityService --> activityRepo : "usa"
+
+' ============ RELACIONES - CONTROLADORES Y SERVICIOS ============
+
+woController --> woService : "usa"
+woController --> activityService : "usa"
+authController --> authService : "usa"
+
+' ============ RELACIONES - MIDDLEWARE ============
+
+validator --> "registerSchema, loginSchema" : "valida con"
+
+@enduml
+

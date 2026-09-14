@@ -1,6 +1,7 @@
 import { ForbiddenError, NotFoundError } from '../../shared/errors/app-error';
 import { IWorkOrderRepository } from './work-orders.repository';
 import { GuidGenerator } from '../../shared/utils/guid';
+import { AuthorizationFilterFactory } from '../../shared/authorization/filters/authorization-filter-factory';
 import {
   CreateWorkOrderInput,
   ExitRegisterInput,
@@ -29,18 +30,21 @@ export class WorkOrderService {
   async list(options: {
     status?: OrderStatus;
     technicianId?: string;
+    customerId?: string;
     fromDate?: string;
     toDate?: string;
     searchText?: string;
     page: number;
     pageSize: number;
     userTechnicianId?: string;
+    userCustomerId?: string;
     userRole?: string;
   }): Promise<{ items: WorkOrder[]; total: number }> {
-    // Validar ownership: si es técnico, solo ver sus órdenes
-    if (options.userRole === 'tecnico' && !options.technicianId) {
-      options.technicianId = options.userTechnicianId;
-    }
+    // Obtener la estrategia de autorización para el rol del usuario
+    const authFilter = AuthorizationFilterFactory.createFilter(options.userRole);
+    
+    // Aplicar el filtro sin conocer detalles específicos del rol
+    authFilter.applyFilter(options);
 
     const { rows, total } = await this.repository.list(options);
     return { items: rows.map(WorkOrder.fromRow), total };
