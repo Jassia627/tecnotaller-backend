@@ -8,331 +8,392 @@ Este documento presenta la **versión refactorizada** del diagrama de clases de 
 
 | Principio | Violación Identificada | Solución Implementada | Archivo |
 |-----------|------------------------|----------------------|---------|
-| **OCP** | WorkOrderService verifica rol con if-else hardcodeado | Strategy Pattern + Factory Pattern | `CONTROL_DE_CAMBIOS_SOLID.md` (CC-01) |
-| **SRP** | AuthController valida datos + orquesta HTTP | Middleware de Validación | `CONTROL_DE_CAMBIOS_SRP.md` (CC-02) |
+| **OCP** | WorkOrderService verifica rol con if-else hardcodeado | Strategy Pattern + Factory Pattern | `CONTROL_DE_CAMBIOS_SOLID.md` (CC-05) |
+| **SRP** | AuthController valida datos + orquesta HTTP | Middleware de Validación | `CONTROL_DE_CAMBIOS_SRP.md` (CC-06) |
 | **DIP** | Dependencias concretas sin interfaces | Inyección de Interfaces: `IWorkOrderRepository`, `IAuthRepository` | Código implementado |
 
 ---
 
-## Cambios Principales en Arquitectura
+## 1. PATRÓN OCP - Strategy Pattern para Autorización (CC-05)
 
-### 1. PATRÓN OCP - Strategy Pattern para Autorización
-
-#### Antes (Violación):
+### Antes (Violación):
 ```typescript
 async list(options: {
+  status?: OrderStatus;
   userRole?: string;
   userTechnicianId?: string;
 }): Promise<...> {
+  // Regla de negocio y roles quemados dentro del servicio
   if (options.userRole === 'tecnico' && !options.technicianId) {
-    options.technicianId = options.userTechnicianId;
+    options.technicianId = options.userTechnicianId;  // ❌ Hardcodeado
   }
-  // Si hay un nuevo rol, hay que modificar aquí ❌
+  // Si mañana hay "supervisor", "auditor", etc., hay que modificar aquí
+  
+  const { rows, total } = await this.repository.list(options);
+  return { items: rows.map(WorkOrder.fromRow), total };
 }
 ```
 
-#### Después (OCP Compliant):
-```typescript
-async list(options: {...}): Promise<...> {
-  const authFilter = AuthorizationFilterFactory.createFilter(options.userRole);
-  authFilter.applyFilter(options);
-  // Nuevos roles se agregan SIN modificar este código ✅
-}
-```
-
-#### Clases Agregadas al Diagrama:
-
-```
-IAuthorizationFilter <<interface>>
-  + applyFilter(options: Record): void
-
-TechnicianAuthorizationFilter <<implements>>
-  + applyFilter(options): void [auto-asigna technicianId]
-
-AdminAuthorizationFilter <<implements>>
-  + applyFilter(options): void [sin restricciones]
-
-ClientAuthorizationFilter <<implements>>
-  + applyFilter(options): void [filtra por customerId]
-
-AuthorizationFilterFactory
-  + {static} createFilter(role: string): IAuthorizationFilter
-```
-
-**Beneficio**: Nuevos roles (supervisor, auditor) se agregan SIN modificar `WorkOrderService`.
+**Problema:**
+- El código está **abierto a modificación** (requiere editar el método `list()`)
+- Cada nuevo rol requiere agregar un `if` más
+- Violación de OCP: "Software entities should be open for extension, closed for modification"
 
 ---
 
-### 2. PATRÓN SRP - Middleware de Validación
+### Después (OCP Compliant):
 
-#### Antes (Violación):
-```typescript
-async register(req: Request, res: Response): void {
-  const input = registerSchema.parse(req.body);  // ❌ Validación
-  const user = await this.service.register(input);  // ✅ Orquestación
-  res.status(201).json({ user });
-}
-```
-
-**Problema**: El controlador tiene DOS responsabilidades.
-
-#### Después (SRP Compliant):
-```typescript
-// Middleware (SRP: SOLO validación)
-export function validateRequest(schema: ZodSchema) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    const validated = schema.parse(req.body);
-    req.validatedData = validated;
-    next();
-  };
-}
-
-// Controlador (SRP: SOLO orquestación)
-async register(req: Request, res: Response): void {
-  const input = req.validatedData as RegisterInput;
-  const user = await this.service.register(input);
-  res.status(201).json({ user });
-}
-
-// Ruta (composición)
-router.post(
-  '/register',
-  validateRequest(registerSchema),  // Middleware
-  asyncHandler(controller.register.bind(controller))  // Controlador
-);
-```
-
-#### Clase Agregada al Diagrama:
-
-```
-ValidateRequestMiddleware
-  - schema: ZodSchema
-  + handle(req, res, next): Promise<void>
-```
-
-**Beneficio**: Controladores solo orquestan HTTP. Validación reutilizable en todos los módulos.
-
----
-
-### 3. PATRÓN DIP - Inyección de Dependencias
-
-#### Interfaces Agregadas:
+#### 1. Interfaz Strategy para Autorización:
 
 ```typescript
-interface IWorkOrderRepository {
-  + findById(id: string): Promise<WorkOrderRow | null>
-  + list(options): Promise<{rows, total}>
-  + create(input, guideNumber, status): Promise<WorkOrderRow>
-  + transitionStatus(id, from, to, userId): Promise<WorkOrderRow>
-}
-
-interface IAuthRepository {
-  + register(input): Promise<AuthUser>
-  + login(input): Promise<AuthSession>
-  + logout(accessToken): Promise<void>
-  + getUserById(id): Promise<AuthUser | null>
+// src/shared/authorization/filters/authorization-filter.interface.ts
+export interface IAuthorizationFilter {
+  applyFilter(options: ListOptions): void;
 }
 ```
 
-#### Relación en Servicios:
+#### 2. Estrategia para cada rol:
 
 ```typescript
-// DIP: Servicio depende de interfaz, no de implementación
-class WorkOrderService {
-  constructor(private readonly repository: IWorkOrderRepository) {}
-  // Repository puede ser mock, real, etc.
+// src/shared/authorization/filters/technician-authorization-filter.ts
+export class TechnicianAuthorizationFilter implements IAuthorizationFilter {
+  applyFilter(options: ListOptions): void {
+    if (!options.technicianId && options.userTechnicianId) {
+      options.technicianId = options.userTechnicianId;
+    }
+  }
+}
+
+// src/shared/authorization/filters/admin-authorization-filter.ts
+export class AdminAuthorizationFilter implements IAuthorizationFilter {
+  applyFilter(options: ListOptions): void {
+    // Admin ve todas las órdenes, no aplica filtro
+  }
+}
+
+// src/shared/authorization/filters/client-authorization-filter.ts
+export class ClientAuthorizationFilter implements IAuthorizationFilter {
+  applyFilter(options: ListOptions): void {
+    // Clientes solo ven sus propias órdenes
+    if (!options.customerId && options.userCustomerId) {
+      options.customerId = options.userCustomerId;
+    }
+  }
 }
 ```
 
-**Beneficio**: Fácil testing con mocks. Desacoplamiento de infraestructura.
-
----
-
-## Nuevas Entidades de Dominio
-
-### 1. PurchaseRequest (Compras)
-
-Agregada para soportar la **Fase 25** del frontend.
+#### 3. Factory para crear estrategias:
 
 ```typescript
-class PurchaseRequest {
-  - id: string
-  - supplierId: string
-  - productId: string | null
-  - partId: string | null
-  - quantity: number
-  - unitPrice: number
-  - subtotal: number
-  - total: number
-  - _status: PurchaseStatus
-  --
-  + markAsReceived(): Promise<void>
-  + canReceive(): boolean
-  + get status(): PurchaseStatus
+// src/shared/authorization/filters/authorization-filter-factory.ts
+export class AuthorizationFilterFactory {
+  static createFilter(role: string): IAuthorizationFilter {
+    const filters: Record<string, IAuthorizationFilter> = {
+      'tecnico': new TechnicianAuthorizationFilter(),
+      'administrador': new AdminAuthorizationFilter(),
+      'cliente': new ClientAuthorizationFilter(),
+      // Fácil de extender: agregar 'supervisor', 'auditor', etc.
+    };
+    
+    return filters[role] || new ClientAuthorizationFilter(); // Default
+  }
 }
 ```
 
-**Características**:
-- Validación XOR: productId XOR partId (no ambos, no ninguno)
-- Transaccional: actualiza stock de manera atómica
-- Idempotente: rechaza si ya está RECIBIDO
-
-### 2. Supplier (Proveedor)
-
-Agregada para soportar compras.
+#### 4. Servicio refactorizado (OCP compliant):
 
 ```typescript
-class Supplier {
-  - id: string
-  - name: string
-  - contactEmail: string | null
-  - phone: string | null
-  - active: boolean
-  - createdAt: string
+// src/modules/work-orders/work-orders.service.ts
+async list(options: {
+  status?: OrderStatus;
+  userRole?: string;
+  userTechnicianId?: string;
+}): Promise<{ items: WorkOrder[]; total: number }> {
+  // Obtener estrategia según el rol (sin conocer detalles)
+  const filter = AuthorizationFilterFactory.createFilter(options.userRole || 'cliente');
+  
+  // Aplicar filtro sin saber qué rol es
+  filter.applyFilter(options);
+  
+  // Resto del código igual
+  const { rows, total } = await this.repository.list(options);
+  return { items: rows.map(WorkOrder.fromRow), total };
 }
-```
-
-### 3. Estados Adicionales en WorkOrder
-
-```typescript
-enum OrderStatus {
-  INGRESADO           // Original
-  PENDIENTE           // Nuevo: cliente propone
-  ACEPTADA            // Nuevo: admin/tech acepta
-  EN_REVISION         // Original
-  ESPERANDO_REPUESTO  // Original
-  EN_REPARACION       // Original
-  REPARADO            // Original
-  LISTO_PARA_ENTREGA  // Original
-  ENTREGADO           // Original
-}
-```
-
-### 4. Campos Adicionales en WorkOrder
-
-```typescript
-class WorkOrder {
-  + scheduledTime: string | null     // Propuesto por cliente
-  + assignedTime: string | null      // Asignado por admin/tech
-}
-```
-
-**Lógica**: Si cliente crea orden → PENDIENTE + scheduledTime. Si admin crea → ACEPTADA + assignedTime.
-
----
-
-## Relaciones Arquitectónicas
-
-### Dependencias Explícitas (DIP)
-
-```
-WorkOrderService ──depends on──> IWorkOrderRepository
-AuthService ──depends on──> IAuthRepository
-PurchaseRequestService ──depends on──> IPurchaseRequestRepository
-```
-
-### Factory Pattern (OCP)
-
-```
-AuthorizationFilterFactory ──creates──> IAuthorizationFilter
-  ├─> TechnicianAuthorizationFilter
-  ├─> AdminAuthorizationFilter
-  └─> ClientAuthorizationFilter
-```
-
-### Middleware Chain (SRP)
-
-```
-ValidateRequestMiddleware ──→ AuthController
-  (valida)                  (orquesta)
 ```
 
 ---
 
-## Tabla Comparativa: Antes vs. Después
+### Beneficios de la Mejora:
 
 | Aspecto | Antes | Después |
 |--------|-------|---------|
-| **OCP en Autorización** | ❌ if-else en servicio | ✅ Strategy Pattern + Factory |
-| **SRP en Validación** | ❌ Validación en controlador | ✅ Middleware separado |
-| **DIP en Repositorios** | ❌ Dependencias concretas | ✅ Inyección de interfaces |
-| **Nuevas Entidades** | ❌ Sin PurchaseRequest, Supplier | ✅ Completo para Fase 25 |
-| **Estados WorkOrder** | ❌ 7 estados (INGRESADO...) | ✅ 9 estados (+ PENDIENTE, ACEPTADA) |
-| **Campos WorkOrder** | ❌ Sin horarios | ✅ scheduledTime, assignedTime |
-| **Testabilidad** | ❌ Difícil aislar lógica | ✅ Fácil inyectar mocks |
-| **Extensibilidad** | ❌ Modificar código existente | ✅ Crear nuevas estrategias/middlewares |
+| **Escalabilidad** | ❌ Modificar servicio | ✅ Crear nueva estrategia |
+| **OCP** | ❌ Abierto a modificación | ✅ Cerrado a modificación |
+| **Testabilidad** | ❌ Difícil mockear roles | ✅ Fácil inyectar estrategia |
+| **Responsabilidad** | ❌ Servicio + autorización | ✅ Servicio solo lógica negocio |
+| **Mantenibilidad** | ❌ Cambios en core | ✅ Cambios en interfaces |
 
----
+### Patrón Aplicado:
 
-## Impacto en la Arquitectura General
+- **Strategy Pattern**: Cada rol es una estrategia intercambiable
+- **Factory Pattern**: Creación centralizada de estrategias
+- **Dependency Inversion**: El servicio depende de la interfaz, no de implementaciones concretas
 
-### Capas de la Aplicación
+### Cómo Agregar un Nuevo Rol (sin modificar el servicio):
 
-```
-┌─────────────────────────────────────────┐
-│  Router / Rutas                         │  ← Inyecta middlewares
-├─────────────────────────────────────────┤
-│  ValidateRequestMiddleware              │  ← SRP: Solo validación
-├─────────────────────────────────────────┤
-│  AuthMiddleware (auth)                  │  ← Autentica usuario
-├─────────────────────────────────────────┤
-│  Controller                             │  ← SRP: Solo orquestación
-│  (recibe datos en req.validatedData)    │
-├─────────────────────────────────────────┤
-│  Service                                │  ← Lógica de negocio
-│  (usa AuthorizationFilterFactory)       │  ← OCP: Delega autorización
-├─────────────────────────────────────────┤
-│  Repository (inyectado)                 │  ← DIP: Dependencia de interfaz
-├─────────────────────────────────────────┤
-│  Database / Supabase                    │
-└─────────────────────────────────────────┘
+```typescript
+// 1. Crear nueva estrategia
+export class SupervisorAuthorizationFilter implements IAuthorizationFilter {
+  applyFilter(options: ListOptions): void {
+    // Lógica específica de supervisor
+  }
+}
+
+// 2. Registrar en factory (única línea)
+filters['supervisor'] = new SupervisorAuthorizationFilter();
+
+// 3. ¡Listo! El servicio NO se modifica
 ```
 
-### Beneficios por Principio SOLID
-
-| Principio | Beneficio | Evidencia |
-|-----------|-----------|-----------|
-| **OCP** | Escalar roles sin modificar WorkOrderService | `AuthorizationFilterFactory.createFilter()` |
-| **SRP** | Cambiar validación sin afectar controladores | `validateRequest()` reutilizable |
-| **DIP** | Testear servicios con mocks | `IWorkOrderRepository` inyectada |
-| **LSP** | (Futuro) Todas las estrategias cumplen contrato | `IAuthorizationFilter` |
-| **ISP** | (Futuro) Interfaces pequeñas y cohesivas | Interfaces separadas por dominio |
+✅ **Código cerrado a modificación, abierto a extensión**
 
 ---
 
-## Próximas Iteraciones Recomendadas
+## 2. PATRÓN SRP - Middleware de Validación (CC-06)
 
-### Corto Plazo (Sprint Actual)
+### Antes (Violación SRP):
 
-- ✅ **CC-01**: Implementar OCP en work-orders (COMPLETADO)
-- ✅ **CC-02**: Implementar SRP en auth (COMPLETADO)
-- ⏳ Extender SRP a otros módulos (customers, technicians, suppliers, etc.)
+```typescript
+// ❌ Controlador hace DOS cosas: orquestar HTTP + validar datos
+export class AuthController {
+  async register(req: Request, res: Response): Promise<void> {
+    // Responsabilidad 1: Validación (debería estar en middleware)
+    const input = registerSchema.parse(req.body);
+    
+    // Responsabilidad 2: Orquestación HTTP
+    const user = await this.service.register(input);
+    res.status(201).json({ user });
+  }
 
-### Mediano Plazo
+  async login(req: Request, res: Response): Promise<void> {
+    // Responsabilidad 1: Validación (debería estar en middleware)
+    const input = loginSchema.parse(req.body);
+    
+    // Responsabilidad 2: Orquestación HTTP
+    const session = await this.service.login(input);
+    res.json(session);
+  }
+}
+```
 
-- Implementar LSP: Revisar jerarquías de herencia
-- Implementar ISP: Dividir interfaces grandes en pequeñas
-- Cobertura de tests en clases strategy y middleware
-
-### Largo Plazo
-
-- Event Sourcing para auditabilidad
-- CQRS para optimizar queries
-- Event-driven architecture para notificaciones
+**Problema:**
+- El código está **abierto a modificación** (requiere editar el método `list()`)
+- Si cambia `registerSchema`, hay que modificar el controlador
+- Si cambia el formato de error de validación, hay que modificar el controlador
+- Violación de SRP: "Una clase debe tener una única razón para cambiar"
 
 ---
 
-## Referencias
+### Después (SRP Compliant):
 
-- **Commit CC-01**: `feat: implementar Strategy Pattern en work-orders para cumplir OCP`
-- **Commit CC-02**: `refactor: implementar SRP en auth con Middleware de Validación`
-- **Archivos de Control de Cambios**: 
-  - `CONTROL_DE_CAMBIOS_SOLID.md`
-  - `CONTROL_DE_CAMBIOS_SRP.md`
+#### 1. Middleware Genérico de Validación:
+
+```typescript
+// src/shared/middleware/validate-request.middleware.ts
+export function validateRequest(schema: ZodSchema) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      // Validación ocurre aquí, no en el controlador
+      const validated = schema.parse(req.body);
+      
+      // Adjuntar datos validados al request
+      req.validatedData = validated;
+      
+      next();
+    } catch (error: any) {
+      // Manejo de errores de validación centralizado
+      if (error.errors && Array.isArray(error.errors)) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          details: error.errors.map((e: any) => ({
+            field: e.path.join('.'),
+            message: e.message,
+          })),
+        });
+      }
+      
+      res.status(400).json({
+        error: 'Validation failed',
+        message: error.message,
+      });
+    }
+  };
+}
+
+/**
+ * Extender Express Request para incluir validatedData
+ * Esto permite que TypeScript entienda req.validatedData
+ */
+declare global {
+  namespace Express {
+    interface Request {
+      validatedData?: any;
+    }
+  }
+}
+```
+
+#### 2. Controlador Refactorizado (SRP Compliant):
+
+```typescript
+// src/modules/auth/auth.controller.ts
+export class AuthController {
+  async register(req: Request, res: Response): Promise<void> {
+    // ✅ Datos ya validados por middleware
+    const input = req.validatedData as RegisterInput;
+    
+    // ✅ Solo orquestación HTTP (una única responsabilidad)
+    const user = await this.service.register(input);
+    res.status(201).json({ user });
+  }
+
+  async login(req: Request, res: Response): Promise<void> {
+    // ✅ Datos ya validados por middleware
+    const input = req.validatedData as LoginInput;
+    
+    // ✅ Solo orquestación HTTP (una única responsabilidad)
+    const session = await this.service.login(input);
+    res.json(session);
+  }
+}
+```
+
+#### 3. Rutas Inyectan Middleware de Validación:
+
+```typescript
+// src/modules/auth/auth.routes.ts
+export function createAuthRouter(): Router {
+  const repository = new AuthRepository();
+  const service = new AuthService(repository);
+  const controller = new AuthController(service);
+
+  const router = Router();
+
+  // ✅ Validación en middleware, no en controlador
+  router.post(
+    '/register',
+    validateRequest(registerSchema),  // ← Middleware de validación
+    asyncHandler(controller.register.bind(controller))
+  );
+  
+  router.post(
+    '/login',
+    validateRequest(loginSchema),     // ← Middleware de validación
+    asyncHandler(controller.login.bind(controller))
+  );
+
+  return router;
+}
+```
 
 ---
 
-**Versión del Diagrama**: 2.0  
-**Fecha de Actualización**: Septiembre 2026  
-**Estado**: ✅ Refactorizado con SOLID  
+### Beneficios de la Mejora:
+
+| Aspecto | Antes | Después |
+|--------|-------|---------|
+| **SRP** | ❌ 2 responsabilidades | ✅ 1 responsabilidad |
+| **Cambios en validación** | ❌ Modificar controlador | ✅ Modificar solo middleware/rutas |
+| **Testabilidad** | ❌ Difícil aislar lógica HTTP | ✅ Fácil testear middleware y controlador por separado |
+| **Reutilización** | ❌ Validación solo en auth | ✅ Middleware reutilizable en todos los módulos |
+| **Mantenibilidad** | ❌ Lógica de validación dispersa | ✅ Validación centralizada en middleware |
+| **Acoplamiento** | ❌ Controlador → Zod | ✅ Controlador → Express Request (genérico) |
+
+### Patrón Aplicado:
+
+- **Middleware Pattern**: Middleware de validación genérico antes del controlador
+- **Separation of Concerns**: Validación (middleware) vs. Orquestación (controlador)
+- **Chain of Responsibility**: Cadena middleware → controlador → servicio
+
+### Cómo Reutilizar en Otros Módulos:
+
+```typescript
+// En cualquier ruta
+router.post(
+  '/create-work-order',
+  validateRequest(createWorkOrderSchema),  // ← Reutilizable
+  asyncHandler(workOrderController.create.bind(workOrderController))
+);
+
+router.put(
+  '/update-product/:id',
+  validateRequest(updateProductSchema),    // ← Reutilizable
+  asyncHandler(productController.update.bind(productController))
+);
+```
+
+✅ **Sin modificar validación de ningún controlador existente**
+
+---
+
+## Resumen de Cambios
+
+| Antes | Después |
+|-------|---------|
+| Verificación de rol hardcodeada en servicio | Estrategia por rol en interfaces |
+| Requiere modificar `WorkOrderService` para agregar rol | Solo crea nueva clase Strategy |
+| Lógica de autorización mezclada con negocio | Autorización separada y reutilizable |
+| Difícil de testear y mockear | Fácil inyectar estrategias mock |
+| Validación dentro del controlador | Validación en middleware previo |
+| Controlador = orquestación + validación | Controlador = solo orquestación |
+| Cambios en schemas afectan controlador | Cambios en schemas solo afectan middleware |
+| Validación no reutilizable | Validación reutilizable en todas las rutas |
+| Difícil testear controlador aislado | Fácil testear middleware y controlador por separado |
+
+---
+
+## Archivos Modificados y Creados
+
+### ✅ CREADOS:
+
+1. **`src/shared/authorization/filters/authorization-filter.interface.ts`** ✅
+   - Interfaz Strategy para encapsular lógica de filtrado
+
+2. **`src/shared/authorization/filters/technician-authorization-filter.ts`** ✅
+   - Estrategia para técnicos
+
+3. **`src/shared/authorization/filters/admin-authorization-filter.ts`** ✅
+   - Estrategia para administradores
+
+4. **`src/shared/authorization/filters/client-authorization-filter.ts`** ✅
+   - Estrategia para clientes
+
+5. **`src/shared/authorization/filters/authorization-filter-factory.ts`** ✅
+   - Factory para crear estrategias por rol
+
+6. **`src/shared/middleware/validate-request.middleware.ts`** ✅
+   - Middleware genérico de validación
+
+### ✅ MODIFICADOS:
+
+1. **`src/modules/work-orders/work-orders.service.ts`** ✅
+   - Refactorizado para usar AuthorizationFilterFactory
+
+2. **`src/modules/work-orders/work-orders.controller.ts`** ✅
+   - Actualizado para pasar userCustomerId al servicio
+
+3. **`src/modules/work-orders/work-orders.repository.ts`** ✅
+   - Extendido para soportar filtrado por customer_id
+
+4. **`src/modules/auth/auth.controller.ts`** ✅
+   - Refactorizado: recibe datos en req.validatedData
+
+5. **`src/modules/auth/auth.routes.ts`** ✅
+   - Agrega validateRequest() middleware en rutas
+
+---
+
+**Estado: ✅ COMPLETADO**
 **Build Status**: ✅ TypeScript + npm run build → SUCCESS
+**Patrón Implementado**: Strategy Pattern + Factory Pattern (CC-05), Middleware Pattern (CC-06)
+**Resultado**: OCP y SRP = ✅ CUMPLIDO
