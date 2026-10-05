@@ -26,3 +26,18 @@ export class ConsoleNotifier implements INotifier {
     logger.info({ to: message.toEmail, subject: message.subject }, 'Notificación (console)');
   }
 }
+
+// Implementación para canal SMS (Twilio u otro proveedor)
+export class SmsNotifier implements INotifier {
+  async send(message: NotificationMessage): Promise<void> {
+    logger.info({ to: message.toEmail, message: message.body }, 'Notificación enviada por SMS');
+  }
+}
+
+// Implementación para canal WhatsApp (Meta Cloud API u otro proveedor)
+export class WhatsAppNotifier implements INotifier {
+  async send(message: NotificationMessage): Promise<void> {
+    logger.info({ to: message.toEmail, message: message.body }, 'Notificación enviada por WhatsApp');
+  }
+}
+

@@ -1,0 +1,119 @@
+@startuml DDD_TecnoTaller
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 10
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+
+skinparam rectangle {
+    BackgroundColor<<core>> #FFF3CD
+    BorderColor<<core>> #E0A800
+    FontColor<<core>> #333333
+    
+    BackgroundColor<<supporting>> #D1ECF1
+    BorderColor<<supporting>> #17A2B8
+    FontColor<<supporting>> #333333
+
+    BackgroundColor<<generic>> #E2E3E5
+    BorderColor<<generic>> #6C757D
+    FontColor<<generic>> #333333
+
+    BackgroundColor<<acl>> #D4EDDA
+    BorderColor<<acl>> #28A745
+    FontColor<<acl>> #155724
+
+    BackgroundColor<<aggregate_box>> #F8F9FA
+    BorderColor<<aggregate_box>> #0D6EFD
+}
+
+title DOMAIN DRIVEN DESIGN (DDD) - TECNOTALLER / TECNOFIX\nMapa de Contextos (Context Map) y Modelo de Agregado Táctico
+
+' =========================================================================
+' 1. MAPA DE CONTEXTOS DELIMITADOS (BOUNDED CONTEXTS & CONTEXT MAPPING)
+' =========================================================================
+package "1. MAPA ESTRATÉGICO DE CONTEXTOS (CONTEXT MAP)" {
+    
+    rectangle "🔐 Auth & Usuarios\n[Generic Subdomain]" as Auth <<generic>>
+    rectangle "🔔 Notificaciones\n[Generic Subdomain]" as Notif <<generic>>
+    rectangle "📜 Auditoría & Logs\n[Generic Subdomain]" as Audit <<generic>>
+
+    rectangle "🛠️ Reparaciones & Taller\n(Work Orders & Diagnostics)\n[CORE DOMAIN]" as CoreReparaciones <<core>>
+    
+    rectangle "📦 Inventario & Catálogo\n[Supporting Subdomain]" as Inventario <<supporting>>
+    rectangle "📅 Citas & Agenda\n[Supporting Subdomain]" as Citas <<supporting>>
+    rectangle "🛡️ Garantías\n[Supporting Subdomain]" as Garantias <<supporting>>
+
+    rectangle "🛡️ ACL (Anti-Corruption Layer)\nTraductor de Repuestos" as ACL_Parts <<acl>>
+
+    ' Relaciones Upstream / Downstream con patrones DDD de la infografía
+    Auth -down-> CoreReparaciones : [OHS / PL]\nUpstream (U) -> Downstream (D)\nProvee tokens y roles
+    Auth -down-> Inventario : [OHS / PL]\nUpstream
+    Auth -down-> Citas : [OHS / PL]\nUpstream
+
+    Citas -right-> CoreReparaciones : [Customer / Supplier]\nCita genera recepción
+
+    Inventario -right-> ACL_Parts : Upstream (U)\nConsulta y reserva stock
+    ACL_Parts -right-> CoreReparaciones : Downstream (D)\nAdapta repuesto al taller
+
+    CoreReparaciones -down-> Garantias : Upstream (U)\nEvento: Orden entregada
+    CoreReparaciones -right-> Notif : [OHS]\nEvento: Estado cambiado
+    Citas -down-> Notif : [OHS]\nEvento: Cita agendada
+
+    CoreReparaciones ..> Audit : Domain Events
+    Inventario ..> Audit : Domain Events
+}
+
+' =========================================================================
+' 2. EJEMPLO PRÁCTICO TÁCTICO: BOUNDED CONTEXT DE REPARACIONES (WORK ORDERS)
+' Basado en el ejemplo de la infografía: Cliente -> Pedido -> Línea -> Total -> Repo
+' =========================================================================
+package "2. EJEMPLO PRÁCTICO DEL AGREGADO (MODELO TÁCTICO DE REPARACIONES)" {
+
+    rectangle "BOUNDED CONTEXT: REPARACIONES" <<aggregate_box>> {
+        
+        rectangle "👤 Cliente (ID)\n[Referencia Externa]" as ClienteRef
+        
+        rectangle "📋 WorkOrder\n[ENTIDAD / RAÍZ DEL AGREGADO]\n- id: UUID\n- trackingCode: TrackingCode\n- customerId: UUID\n- technicianId: UUID\n- status: OrderStatus\n--\n+ assignTechnician()\n+ transitionTo(status)\n+ addDiagnostic()\n+ addPart()\n+ calculateTotal()" as WorkOrder <<core>>
+
+        rectangle "🩺 Diagnóstico\n[ENTIDAD]\n- id: UUID\n- description: String\n- laborCost: Money\n- clientApproved: Boolean" as Diagnostico <<supporting>>
+
+        rectangle "🧩 Repuesto Usado\n[ENTIDAD (Línea de Orden)]\n- id: UUID\n- partId: UUID\n- quantity: Number\n- unitPrice: Money\n--\n+ subtotal(): Money" as OrderPart <<supporting>>
+
+        rectangle "📷 Foto Evidencia\n[ENTIDAD]\n- id: UUID\n- fileUrl: String\n- stage: BEFORE | DURING | AFTER" as OrderPhoto <<supporting>>
+
+        rectangle "💎 Total & Costos\n[VALOR OBJECT]\n- amount: Decimal\n- currency: 'USD' | 'COP'\n--\n+ add(Money): Money" as TotalMoney <<acl>>
+
+        rectangle "💎 TrackingCode\n[VALOR OBJECT]\n- code: String (ej: WO-2026-001)\n--\n+ isValid(): Boolean" as TrackingVO <<acl>>
+
+        rectangle "💎 OrderStatus\n[VALOR OBJECT / STATE MACHINE]\n- current: String\n--\n+ canTransitionTo(next): Boolean" as StatusVO <<acl>>
+
+        ' Estructura interna del agregado
+        ClienteRef -right-> WorkOrder : Referencia por ID
+        WorkOrder *-down- Diagnostico : 1 Diagnóstico
+        WorkOrder *-down- OrderPart : 0..* Repuestos usados
+        WorkOrder *-down- OrderPhoto : 0..* Evidencias
+
+        WorkOrder -right-> TotalMoney : Totaliza con
+        WorkOrder -right-> TrackingVO : Identifica seguimiento
+        WorkOrder -right-> StatusVO : Gobierna estado
+
+        ' Reglas de negocio del agregado
+        note bottom of WorkOrder
+            <b>REGLAS DE NEGOCIO DEL AGREGADO:</b>
+            1. Una orden requiere obligatoriamente un Diagnóstico aprobado para pasar a reparación.
+            2. El total se calcula automáticamente: Total = Sum(Repuestos.subtotal) + Diagnóstico.laborCost.
+            3. Flujo estricto de estados:
+               RECEIVED -> DIAGNOSING -> PENDING_APPROVAL -> IN_PROGRESS -> COMPLETED -> DELIVERED.
+            4. Ninguna entidad interna (Repuesto, Diagnóstico, Foto) se modifica directamente desde afuera;
+               todo acceso y validación pasa por la raíz (WorkOrder).
+        end note
+
+        ' Repositorio
+        database "💾 WorkOrderRepository\n[REPOSITORIO]\nEncapsula persistencia en Supabase/Postgres\n--\n+ findById(id): WorkOrder\n+ findByTracking(code): WorkOrder\n+ save(workOrder): void\n+ updateStatus(id, status): void" as Repo
+        
+        Repo ..> WorkOrder : Persiste y recupera el Agregado completo
+    }
+}
+
+@enduml
