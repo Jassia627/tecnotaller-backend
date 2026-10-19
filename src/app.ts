@@ -1,7 +1,7 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import { apiReference } from '@scalar/express-api-reference';
+// import { apiReference } from '@scalar/express-api-reference';
 import { env } from './config/env';
 import { openapiSpec } from './config/openapi';
 import { errorHandler } from './shared/middlewares/error-handler';
@@ -38,13 +38,8 @@ export function createApp(): Express {
     res.json(openapiSpec);
   });
 
-  app.use(
-    '/docs',
-    apiReference({
-      pageTitle: 'TecnoTaller API',
-      spec: { url: '/openapi.json' },
-    }),
-  );
+  // API docs eliminados para compatibilidad
+
 
   app.use('/api/v1/auth', createAuthRouter());
   app.use('/api/v1/products', createProductsRouter());
