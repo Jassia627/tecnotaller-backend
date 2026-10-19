@@ -15,6 +15,7 @@ export function createServicesRouter(): Router {
   const router = Router();
 
   router.get('/', asyncHandler(controller.listPublic.bind(controller)));
+  router.post('/quote', asyncHandler(controller.quote.bind(controller)));
 
   router.use(authMiddleware);
 

@@ -323,4 +323,90 @@ describe('ServiceService', () => {
       expect(mockRepository.setActive).not.toHaveBeenCalled();
     });
   });
+
+  describe('calculateQuotation (Patrones Composite y Decorator)', () => {
+    it('debe cotizar un servicio individual desde la base de datos sin modificadores', async () => {
+      const mockServiceRow: ServiceRow = {
+        id: '11111111-1111-4111-8111-111111111111',
+        name: 'Mantenimiento Preventivo',
+        description: 'Limpieza y pasta térmica',
+        price: 40,
+        active: true,
+        created_at: '2024-01-01T00:00:00Z',
+      };
+      mockRepository.findById.mockResolvedValue(mockServiceRow);
+
+      const quote = await service.calculateQuotation({
+        serviceIds: [mockServiceRow.id],
+        customItems: [],
+      });
+
+      expect(quote.summary.name).toBe('Mantenimiento Preventivo');
+      expect(quote.summary.totalPrice).toBe(40);
+      expect(quote.summary.isCombo).toBe(false);
+      expect(quote.breakdown.length).toBe(1);
+    });
+
+    it('debe crear un combo con descuento (Composite) y aplicar decoradores (Express y Delivery)', async () => {
+      const mockServiceRow1: ServiceRow = {
+        id: '11111111-1111-4111-8111-111111111111',
+        name: 'Cambio de Pantalla OLED',
+        description: 'Pantalla original',
+        price: 70,
+        active: true,
+        created_at: '2024-01-01T00:00:00Z',
+      };
+      const mockServiceRow2: ServiceRow = {
+        id: '22222222-2222-4222-8222-222222222222',
+        name: 'Cambio de Batería',
+        description: 'Batería nueva',
+        price: 30,
+        active: true,
+        created_at: '2024-01-01T00:00:00Z',
+      };
+
+      mockRepository.findById.mockImplementation((id: string) => {
+        if (id === mockServiceRow1.id) return Promise.resolve(mockServiceRow1);
+        if (id === mockServiceRow2.id) return Promise.resolve(mockServiceRow2);
+        return Promise.resolve(null);
+      });
+
+      const quote = await service.calculateQuotation({
+        serviceIds: [mockServiceRow1.id, mockServiceRow2.id],
+        customItems: [
+          {
+            name: 'Mica de Cristal 9H',
+            description: 'Protector instalado',
+            price: 10,
+            estimatedDurationMinutes: 10,
+          },
+        ],
+        bundleName: 'Combo Smartphone Renovado',
+        bundleDiscountPercentage: 10, // 10% de descuento
+        modifiers: {
+          isExpress: true, // +25% de recargo sobre el subtotal del combo
+          extendedWarrantyMonths: 12, // +$25
+          homeDelivery: {
+            address: 'Calle 100 # 15-20',
+            deliveryFee: 15, // +$15
+          },
+        },
+      });
+
+      // Subtotal servicios: 70 + 30 + 10 = 110.
+      // Descuento combo 10% = 11 => Precio combo = 99.
+      // + Garantía: 99 + 25 = 124.
+      // + Delivery: 124 + 15 = 139.
+      // + Express (+25% sobre 139) = 139 + 34.75 = 173.75.
+      expect(quote.summary.isCombo).toBe(true);
+      expect(quote.summary.totalPrice).toBe(173.75);
+      expect(quote.summary.name).toContain('Combo Smartphone Renovado');
+      expect(quote.summary.name).toContain('[EXPRESS ⚡]');
+      expect(quote.summary.name).toContain('[Delivery 🚚]');
+      expect(quote.summary.name).toContain('[+12M Garantía 🛡️]');
+      expect(quote.breakdown.join('\n')).toContain('PAQUETE: Combo Smartphone Renovado');
+      expect(quote.breakdown.join('\n')).toContain('Recargo Atención Express');
+    });
+  });
 });
+

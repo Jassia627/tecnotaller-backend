@@ -428,6 +428,87 @@ export const openapiSpec = {
         responses: { 201: { description: 'Servicio creado', content: { 'application/json': { schema: { $ref: '#/components/schemas/Service' } } } } },
       },
     },
+    '/services/quote': {
+      post: {
+        tags: ['services'],
+        summary: 'Cotizador inteligente de servicios',
+        description: 'Calcula presupuestos combinando servicios individuales o combos con descuentos (patrón Composite) y aplicando modalidades dinámicas como recargo Express, garantía extendida, domicilio y backup de datos (patrón Decorator).',
+        security: [],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  serviceIds: { type: 'array', items: { type: 'string', format: 'uuid' } },
+                  customItems: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      required: ['name', 'price'],
+                      properties: {
+                        name: { type: 'string' },
+                        description: { type: 'string' },
+                        price: { type: 'number', minimum: 0 },
+                        estimatedDurationMinutes: { type: 'number', minimum: 0 },
+                      },
+                    },
+                  },
+                  bundleName: { type: 'string' },
+                  bundleDescription: { type: 'string' },
+                  bundleDiscountPercentage: { type: 'number', minimum: 0, maximum: 100 },
+                  modifiers: {
+                    type: 'object',
+                    properties: {
+                      isExpress: { type: 'boolean' },
+                      expressSurchargePercentage: { type: 'number', minimum: 0, maximum: 100 },
+                      extendedWarrantyMonths: { type: 'integer', minimum: 1 },
+                      warrantyCost: { type: 'number', minimum: 0 },
+                      homeDelivery: {
+                        type: 'object',
+                        required: ['address'],
+                        properties: { address: { type: 'string' }, deliveryFee: { type: 'number', minimum: 0 } },
+                      },
+                      dataBackup: {
+                        type: 'object',
+                        properties: { limitGb: { type: 'number', minimum: 1 }, backupFee: { type: 'number', minimum: 0 } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: {
+            description: 'Cotización detallada generada con desglose jerárquico',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    summary: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        description: { type: 'string' },
+                        totalPrice: { type: 'number' },
+                        estimatedDurationMinutes: { type: 'number' },
+                        isCombo: { type: 'boolean' },
+                      },
+                    },
+                    breakdown: { type: 'array', items: { type: 'string' } },
+                    structure: { type: 'object' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/services/admin/all': {
       get: {
         tags: ['services'],

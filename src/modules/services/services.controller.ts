@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import { ServiceService } from './services.service';
-import { createServiceSchema, updateServiceSchema } from './services.types';
+import {
+  createServiceSchema,
+  quoteServiceSchema,
+  updateServiceSchema,
+} from './services.types';
 
 export class ServiceController {
   constructor(private readonly service: ServiceService) {}
@@ -8,6 +12,12 @@ export class ServiceController {
   async listPublic(_req: Request, res: Response): Promise<void> {
     const items = await this.service.listPublic();
     res.json({ items });
+  }
+
+  async quote(req: Request, res: Response): Promise<void> {
+    const input = quoteServiceSchema.parse(req.body);
+    const quotation = await this.service.calculateQuotation(input);
+    res.json(quotation);
   }
 
   async listAll(_req: Request, res: Response): Promise<void> {
@@ -39,3 +49,4 @@ export class ServiceController {
     res.json(service);
   }
 }
+
