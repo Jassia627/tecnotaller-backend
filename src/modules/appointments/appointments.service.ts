@@ -1,5 +1,6 @@
 import { ConflictError, ForbiddenError, NotFoundError } from '../../shared/errors/app-error';
 import { IAppointmentRepository } from './appointments.repository';
+import { ICustomerRepository } from '../customers/customers.repository';
 import { WorkOrderService } from '../work-orders/work-orders.service';
 import { WorkOrder } from '../work-orders/work-orders.types';
 import {
@@ -14,6 +15,7 @@ export class AppointmentService {
   constructor(
     private readonly repository: IAppointmentRepository,
     private readonly workOrderService?: WorkOrderService,
+    private readonly customerRepository?: ICustomerRepository,
   ) {}
 
   async create(input: CreateAppointmentInput): Promise<Appointment> {
@@ -67,8 +69,13 @@ export class AppointmentService {
   /**
    * Convierte una cita confirmada en una orden de servicio.
    * Es idempotente: si ya existe una orden para esta cita, la devuelve.
+   * 
+   * Búsqueda de cliente:
+   * 1. Si se proporciona customerId en el input, se usa ese
+   * 2. Si no, se busca un cliente registrado por teléfono normalizado
+   * 3. Si no se encuentra, la orden queda sin cliente asignado
    */
-  async convertToOrder(id: string, input: ConvertToOrderInput): Promise<{ appointment: Appointment; workOrder: WorkOrder }> {
+  async convertToOrder(id: string, input: ConvertToOrderInput): Promise<{ appointment: Appointment; workOrder: WorkOrder; customerFound: boolean }> {
     if (!this.workOrderService) {
       throw new Error('WorkOrderService no configurado en AppointmentService');
     }
@@ -82,7 +89,7 @@ export class AppointmentService {
     // Verificar idempotencia: si ya existe una orden para esta cita, devolverla
     const existingOrder = await this.workOrderService.findByAppointmentId(id);
     if (existingOrder) {
-      return { appointment, workOrder: existingOrder };
+      return { appointment, workOrder: existingOrder, customerFound: existingOrder.customerId !== null };
     }
 
     // Combinar datos de la cita con los datos proporcionados
@@ -101,11 +108,21 @@ export class AppointmentService {
     }
 
     // Serial: usar el proporcionado o generar uno provisional
-    // El serial provisional indica claramente que está pendiente de recepción
     const deviceSerial = input.deviceSerial || `PENDIENTE-${Date.now()}`;
 
-    // customerId: usar el proporcionado en el input (puede venir del frontend)
-    const customerId = input.customerId ?? null;
+    // Determinar customerId:
+    // 1. Si viene en el input, usarlo
+    // 2. Si no, buscar por teléfono normalizado
+    let customerId: string | null = input.customerId ?? null;
+    let customerFound = customerId !== null;
+
+    if (!customerId && this.customerRepository && appointment.phone) {
+      const customer = await this.customerRepository.findByPhone(appointment.phone);
+      if (customer) {
+        customerId = customer.id;
+        customerFound = true;
+      }
+    }
 
     // Crear la orden de servicio
     const workOrder = await this.workOrderService.create(
@@ -124,6 +141,6 @@ export class AppointmentService {
       id, // appointmentId para idempotencia
     );
 
-    return { appointment, workOrder };
+    return { appointment, workOrder, customerFound };
   }
 }

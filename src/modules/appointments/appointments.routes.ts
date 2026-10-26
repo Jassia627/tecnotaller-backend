@@ -4,6 +4,7 @@ import { AppointmentService } from './appointments.service';
 import { AppointmentRepository } from './appointments.repository';
 import { WorkOrderService } from '../work-orders/work-orders.service';
 import { WorkOrderRepository } from '../work-orders/work-orders.repository';
+import { CustomerRepository } from '../customers/customers.repository';
 import { asyncHandler } from '../../shared/utils/async-handler';
 import { authMiddleware } from '../../shared/middlewares/auth';
 import { authorizeRoles } from '../../shared/middlewares/authorize-roles';
@@ -17,7 +18,10 @@ export function createAppointmentsRouter(): Router {
   const workOrderRepository = new WorkOrderRepository();
   const workOrderService = new WorkOrderService(workOrderRepository, guidGenerator);
   
-  const service = new AppointmentService(repository, workOrderService);
+  // Inyectar CustomerRepository para buscar clientes por teléfono
+  const customerRepository = new CustomerRepository();
+  
+  const service = new AppointmentService(repository, workOrderService, customerRepository);
   const controller = new AppointmentController(service);
 
   const router = Router();

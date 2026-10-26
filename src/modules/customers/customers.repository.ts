@@ -4,6 +4,7 @@ import { CreateCustomerInput, UpdateCustomerInput, CustomerRow } from './custome
 export interface ICustomerRepository {
   list(options: { page: number; pageSize: number }): Promise<{ rows: CustomerRow[]; total: number }>;
   findById(id: string): Promise<CustomerRow | null>;
+  findByPhone(phone: string): Promise<CustomerRow | null>;
   create(input: CreateCustomerInput): Promise<CustomerRow>;
   update(id: string, input: UpdateCustomerInput): Promise<CustomerRow>;
   delete(id: string): Promise<void>;
@@ -32,6 +33,57 @@ export class CustomerRepository implements ICustomerRepository {
       throw error;
     }
     return data as CustomerRow;
+  }
+
+  /**
+   * Busca un cliente por teléfono normalizado.
+   * Normaliza el teléfono removiendo espacios, guiones y el prefijo +57.
+   * Retorna el primer cliente que coincida exactamente.
+   */
+  async findByPhone(phone: string): Promise<CustomerRow | null> {
+    // Normalizar el teléfono de búsqueda
+    const normalizedPhone = this.normalizePhone(phone);
+    
+    if (!normalizedPhone) return null;
+
+    // Buscar clientes con teléfono no nulo
+    const { data, error } = await supabase
+      .from('customers')
+      .select('*')
+      .not('phone', 'is', null);
+
+    if (error) throw error;
+    if (!data || data.length === 0) return null;
+
+    // Buscar coincidencia exacta con teléfono normalizado
+    for (const customer of data as CustomerRow[]) {
+      if (customer.phone && this.normalizePhone(customer.phone) === normalizedPhone) {
+        return customer;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Normaliza un número de teléfono para comparación.
+   * Remueve espacios, guiones, paréntesis y prefijos de país.
+   */
+  private normalizePhone(phone: string): string {
+    // Remover todo excepto dígitos
+    let normalized = phone.replace(/\D/g, '');
+    
+    // Remover prefijo de Colombia si existe (57)
+    if (normalized.startsWith('57') && normalized.length > 10) {
+      normalized = normalized.substring(2);
+    }
+    
+    // Remover prefijo internacional genérico
+    if (normalized.startsWith('00')) {
+      normalized = normalized.substring(2);
+    }
+    
+    return normalized;
   }
 
   async create(input: CreateCustomerInput): Promise<CustomerRow> {
