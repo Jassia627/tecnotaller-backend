@@ -1,0 +1,91 @@
+@startuml Diagrama_WorkOrder_DESPUES_Prototype
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam defaultFontName Arial
+skinparam backgroundColor #FEFEFE
+skinparam class {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    ArrowColor #2E7D32
+}
+skinparam interface {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+}
+
+title **WorkOrder - DESPUÉS de aplicar Patrón Prototype**\n<size:11>Con capacidad de clonación mediante IPrototype</size>
+
+package "work-orders" #E8F5E9 {
+    
+    interface "<<interface>>\nIPrototype<T>" as IPrototype {
+        + clone(): T
+    }
+    
+    class WorkOrder {
+        - id: string
+        - guideNumber: string
+        - customerId: string | null
+        - technicianId: string | null
+        - deviceBrand: string
+        - deviceModel: string
+        - deviceSerial: string
+        - problemDescription: string
+        - accessories: string | null
+        - scheduledTime: string | null
+        - assignedTime: string | null
+        - _currentStatus: OrderStatus
+        - createdAt: string
+        - appointmentId: string | null
+        __
+        + {static} fromRow(row: WorkOrderRow): WorkOrder
+        + **clone(): WorkOrder** ◄ PROTOTYPE
+        + **cloneWith(overrides): WorkOrder** ◄ PROTOTYPE+
+        + **toCreateInput(): CreateWorkOrderInput**
+        + currentStatus: OrderStatus
+        + canTransitionTo(next: OrderStatus): boolean
+        + transitionTo(next: OrderStatus): void
+        + toJSON(): object
+    }
+    
+    class WorkOrderService {
+        - repository: IWorkOrderRepository
+        - guid: GuidGenerator
+        __
+        + create(input, status, appointmentId?): Promise<WorkOrder>
+        + getById(id: string): Promise<WorkOrder>
+        + list(options): Promise<{items, total}>
+        + transitionStatus(id, to, userId): Promise<WorkOrder>
+        + assignTechnician(id, input): Promise<WorkOrder>
+        + **duplicateOrder(id, newDesc?): Promise<WorkOrder>** ◄ USA PROTOTYPE
+    }
+    
+    note right of IPrototype
+        **PATRÓN PROTOTYPE**
+        Interfaz genérica que define
+        el contrato de clonación.
+        
+        Permite crear copias de objetos
+        sin depender de sus clases concretas.
+    end note
+    
+    note bottom of WorkOrder
+        ✅ **SOLUCIÓN:**
+        
+        **clone()**: Crea copia exacta con IDs vacíos
+        - Mantiene: cliente, dispositivo, accesorios
+        - Reinicia: estado, fechas, técnico
+        
+        **cloneWith(overrides)**: Crea copia con modificaciones
+        - Permite cambiar descripción del problema
+        - Permite cambiar cliente o técnico
+        
+        **toCreateInput()**: Convierte clon a input para persistir
+    end note
+}
+
+WorkOrder ..|> IPrototype : implements
+WorkOrderService --> WorkOrder : crea/clona
+
+@enduml

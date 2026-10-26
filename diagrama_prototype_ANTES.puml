@@ -1,0 +1,70 @@
+@startuml Diagrama_WorkOrder_ANTES_Prototype
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam defaultFontName Arial
+skinparam backgroundColor #FEFEFE
+skinparam class {
+    BackgroundColor #FFF8DC
+    BorderColor #8B4513
+    ArrowColor #8B4513
+}
+
+title **WorkOrder - ANTES de aplicar Patrón Prototype**\n<size:11>Sin capacidad de clonación</size>
+
+package "work-orders" #FFEBCD {
+    
+    class WorkOrder {
+        - id: string
+        - guideNumber: string
+        - customerId: string | null
+        - technicianId: string | null
+        - deviceBrand: string
+        - deviceModel: string
+        - deviceSerial: string
+        - problemDescription: string
+        - accessories: string | null
+        - scheduledTime: string | null
+        - assignedTime: string | null
+        - _currentStatus: OrderStatus
+        - createdAt: string
+        - appointmentId: string | null
+        __
+        + {static} fromRow(row: WorkOrderRow): WorkOrder
+        + currentStatus: OrderStatus
+        + canTransitionTo(next: OrderStatus): boolean
+        + transitionTo(next: OrderStatus): void
+        + toJSON(): object
+    }
+    
+    class WorkOrderService {
+        - repository: IWorkOrderRepository
+        - guid: GuidGenerator
+        __
+        + create(input, status, appointmentId?): Promise<WorkOrder>
+        + getById(id: string): Promise<WorkOrder>
+        + list(options): Promise<{items, total}>
+        + transitionStatus(id, to, userId): Promise<WorkOrder>
+        + assignTechnician(id, input): Promise<WorkOrder>
+    }
+    
+    note right of WorkOrder
+        ❌ **PROBLEMA:**
+        No hay forma de clonar una orden.
+        
+        Para crear una orden similar (garantía,
+        dispositivo recurrente), hay que:
+        1. Obtener la orden original
+        2. Extraer CADA campo manualmente
+        3. Crear un nuevo input desde cero
+        4. Llamar a create()
+        
+        Esto es propenso a errores y
+        viola DRY (Don't Repeat Yourself)
+    end note
+}
+
+WorkOrderService --> WorkOrder : crea/usa
+
+@enduml

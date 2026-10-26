@@ -1,5 +1,14 @@
 import { z } from 'zod';
 
+/**
+ * PATRÓN PROTOTYPE
+ * Interfaz que define el contrato para objetos clonables.
+ * Permite crear copias de objetos sin depender de sus clases concretas.
+ */
+export interface IPrototype<T> {
+  clone(): T;
+}
+
 export const ORDER_STATUSES = [
   'PENDIENTE',
   'ACEPTADA',
@@ -60,7 +69,7 @@ export interface StatusHistoryEntry {
   createdAt: string;
 }
 
-export class WorkOrder {
+export class WorkOrder implements IPrototype<WorkOrder> {
   private constructor(
     readonly id: string,
     readonly guideNumber: string,
@@ -95,6 +104,80 @@ export class WorkOrder {
       row.created_at,
       row.appointment_id,
     );
+  }
+
+  /**
+   * PATRÓN PROTOTYPE: Clona la orden de servicio.
+   * Crea una copia con IDs vacíos (se generarán al persistir) pero mantiene
+   * los datos del dispositivo y cliente.
+   * 
+   * Casos de uso:
+   * - Órdenes de garantía (mismo dispositivo, nuevo problema)
+   * - Dispositivos recurrentes (cliente trae el mismo equipo)
+   * - Crear seguimientos de reparaciones anteriores
+   */
+  clone(): WorkOrder {
+    return new WorkOrder(
+      '',                          // ID vacío (se generará al persistir)
+      '',                          // guideNumber vacío (se generará al persistir)
+      this.customerId,             // Mismo cliente
+      null,                        // Sin técnico asignado (se asignará después)
+      this.deviceBrand,            // Misma marca
+      this.deviceModel,            // Mismo modelo
+      this.deviceSerial,           // Mismo serial
+      this.problemDescription,     // Misma descripción (se puede modificar después)
+      this.accessories,            // Mismos accesorios
+      null,                        // Sin tiempo programado
+      null,                        // Sin tiempo asignado
+      'PENDIENTE',                 // Estado inicial para nueva orden
+      new Date().toISOString(),    // Nueva fecha de creación
+      null,                        // Sin cita asociada
+    );
+  }
+
+  /**
+   * PATRÓN PROTOTYPE (variante): Clona la orden con modificaciones específicas.
+   * Permite crear variantes de la orden original sobrescribiendo campos específicos.
+   */
+  cloneWith(overrides: Partial<{
+    problemDescription: string;
+    accessories: string | null;
+    customerId: string | null;
+    technicianId: string | null;
+  }>): WorkOrder {
+    return new WorkOrder(
+      '',
+      '',
+      overrides.customerId ?? this.customerId,
+      overrides.technicianId ?? null,
+      this.deviceBrand,
+      this.deviceModel,
+      this.deviceSerial,
+      overrides.problemDescription ?? this.problemDescription,
+      overrides.accessories ?? this.accessories,
+      null,
+      null,
+      'PENDIENTE',
+      new Date().toISOString(),
+      null,
+    );
+  }
+
+  /**
+   * Convierte la orden (o su clon) a un input válido para crear una nueva orden en BD.
+   * Útil después de clonar para persistir la nueva orden.
+   */
+  toCreateInput(): CreateWorkOrderInput {
+    return {
+      customerId: this.customerId,
+      technicianId: this.technicianId,
+      deviceBrand: this.deviceBrand,
+      deviceModel: this.deviceModel,
+      deviceSerial: this.deviceSerial,
+      problemDescription: this.problemDescription,
+      accessories: this.accessories ?? undefined,
+      scheduledTime: this.scheduledTime,
+    };
   }
 
   get currentStatus(): OrderStatus {
@@ -174,3 +257,9 @@ export const assignTechnicianSchema = z.object({
 });
 
 export type AssignTechnicianInput = z.infer<typeof assignTechnicianSchema>;
+
+export const duplicateOrderSchema = z.object({
+  problemDescription: z.string().min(1).optional(),
+});
+
+export type DuplicateOrderInput = z.infer<typeof duplicateOrderSchema>;

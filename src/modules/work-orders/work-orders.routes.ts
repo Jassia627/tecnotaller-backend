@@ -35,6 +35,9 @@ export function createWorkOrdersRouter(): Router {
   router.get('/:id/activities', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.listActivities.bind(controller)));
   router.patch('/:id/assign-technician', authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.assignTechnician.bind(controller)));
   
+  // PATRÓN PROTOTYPE: Duplicar orden existente (para garantías o dispositivos recurrentes)
+  router.post('/:id/duplicate', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.duplicateOrder.bind(controller)));
+  
   // Submount fotos módulo
   router.use('/:id/photos', createPhotosRouter());
 

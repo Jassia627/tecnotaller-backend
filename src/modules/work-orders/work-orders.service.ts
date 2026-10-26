@@ -133,4 +133,28 @@ export class WorkOrderService {
     const row = await this.repository.assignTechnician(id, input.technicianId);
     return WorkOrder.fromRow(row);
   }
+
+  /**
+   * PATRÓN PROTOTYPE: Duplica una orden existente.
+   * Útil para:
+   * - Órdenes de garantía (mismo dispositivo regresa)
+   * - Dispositivos recurrentes (cliente frecuente con mismo equipo)
+   * - Crear seguimiento de reparaciones anteriores
+   * 
+   * @param originalOrderId ID de la orden a duplicar
+   * @param newProblemDescription Nueva descripción del problema (opcional)
+   * @returns Nueva orden creada basada en la original
+   */
+  async duplicateOrder(originalOrderId: string, newProblemDescription?: string): Promise<WorkOrder> {
+    // Obtener orden original
+    const original = await this.getById(originalOrderId);
+    
+    // PATRÓN PROTOTYPE: Clonar la orden con nueva descripción si se proporciona
+    const cloned = newProblemDescription 
+      ? original.cloneWith({ problemDescription: newProblemDescription })
+      : original.clone();
+    
+    // Persistir el clon como nueva orden
+    return this.create(cloned.toCreateInput(), 'PENDIENTE');
+  }
 }

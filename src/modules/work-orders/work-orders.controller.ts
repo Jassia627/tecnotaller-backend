@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { WorkOrderService } from './work-orders.service';
-import { OrderStatus, assignTechnicianSchema, createWorkOrderSchema, exitRegisterSchema, transitionStatusSchema } from './work-orders.types';
+import { OrderStatus, assignTechnicianSchema, createWorkOrderSchema, duplicateOrderSchema, exitRegisterSchema, transitionStatusSchema } from './work-orders.types';
 import { ActivityService } from '../activities/activities.service';
 import { ActivityRepository } from '../activities/activities.repository';
 import { createActivitySchema } from '../activities/activities.types';
@@ -111,5 +111,16 @@ export class WorkOrderController {
     const input = assignTechnicianSchema.parse(req.body);
     const order = await this.service.assignTechnician(req.params.id!, input);
     res.json(order);
+  }
+
+  /**
+   * PATRÓN PROTOTYPE: Duplica una orden existente.
+   * POST /work-orders/:id/duplicate
+   * Útil para órdenes de garantía o dispositivos recurrentes.
+   */
+  async duplicateOrder(req: Request, res: Response): Promise<void> {
+    const input = duplicateOrderSchema.parse(req.body);
+    const order = await this.service.duplicateOrder(req.params.id!, input.problemDescription);
+    res.status(201).json(order);
   }
 }
