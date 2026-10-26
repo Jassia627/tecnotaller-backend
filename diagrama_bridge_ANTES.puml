@@ -1,0 +1,82 @@
+@startuml Diagrama_Notifications_ANTES_Bridge
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classAttributeFontSize 11
+skinparam defaultFontName Arial
+skinparam backgroundColor #FEFEFE
+skinparam class {
+    BackgroundColor #FFF8DC
+    BorderColor #8B4513
+    ArrowColor #8B4513
+}
+
+title **Sistema de Notificaciones - ANTES de aplicar Patrón Bridge**\n<size:11>Canales de envío sin abstracción de tipos de notificación</size>
+
+package "notifications" #FFEBCD {
+    
+    interface INotifier {
+        + send(message: NotificationMessage): Promise<void>
+    }
+    
+    class NotificationMessage {
+        + toEmail: string
+        + subject: string
+        + body: string
+    }
+    
+    class EmailNotifier {
+        + send(message): Promise<void>
+    }
+    
+    class SmsNotifier {
+        + send(message): Promise<void>
+    }
+    
+    class WhatsAppNotifier {
+        + send(message): Promise<void>
+    }
+    
+    class ConsoleNotifier {
+        + send(message): Promise<void>
+    }
+    
+    class NotificationService {
+        - repository: INotificationRepository
+        - notifier: INotifier
+        __
+        + send(id, message): Promise<void>
+    }
+    
+    note right of NotificationService
+        ❌ **PROBLEMA:**
+        
+        El servicio recibe un mensaje genérico
+        (subject, body) que debe construirse
+        manualmente en cada lugar de uso.
+        
+        Si quiero enviar "cambio de estado":
+        - Debo crear el mensaje manualmente
+        - El formato se repite en múltiples lugares
+        - Agregar un nuevo tipo de notificación
+          requiere duplicar código
+        
+        **Ejemplo de uso actual:**
+        const msg = {
+          toEmail: email,
+          subject: "Estado actualizado",
+          body: `Orden ${id} cambió a ${status}`
+        };
+        await service.send(notifId, msg);
+    end note
+}
+
+INotifier <|.. EmailNotifier
+INotifier <|.. SmsNotifier
+INotifier <|.. WhatsAppNotifier
+INotifier <|.. ConsoleNotifier
+
+NotificationService --> INotifier : usa
+NotificationService ..> NotificationMessage : recibe
+
+@enduml

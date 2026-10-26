@@ -1,0 +1,135 @@
+@startuml Diagrama_Notifications_DESPUES_Bridge
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classAttributeFontSize 10
+skinparam defaultFontName Arial
+skinparam backgroundColor #FEFEFE
+skinparam class {
+    BackgroundColor #E8F5E9
+    BorderColor #2E7D32
+    ArrowColor #2E7D32
+}
+skinparam interface {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+}
+skinparam abstract {
+    BackgroundColor #FFF3E0
+    BorderColor #E65100
+}
+
+title **Sistema de Notificaciones - DESPUÉS de aplicar Patrón Bridge**\n<size:11>Abstracción (tipos) separada de Implementación (canales)</size>
+
+package "IMPLEMENTACIÓN (Canales)" #E3F2FD {
+    
+    interface INotificationChannel {
+        + channelName: string
+        + send(to, subject, body): Promise<void>
+    }
+    
+    class EmailChannel {
+        + channelName = "email"
+        + send(to, subject, body): Promise<void>
+    }
+    
+    class SmsChannel {
+        + channelName = "sms"
+        + send(to, subject, body): Promise<void>
+    }
+    
+    class WhatsAppChannel {
+        + channelName = "whatsapp"
+        + send(to, subject, body): Promise<void>
+    }
+    
+    class ConsoleChannel {
+        + channelName = "console"
+        + send(to, subject, body): Promise<void>
+    }
+}
+
+package "ABSTRACCIÓN (Tipos de Notificación)" #FFF3E0 {
+    
+    abstract class NotificationAbstraction {
+        # channel: INotificationChannel
+        __
+        + setChannel(channel): void
+        + getChannelName(): string
+        + {abstract} send(): Promise<void>
+    }
+    
+    class StatusChangeNotification {
+        - toEmail: string
+        - guideNumber: string
+        - fromStatus: string
+        - toStatus: string
+        - customerName: string
+        __
+        + send(): Promise<void>
+    }
+    
+    class AppointmentReminderNotification {
+        - toEmail: string
+        - customerName: string
+        - appointmentDate: Date
+        - serviceName: string
+        __
+        + send(): Promise<void>
+    }
+    
+    class WarrantyAlertNotification {
+        - toEmail: string
+        - customerName: string
+        - guideNumber: string
+        - expirationDate: Date
+        - daysRemaining: number
+        __
+        + send(): Promise<void>
+    }
+    
+    class ReadyForPickupNotification {
+        - toEmail: string
+        - customerName: string
+        - guideNumber: string
+        - deviceDescription: string
+        __
+        + send(): Promise<void>
+    }
+}
+
+' Relaciones de herencia
+INotificationChannel <|.. EmailChannel
+INotificationChannel <|.. SmsChannel
+INotificationChannel <|.. WhatsAppChannel
+INotificationChannel <|.. ConsoleChannel
+
+NotificationAbstraction <|-- StatusChangeNotification
+NotificationAbstraction <|-- AppointmentReminderNotification
+NotificationAbstraction <|-- WarrantyAlertNotification
+NotificationAbstraction <|-- ReadyForPickupNotification
+
+' BRIDGE: La abstracción tiene referencia a la implementación
+NotificationAbstraction o--> INotificationChannel : bridge
+
+note bottom of NotificationAbstraction
+    ✅ **PATRÓN BRIDGE**
+    
+    La abstracción (tipos de notificación)
+    está separada de la implementación (canales).
+    
+    **Beneficios:**
+    - Agregar nuevo tipo: solo crear clase que extienda NotificationAbstraction
+    - Agregar nuevo canal: solo crear clase que implemente INotificationChannel
+    - Sin explosión de clases: 4 tipos + 4 canales = 8 clases (no 16)
+    - Cambio de canal en runtime con setChannel()
+end note
+
+note right of INotificationChannel
+    Los canales no saben
+    qué tipo de notificación
+    están enviando.
+    Solo reciben (to, subject, body).
+end note
+
+@enduml
