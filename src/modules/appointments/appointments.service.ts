@@ -100,17 +100,24 @@ export class AppointmentService {
       throw new ForbiddenError('Debe proporcionar la descripción del problema (problemDescription)');
     }
 
+    // Serial: usar el proporcionado o generar uno provisional
+    // El serial provisional indica claramente que está pendiente de recepción
+    const deviceSerial = input.deviceSerial || `PENDIENTE-${Date.now()}`;
+
+    // customerId: usar el proporcionado en el input (puede venir del frontend)
+    const customerId = input.customerId ?? null;
+
     // Crear la orden de servicio
     const workOrder = await this.workOrderService.create(
       {
         deviceBrand,
         deviceModel,
-        deviceSerial: input.deviceSerial,
+        deviceSerial,
         problemDescription,
         technicianId: input.technicianId ?? null,
         devicePassword: input.devicePassword,
         accessories: input.accessories,
-        customerId: null, // Se puede asociar después si es necesario
+        customerId,
         scheduledTime: appointment.date.toISOString(),
       },
       'ACEPTADA',

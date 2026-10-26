@@ -148,11 +148,14 @@ export type CompleteAppointmentInput = z.infer<typeof completeAppointmentSchema>
 export const convertToOrderSchema = z.object({
   deviceBrand: z.string().min(1).optional(),
   deviceModel: z.string().min(1).optional(),
-  deviceSerial: z.string().min(1, 'El serial del dispositivo es obligatorio'),
+  // Serial ahora es opcional - se usa valor provisional si no se proporciona
+  deviceSerial: z.string().min(1).optional(),
   problemDescription: z.string().min(1).optional(),
   technicianId: z.string().uuid().nullable().optional(),
   devicePassword: z.string().optional(),
   accessories: z.string().optional(),
+  // customerId para asociar la orden con un cliente registrado
+  customerId: z.string().uuid().nullable().optional(),
 });
 
 export type ConvertToOrderInput = z.infer<typeof convertToOrderSchema>;

@@ -101,6 +101,12 @@ export const openapiSpec = {
           date: { type: 'string', format: 'date-time' },
           status: { type: 'string', enum: ['pendiente', 'confirmada', 'cancelada', 'completada'] },
           createdAt: { type: 'string', format: 'date-time' },
+          deviceBrand: { type: 'string', nullable: true, description: 'Marca del dispositivo (opcional)' },
+          deviceModel: { type: 'string', nullable: true, description: 'Modelo del dispositivo (opcional)' },
+          problemDescription: { type: 'string', nullable: true, description: 'Descripción del problema (opcional)' },
+          completedServices: { type: 'string', nullable: true, description: 'Servicios realizados (para citas completadas)' },
+          completedNotes: { type: 'string', nullable: true, description: 'Notas adicionales (para citas completadas)' },
+          completedAt: { type: 'string', format: 'date-time', nullable: true, description: 'Fecha de completado' },
         },
       },
       WorkOrder: {
@@ -604,6 +610,80 @@ export const openapiSpec = {
         security: [{ bearerAuth: [] }],
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
         responses: { 200: { description: 'Cita cancelada', content: { 'application/json': { schema: { $ref: '#/components/schemas/Appointment' } } } } },
+      },
+    },
+    '/appointments/{id}/complete': {
+      patch: {
+        tags: ['appointments'],
+        summary: 'Completar cita',
+        description: 'Marca una cita confirmada como completada cuando el servicio se realiza en el momento (sin ingreso al taller).',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['completedServices'],
+                properties: {
+                  completedServices: { type: 'string', description: 'Descripción de los servicios realizados' },
+                  completedNotes: { type: 'string', description: 'Notas adicionales (opcional)' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'Cita completada', content: { 'application/json': { schema: { $ref: '#/components/schemas/Appointment' } } } },
+          403: { description: 'Solo se puede completar una cita confirmada' },
+        },
+      },
+    },
+    '/appointments/{id}/convert': {
+      post: {
+        tags: ['appointments'],
+        summary: 'Convertir cita a orden de servicio',
+        description: 'Convierte una cita confirmada en una orden de servicio para ingreso al taller. Es idempotente: si ya existe una orden para la cita, la devuelve sin crear duplicados. Si no se proporciona deviceSerial, se genera uno provisional (PENDIENTE-timestamp).',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  deviceBrand: { type: 'string', description: 'Marca del dispositivo (usa el de la cita si no se proporciona)' },
+                  deviceModel: { type: 'string', description: 'Modelo del dispositivo (usa el de la cita si no se proporciona)' },
+                  deviceSerial: { type: 'string', description: 'Serial del dispositivo (opcional, se genera provisional si no se proporciona)' },
+                  problemDescription: { type: 'string', description: 'Descripción del problema (usa el de la cita si no se proporciona)' },
+                  customerId: { type: 'string', format: 'uuid', nullable: true, description: 'ID del cliente registrado a asociar con la orden' },
+                  technicianId: { type: 'string', format: 'uuid', nullable: true, description: 'ID del técnico a asignar' },
+                  devicePassword: { type: 'string', description: 'Contraseña del dispositivo (se cifra)' },
+                  accessories: { type: 'string', description: 'Accesorios entregados' },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Orden creada (o existente si ya se convirtió)',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    appointment: { $ref: '#/components/schemas/Appointment' },
+                    workOrder: { $ref: '#/components/schemas/WorkOrder' },
+                  },
+                },
+              },
+            },
+          },
+          403: { description: 'Solo se puede convertir una cita confirmada' },
+        },
       },
     },
     '/work-orders/track/{guideNumber}': {
