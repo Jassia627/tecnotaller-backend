@@ -9,8 +9,9 @@ import {
 export interface IWorkOrderRepository {
   findById(id: string): Promise<WorkOrderRow | null>;
   findByGuideNumber(guideNumber: string): Promise<WorkOrderRow | null>;
+  findByAppointmentId(appointmentId: string): Promise<WorkOrderRow | null>;
   list(options: { status?: OrderStatus; technicianId?: string; customerId?: string; fromDate?: string; toDate?: string; searchText?: string; page: number; pageSize: number }): Promise<{ rows: WorkOrderRow[]; total: number }>;
-  create(input: CreateWorkOrderInput, guideNumber: string, initialStatus: 'PENDIENTE' | 'ACEPTADA'): Promise<WorkOrderRow>;
+  create(input: CreateWorkOrderInput, guideNumber: string, initialStatus: 'PENDIENTE' | 'ACEPTADA', appointmentId?: string): Promise<WorkOrderRow>;
   transitionStatus(id: string, from: OrderStatus, to: OrderStatus, userId: string): Promise<WorkOrderRow>;
   listHistory(id: string): Promise<StatusHistoryRow[]>;
   listHistoryByGuide(guideNumber: string): Promise<StatusHistoryRow[]>;
@@ -31,6 +32,15 @@ export class WorkOrderRepository implements IWorkOrderRepository {
 
   async findByGuideNumber(guideNumber: string): Promise<WorkOrderRow | null> {
     const { data, error } = await supabase.from('work_orders').select('*').eq('guide_number', guideNumber).single();
+    if (error) {
+      if (error.code === 'PGRST116' || error.code === '22P02') return null;
+      throw error;
+    }
+    return data as WorkOrderRow;
+  }
+
+  async findByAppointmentId(appointmentId: string): Promise<WorkOrderRow | null> {
+    const { data, error } = await supabase.from('work_orders').select('*').eq('appointment_id', appointmentId).single();
     if (error) {
       if (error.code === 'PGRST116' || error.code === '22P02') return null;
       throw error;
@@ -86,7 +96,7 @@ export class WorkOrderRepository implements IWorkOrderRepository {
     return { rows: (data as WorkOrderRow[]) ?? [], total: count ?? 0 };
   }
 
-  async create(input: CreateWorkOrderInput, guideNumber: string, initialStatus: 'PENDIENTE' | 'ACEPTADA' = 'ACEPTADA'): Promise<WorkOrderRow> {
+  async create(input: CreateWorkOrderInput, guideNumber: string, initialStatus: 'PENDIENTE' | 'ACEPTADA' = 'ACEPTADA', appointmentId?: string): Promise<WorkOrderRow> {
     let finalCustomerId: string | null = input.customerId ?? null;
     let finalTechnicianId: string | null = input.technicianId ?? null;
 
@@ -123,6 +133,7 @@ export class WorkOrderRepository implements IWorkOrderRepository {
         scheduled_time: input.scheduledTime ?? null,
         assigned_time: null,
         current_status: initialStatus,
+        appointment_id: appointmentId ?? null,
       })
       .select('*')
       .single();

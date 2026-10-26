@@ -2,6 +2,7 @@ import { supabase } from '../../config/supabase';
 import {
   AppointmentRow,
   AppointmentStatus,
+  CompleteAppointmentInput,
   CreateAppointmentInput,
 } from './appointments.types';
 
@@ -12,6 +13,7 @@ export interface IAppointmentRepository {
   setStatus(id: string, status: AppointmentStatus): Promise<AppointmentRow>;
   cancelExpired(thresholdMinutes: number): Promise<number>;
   hasOverlap(serviceId: string, date: string): Promise<boolean>;
+  complete(id: string, input: CompleteAppointmentInput): Promise<AppointmentRow>;
 }
 
 export class AppointmentRepository implements IAppointmentRepository {
@@ -43,6 +45,9 @@ export class AppointmentRepository implements IAppointmentRepository {
         phone: input.phone,
         date: input.date,
         status: 'pendiente',
+        device_brand: input.deviceBrand ?? null,
+        device_model: input.deviceModel ?? null,
+        problem_description: input.problemDescription ?? null,
       })
       .select('*')
       .single();
@@ -88,5 +93,21 @@ export class AppointmentRepository implements IAppointmentRepository {
 
     if (error) throw error;
     return (count ?? 0) > 0;
+  }
+
+  async complete(id: string, input: CompleteAppointmentInput): Promise<AppointmentRow> {
+    const { data, error } = await supabase
+      .from('appointments')
+      .update({
+        status: 'completada',
+        completed_services: input.completedServices,
+        completed_notes: input.completedNotes ?? null,
+        completed_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    return data as AppointmentRow;
   }
 }

@@ -40,6 +40,7 @@ export interface WorkOrderRow {
   assigned_time: string | null;
   current_status: OrderStatus;
   created_at: string;
+  appointment_id: string | null;
 }
 
 export interface StatusHistoryRow {
@@ -74,6 +75,7 @@ export class WorkOrder {
     readonly assignedTime: string | null,
     private _currentStatus: OrderStatus,
     readonly createdAt: string,
+    readonly appointmentId: string | null,
   ) {}
 
   static fromRow(row: WorkOrderRow): WorkOrder {
@@ -91,6 +93,7 @@ export class WorkOrder {
       row.assigned_time,
       row.current_status,
       row.created_at,
+      row.appointment_id,
     );
   }
 
@@ -124,6 +127,7 @@ export class WorkOrder {
       assignedTime: this.assignedTime,
       currentStatus: this._currentStatus,
       createdAt: this.createdAt,
+      appointmentId: this.appointmentId,
     };
   }
 }

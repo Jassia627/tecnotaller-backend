@@ -17,15 +17,20 @@ export class WorkOrderService {
     private readonly guid: GuidGenerator,
   ) {}
 
-  async create(input: CreateWorkOrderInput, initialStatus: 'PENDIENTE' | 'ACEPTADA' = 'ACEPTADA'): Promise<WorkOrder> {
+  async create(input: CreateWorkOrderInput, initialStatus: 'PENDIENTE' | 'ACEPTADA' = 'ACEPTADA', appointmentId?: string): Promise<WorkOrder> {
     const guideNumber = this.guid.generate().slice(0, 8).toUpperCase();
-    return WorkOrder.fromRow(await this.repository.create(input, guideNumber, initialStatus));
+    return WorkOrder.fromRow(await this.repository.create(input, guideNumber, initialStatus, appointmentId));
   }
 
   async getById(id: string): Promise<WorkOrder> {
     const row = await this.repository.findById(id);
     if (!row) throw new NotFoundError('Orden de servicio no encontrada');
     return WorkOrder.fromRow(row);
+  }
+
+  async findByAppointmentId(appointmentId: string): Promise<WorkOrder | null> {
+    const row = await this.repository.findByAppointmentId(appointmentId);
+    return row ? WorkOrder.fromRow(row) : null;
   }
 
   async list(options: {

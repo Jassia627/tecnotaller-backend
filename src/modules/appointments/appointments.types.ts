@@ -10,6 +10,14 @@ export interface AppointmentRow {
   date: string;
   status: AppointmentStatus;
   created_at: string;
+  // Nuevos campos de dispositivo (opcionales)
+  device_brand: string | null;
+  device_model: string | null;
+  problem_description: string | null;
+  // Campos de servicio completado en el momento
+  completed_services: string | null;
+  completed_notes: string | null;
+  completed_at: string | null;
 }
 
 export class Appointment {
@@ -21,6 +29,14 @@ export class Appointment {
     readonly date: Date,
     private _status: AppointmentStatus,
     readonly createdAt: Date,
+    // Nuevos campos de dispositivo
+    readonly deviceBrand: string | null,
+    readonly deviceModel: string | null,
+    readonly problemDescription: string | null,
+    // Campos de servicio completado
+    readonly completedServices: string | null,
+    readonly completedNotes: string | null,
+    readonly completedAt: Date | null,
   ) {}
 
   static fromRow(row: AppointmentRow): Appointment {
@@ -32,6 +48,12 @@ export class Appointment {
       new Date(row.date),
       row.status,
       new Date(row.created_at),
+      row.device_brand,
+      row.device_model,
+      row.problem_description,
+      row.completed_services,
+      row.completed_notes,
+      row.completed_at ? new Date(row.completed_at) : null,
     );
   }
 
@@ -53,6 +75,11 @@ export class Appointment {
     this._status = 'completada';
   }
 
+  /** Verifica si la cita tiene datos suficientes para crear una orden de servicio */
+  hasDeviceData(): boolean {
+    return !!(this.deviceBrand && this.deviceModel && this.problemDescription);
+  }
+
   toJSON() {
     return {
       id: this.id,
@@ -62,6 +89,12 @@ export class Appointment {
       date: this.date.toISOString(),
       status: this._status,
       createdAt: this.createdAt.toISOString(),
+      deviceBrand: this.deviceBrand,
+      deviceModel: this.deviceModel,
+      problemDescription: this.problemDescription,
+      completedServices: this.completedServices,
+      completedNotes: this.completedNotes,
+      completedAt: this.completedAt?.toISOString() ?? null,
     };
   }
 }
@@ -95,6 +128,31 @@ export const createAppointmentSchema = z.object({
   customerName: z.string().min(1),
   phone: z.string().min(1),
   date: z.preprocess(normalizeDate, z.string().datetime()),
+  // Campos opcionales de dispositivo (para citas que requieren ingreso al taller)
+  deviceBrand: z.string().min(1).optional(),
+  deviceModel: z.string().min(1).optional(),
+  problemDescription: z.string().min(1).optional(),
 });
 
 export type CreateAppointmentInput = z.infer<typeof createAppointmentSchema>;
+
+// Schema para completar una cita (servicio realizado en el momento)
+export const completeAppointmentSchema = z.object({
+  completedServices: z.string().min(1, 'Debe especificar los servicios realizados'),
+  completedNotes: z.string().optional(),
+});
+
+export type CompleteAppointmentInput = z.infer<typeof completeAppointmentSchema>;
+
+// Schema para convertir cita a orden (opcional: permite agregar datos faltantes)
+export const convertToOrderSchema = z.object({
+  deviceBrand: z.string().min(1).optional(),
+  deviceModel: z.string().min(1).optional(),
+  deviceSerial: z.string().min(1, 'El serial del dispositivo es obligatorio'),
+  problemDescription: z.string().min(1).optional(),
+  technicianId: z.string().uuid().nullable().optional(),
+  devicePassword: z.string().optional(),
+  accessories: z.string().optional(),
+});
+
+export type ConvertToOrderInput = z.infer<typeof convertToOrderSchema>;
