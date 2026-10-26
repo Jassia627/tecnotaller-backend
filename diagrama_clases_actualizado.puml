@@ -1,0 +1,478 @@
+@startuml TechnoTaller - Diagrama de Clases UML Completo con SOLID (CC-01 al CC-08)
+
+!define ABSTRACT abstract
+!define INTERFACE interface
+
+title Diagrama de Clases: Arquitectura SOLID Completa\nTecnoTaller (Backend + Frontend)\nCC-01 a CC-08
+
+' ============ CAPA BACKEND - INTERFACES Y ABSTRACCIONES ============
+
+interface IAuthorizationFilter {
+    + applyFilter(options: Record): void
+    --
+    CC-05 OCP: Strategy Pattern para roles
+}
+
+interface IProductRepository {
+    + list(options): Promise<{rows, total}>
+    + findById(id): Promise<ProductRow | null>
+    + create(input): Promise<ProductRow>
+    + update(id, input): Promise<ProductRow>
+    + setActive(id, active): Promise<ProductRow>
+    + registerMovement(productId, input, userId): Promise<ProductRow>
+    --
+    CC-07 DIP: Inyección de dependencias
+}
+
+interface IWorkOrderRepository {
+    + findById(id): Promise<WorkOrderRow | null>
+    + list(options): Promise<{rows, total}>
+    + create(input, guideNumber, status): Promise<WorkOrderRow>
+    + transitionStatus(id, from, to, userId): Promise<WorkOrderRow>
+}
+
+' ============ CONSTANTES CENTRALIZADAS - CC-08 (Eliminación Magic Strings) ============
+
+class DBErrorConstants {
+    + POSTGRES_ERROR_CODES: Record
+    + POSTGREST_ERROR_CODES: Record
+    + DB_ERROR_PATTERNS: Record<string, RegExp[]>
+    + UUID_REGEX: RegExp
+    --
+    + isValidUuid(id: string): boolean
+    --
+    CC-08: Códigos de error tipados
+    Reemplaza magic strings por constantes
+}
+
+class DatabaseTableConstants {
+    + PRODUCTS: string = 'products'
+    + INVENTORY_MOVEMENTS: string
+    + WORK_ORDERS: string
+    --
+    CC-08: Nombres de tablas centralizados
+}
+
+class DatabaseRPCConstants {
+    + REGISTER_INVENTORY_MOVEMENT: string
+    + TRANSITION_ORDER_STATUS: string
+    --
+    CC-08: Funciones RPC centralizadas
+}
+
+' ============ ESTRATEGIAS DE AUTORIZACIÓN - CC-05 OCP ============
+
+class TechnicianAuthorizationFilter {
+    + applyFilter(options: Record): void
+    --
+    Filtra órdenes por technicianId
+}
+
+class AdminAuthorizationFilter {
+    + applyFilter(options: Record): void
+    --
+    Sin restricciones de permisos
+}
+
+class ClientAuthorizationFilter {
+    + applyFilter(options: Record): void
+    --
+    Filtra órdenes por customerId
+}
+
+class AuthorizationFilterFactory {
+    + {static} createFilter(role: string): IAuthorizationFilter
+    --
+    Factory: crea estrategias por rol
+    CC-05: Nuevos roles sin modificar servicio
+}
+
+' ============ MIDDLEWARE - CC-06 SRP ============
+
+class ValidateRequestMiddleware {
+    - schema: ZodSchema
+    --
+    + handle(req, res, next): Promise<void>
+    --
+    CC-06 SRP: Validación separada
+    Controladores solo orquestan HTTP
+}
+
+' ============ SERVICIOS BACKEND ============
+
+class ProductService {
+    - repository: IProductRepository
+    --
+    + list(page, pageSize): Promise<{items, total}>
+    + getById(id): Promise<Product>
+    + create(input): Promise<Product>
+    + update(id, input): Promise<Product>
+    + registerMovement(productId, input, userId): Promise<Product>
+    --
+    CC-07 DIP: Usa interfaz de repositorio
+}
+
+class WorkOrderService {
+    - repository: IWorkOrderRepository
+    - authFilterFactory: AuthorizationFilterFactory
+    --
+    + create(input, initialStatus): Promise<WorkOrder>
+    + list(options): Promise<{items, total}>
+    + transitionStatus(id, to, userId): Promise<WorkOrder>
+    --
+    CC-05 OCP: Delega a strategies, no hardcodea roles
+}
+
+class AuthService {
+    - repository: IAuthRepository
+    --
+    + register(input): Promise<AuthUser>
+    + login(input): Promise<AuthSession>
+}
+
+' ============ REPOSITORIOS - CC-07 DIP + CC-08 Error Handling ============
+
+class ProductRepository {
+    - db: SupabaseClient
+    --
+    + constructor(db?: SupabaseClient)
+    + list(options): Promise<{rows, total}>
+    + create(input): Promise<ProductRow>
+    + registerMovement(productId, input, userId): Promise<ProductRow>
+    - handleRpcMovementError(error): never
+    --
+    CC-07: Cliente BD inyectado en constructor
+    CC-08: Errores tipados, patrones regex centralizados
+}
+
+class WorkOrderRepository {
+    - db: SupabaseClient
+    --
+    + constructor(db?: SupabaseClient)
+    + create(input, guideNumber, status): Promise<WorkOrderRow>
+    --
+    CC-07: Cliente BD inyectado
+}
+
+' ============ CONTROLADORES - CC-06 SRP ============
+
+class ProductController {
+    - service: ProductService
+    --
+    + list(req, res): void
+    + create(req, res): void
+    + registerMovement(req, res): void
+    --
+    CC-06: Recibe datos en req.validatedData
+    No valida, solo orquesta HTTP
+}
+
+class WorkOrderController {
+    - service: WorkOrderService
+    --
+    + create(req, res): void
+    + list(req, res): void
+    + transitionStatus(req, res): void
+    --
+    CC-06: Validación en middleware previo
+}
+
+class AuthController {
+    - service: AuthService
+    --
+    + register(req, res): void
+    + login(req, res): void
+    --
+    CC-06: NO llama registerSchema.parse()
+}
+
+' ============ ENTIDADES DE DOMINIO ============
+
+class WorkOrder {
+    - id: string
+    - guideNumber: string
+    - customerId: string | null
+    - technicianId: string | null
+    - deviceBrand: string
+    - deviceModel: string
+    - _currentStatus: OrderStatus
+    - scheduledTime: string | null
+    - assignedTime: string | null
+    - createdAt: string
+    --
+    + canTransitionTo(status): boolean
+    + get currentStatus(): OrderStatus
+    + toJSON(): object
+    + static fromRow(row): WorkOrder
+}
+
+class Product {
+    - id: string
+    - sku: string
+    - name: string
+    - description: string
+    - purchasePrice: number
+    - salePrice: number
+    - _stock: number
+    - _active: boolean
+    --
+    + addStock(quantity): void
+    + removeStock(quantity): void
+    + activate(): void
+    + deactivate(): void
+    + get stock(): number
+    + get active(): boolean
+    + toJSON(): object
+}
+
+class PurchaseRequest {
+    - id: string
+    - supplierId: string
+    - productId: string | null
+    - partId: string | null
+    - quantity: number
+    - unitPrice: number
+    - _status: PurchaseStatus
+    - createdAt: string
+    --
+    + markAsReceived(): Promise<void>
+    + canReceive(): boolean
+    + toJSON(): object
+}
+
+class Customer {
+    - id: string
+    - email: string | null
+    - fullName: string
+    - phone: string | null
+    - createdAt: string
+}
+
+class Technician {
+    - id: string
+    - fullName: string
+    - email: string
+    - active: boolean
+}
+
+class AuthUser {
+    - id: string
+    - email: string
+    - role: Role
+    - fullName: string
+}
+
+class Supplier {
+    - id: string
+    - name: string
+    - contactEmail: string | null
+    - phone: string | null
+    - active: boolean
+}
+
+class InventoryMovement {
+    - id: string
+    - productId: string | null
+    - type: InventoryMovementType
+    - quantity: number
+    - reason: string
+    - userId: string
+    - createdAt: string
+}
+
+' ============ CAPA FRONTEND - SEPARACIÓN DE RESPONSABILIDADES ============
+
+note as FrontendNote
+    ===== FRONTEND REFACTORIZADO =====
+    
+    CC-01: Booking Page (SRP)
+    - Esquemas extraídos a src/schemas/booking.schema.ts
+    - Datos estáticos a constantes
+    - Componente solo renderiza
+    
+    CC-02: ProductForm (God Component → Descompuesto)
+    - Extrae esquema a src/schemas/product.schema.ts
+    - Delega campos dinámicos a sub-componentes
+    - Reduce líneas de 400+ a 150
+    
+    CC-03: ProductDetail (OCP)
+    - WhatsApp hardcodeado → import.meta.env
+    - Configuración por entorno
+    - Centralizado y reutilizable
+    
+    CC-04: React Hooks (DIP)
+    - Hooks acoplados a Axios → Service Layer
+    - ProductService, OrderService, etc
+    - Desacoplado de detalles de red
+end note
+
+note as FrontendStructure
+    Estructura Recomendada Frontend:
+    
+    src/
+    ├── schemas/
+    │   ├── booking.schema.ts (CC-01)
+    │   ├── product.schema.ts (CC-02)
+    │   └── ...
+    ├── services/
+    │   ├── ProductService.ts (CC-04)
+    │   ├── OrderService.ts (CC-04)
+    │   └── ...
+    ├── config/
+    │   └── .env (CC-03: variables de entorno)
+    ├── components/
+    │   ├── ProductForm/
+    │   │   ├── ProductForm.tsx (descompuesto)
+    │   │   ├── DynamicFields.tsx (CC-02)
+    │   │   └── FieldRenderer.tsx
+    │   └── ...
+    └── pages/
+        ├── Booking.tsx (CC-01: simplificado)
+        ├── ProductDetail.tsx (CC-03: env-aware)
+        └── ...
+end note
+
+' ============ RELACIONES DE ARQUITECTURA ============
+
+' CC-05: Strategy Pattern
+IAuthorizationFilter <|.. TechnicianAuthorizationFilter : implements
+IAuthorizationFilter <|.. AdminAuthorizationFilter : implements
+IAuthorizationFilter <|.. ClientAuthorizationFilter : implements
+AuthorizationFilterFactory --> IAuthorizationFilter : creates
+
+' CC-07: DIP - Inyección de Dependencias
+ProductService --> IProductRepository : depends on
+ProductRepository --|> IProductRepository : implements
+ProductRepository --> SupabaseClient : injected
+ProductRepository --> DBErrorConstants : uses
+ProductRepository --> DatabaseTableConstants : uses
+ProductRepository --> DatabaseRPCConstants : uses
+
+WorkOrderService --> IWorkOrderRepository : depends on
+WorkOrderRepository --|> IWorkOrderRepository : implements
+WorkOrderRepository --> SupabaseClient : injected
+
+' CC-06: SRP - Middleware de Validación
+ValidateRequestMiddleware --> "ZodSchema" : valida
+
+' CC-05: OCP - Service usa Factory
+WorkOrderService --> AuthorizationFilterFactory : uses
+
+' Controladores
+ProductController --> ProductService : uses
+WorkOrderController --> WorkOrderService : uses
+AuthController --> AuthService : uses
+
+' CC-06: Controladores reciben datos validados
+ProductController -.->ValidateRequestMiddleware : "req.validatedData"
+WorkOrderController -.-> ValidateRequestMiddleware : "req.validatedData"
+AuthController -.-> ValidateRequestMiddleware : "req.validatedData"
+
+' Entidades de Dominio
+ProductService --> Product : returns
+WorkOrderService --> WorkOrder : returns
+PurchaseRequestService --> PurchaseRequest : returns
+
+WorkOrder "1" -- "0..1" Customer : "tiene"
+WorkOrder "1" -- "0..1" Technician : "asignado a"
+PurchaseRequest "N" -- "1" Supplier : "de"
+Product "1" o-- "N" InventoryMovement : "contiene"
+
+' ============ ENUMERACIONES ============
+
+enum OrderStatus {
+    INGRESADO
+    PENDIENTE
+    ACEPTADA
+    EN_REVISION
+    ESPERANDO_REPUESTO
+    EN_REPARACION
+    REPARADO
+    LISTO_PARA_ENTREGA
+    ENTREGADO
+}
+
+enum PurchaseStatus {
+    PENDIENTE
+    ORDENADO
+    RECIBIDO
+    CANCELADO
+}
+
+enum Role {
+    CLIENTE
+    TECNICO
+    ADMINISTRADOR
+}
+
+enum InventoryMovementType {
+    IN
+    OUT
+}
+
+' ============ LEYENDA Y ANOTACIONES FINALES ============
+
+note bottom of ProductRepository
+    ╔════════════════════════════════════════════╗
+    ║ CC-08: ELIMINACIÓN DE MAGIC STRINGS        ║
+    ╚════════════════════════════════════════════╝
+    
+    ANTES (❌ Frágil):
+    if (error.code === '23505') { ... }
+    if (msg.includes('stock insuficiente')) { ... }
+    
+    DESPUÉS (✅ Robusto):
+    if (error.code === POSTGRES_ERROR_CODES.UNIQUE_VIOLATION) { ... }
+    if (DB_ERROR_PATTERNS.INSUFFICIENT_STOCK.some(p => p.test(msg))) { ... }
+    
+    Beneficio: Cambios centralizados, tipados, reutilizables
+end note
+
+note right of ValidateRequestMiddleware
+    ╔════════════════════════════════════════════╗
+    ║ CC-06: SRP - SEPARACIÓN DE CAPAS          ║
+    ╚════════════════════════════════════════════╝
+    
+    Middleware (Validación) → Controller (Orquestación)
+    
+    ANTES: Controlador hace ambas
+    DESPUÉS: Cada uno su responsabilidad
+    
+    Beneficio: Testeable, reutilizable, mantenible
+end note
+
+note right of AuthorizationFilterFactory
+    ╔════════════════════════════════════════════╗
+    ║ CC-05: OCP - NUEVOS ROLES SIN CAMBIOS    ║
+    ╚════════════════════════════════════════════╝
+    
+    Agregar "supervisor":
+    
+    1. Crear SupervisorAuthorizationFilter
+    2. Registrar en factory
+    3. ¡Listo! WorkOrderService NO se modifica
+    
+    Principio: Abierto a extensión, cerrado a modificación
+end note
+
+note left of ProductRepository
+    ╔════════════════════════════════════════════╗
+    ║ CC-07: DIP - INVERSIÓN DE DEPENDENCIAS   ║
+    ╚════════════════════════════════════════════╝
+    
+    constructor(db = defaultSupabase)
+    
+    ANTES: import { supabase } (acoplado)
+    DESPUÉS: Inyectado en constructor
+    
+    Beneficio: Testeable con mocks, flexible
+end note
+
+legend right
+    Color Legend:
+    🟦 Backend (CC-05, CC-06, CC-07, CC-08)
+    ⬜ Frontend (CC-01, CC-02, CC-03, CC-04)
+    ⬛ Compartido (Tipos, Constantes)
+end legend
+
+@enduml

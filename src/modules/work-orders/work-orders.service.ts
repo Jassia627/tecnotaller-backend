@@ -3,6 +3,7 @@ import { IWorkOrderRepository } from './work-orders.repository';
 import { GuidGenerator } from '../../shared/utils/guid';
 import { AuthorizationFilterFactory } from '../../shared/authorization/filters/authorization-filter-factory';
 import {
+  AssignTechnicianInput,
   CreateWorkOrderInput,
   ExitRegisterInput,
   OrderStatus,
@@ -110,6 +111,21 @@ export class WorkOrderService {
     }
 
     const row = await this.repository.registerExit(id, input);
+    return WorkOrder.fromRow(row);
+  }
+
+  async assignTechnician(id: string, input: AssignTechnicianInput): Promise<WorkOrder> {
+    // Obtener la orden actual
+    const order = await this.getById(id);
+    
+    // Validar que la orden no tenga un técnico ya asignado
+    if (order.technicianId !== null) {
+      throw new ForbiddenError(
+        'Esta orden de servicio ya tiene un técnico asignado. No se puede reasignar.'
+      );
+    }
+
+    const row = await this.repository.assignTechnician(id, input.technicianId);
     return WorkOrder.fromRow(row);
   }
 }

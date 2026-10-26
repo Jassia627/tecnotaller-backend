@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { WorkOrderService } from './work-orders.service';
-import { OrderStatus, createWorkOrderSchema, exitRegisterSchema, transitionStatusSchema } from './work-orders.types';
+import { OrderStatus, assignTechnicianSchema, createWorkOrderSchema, exitRegisterSchema, transitionStatusSchema } from './work-orders.types';
 import { ActivityService } from '../activities/activities.service';
 import { ActivityRepository } from '../activities/activities.repository';
 import { createActivitySchema } from '../activities/activities.types';
@@ -105,5 +105,11 @@ export class WorkOrderController {
   async listActivities(req: Request, res: Response): Promise<void> {
     const activities = await this.activityService.listByWorkOrder(req.params.id!);
     res.json({ items: activities });
+  }
+
+  async assignTechnician(req: Request, res: Response): Promise<void> {
+    const input = assignTechnicianSchema.parse(req.body);
+    const order = await this.service.assignTechnician(req.params.id!, input);
+    res.json(order);
   }
 }

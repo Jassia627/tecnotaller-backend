@@ -164,3 +164,9 @@ export const exitRegisterSchema = z.object({
 });
 
 export type ExitRegisterInput = z.infer<typeof exitRegisterSchema>;
+
+export const assignTechnicianSchema = z.object({
+  technicianId: z.string().uuid('El ID del técnico debe ser un UUID válido'),
+});
+
+export type AssignTechnicianInput = z.infer<typeof assignTechnicianSchema>;

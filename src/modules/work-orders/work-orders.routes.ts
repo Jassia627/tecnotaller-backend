@@ -33,6 +33,7 @@ export function createWorkOrdersRouter(): Router {
   router.post('/:id/exit-register', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.registerExit.bind(controller)));
   router.post('/:id/activities', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.createActivity.bind(controller)));
   router.get('/:id/activities', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.listActivities.bind(controller)));
+  router.patch('/:id/assign-technician', authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.assignTechnician.bind(controller)));
   
   // Submount fotos módulo
   router.use('/:id/photos', createPhotosRouter());

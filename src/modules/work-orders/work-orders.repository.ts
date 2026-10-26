@@ -16,6 +16,7 @@ export interface IWorkOrderRepository {
   listHistoryByGuide(guideNumber: string): Promise<StatusHistoryRow[]>;
   addPhoto(workOrderId: string, storagePath: string, kind: 'inicial' | 'final'): Promise<void>;
   registerExit(id: string, data: { finalState: string; repairsPerformed: string; partsUsed?: string; observations?: string }): Promise<WorkOrderRow>;
+  assignTechnician(id: string, technicianId: string): Promise<WorkOrderRow>;
 }
 
 export class WorkOrderRepository implements IWorkOrderRepository {
@@ -245,5 +246,20 @@ export class WorkOrderRepository implements IWorkOrderRepository {
       p_password: password,
     });
     if (error) throw error;
+  }
+
+  async assignTechnician(id: string, technicianId: string): Promise<WorkOrderRow> {
+    const { data, error } = await supabase
+      .from('work_orders')
+      .update({ 
+        technician_id: technicianId,
+        assigned_time: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
+
+    if (error) throw error;
+    return data as WorkOrderRow;
   }
 }
