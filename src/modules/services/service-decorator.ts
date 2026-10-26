@@ -54,7 +54,7 @@ export abstract class ServiceDecorator extends ServiceComponent {
 }
 
 /**
- * Decorador Concreto 1: Servicio Express / Urgente ⚡
+ * Decorador Concreto 1: Servicio Express / Urgente 
  * Aplica un recargo porcentual por atención prioritaria e inmediata en el taller,
  * y reduce el tiempo comprometido de entrega por dedicación exclusiva de un técnico.
  */
@@ -111,7 +111,7 @@ export class ExpressServiceDecorator extends ServiceDecorator {
 }
 
 /**
- * Decorador Concreto 2: Garantía Extendida Premium 🛡️
+ * Decorador Concreto 2: Garantía Extendida Premium 
  * Adiciona una póliza de garantía extendida (por ejemplo, 6 o 12 meses adicionales)
  * por un costo fijo de protección.
  */
@@ -167,7 +167,7 @@ export class ExtendedWarrantyDecorator extends ServiceDecorator {
 }
 
 /**
- * Decorador Concreto 3: Servicio a Domicilio (Home Delivery / Pickup) 🚚
+ * Decorador Concreto 3: Servicio a Domicilio (Home Delivery / Pickup) 
  * Añade la logística de recogida y entrega del dispositivo a domicilio.
  */
 export class HomeDeliveryDecorator extends ServiceDecorator {
@@ -183,7 +183,7 @@ export class HomeDeliveryDecorator extends ServiceDecorator {
   }
 
   getName(): string {
-    return `${this.wrappee.getName()} [Delivery 🚚]`;
+    return `${this.wrappee.getName()} [Delivery]`;
   }
 
   getDescription(): string {
@@ -215,7 +215,7 @@ export class HomeDeliveryDecorator extends ServiceDecorator {
 }
 
 /**
- * Decorador Concreto 4: Respaldo Preventivo de Información (Data Backup) 💾
+ * Decorador Concreto 4: Respaldo Preventivo de Información (Data Backup) 
  * Realiza una copia de seguridad íntegra de la información del cliente
  * antes de manipular la placa o reinstalar el sistema operativo.
  */
@@ -232,7 +232,7 @@ export class DataBackupDecorator extends ServiceDecorator {
   }
 
   getName(): string {
-    return `${this.wrappee.getName()} [Backup de Datos 💾]`;
+    return `${this.wrappee.getName()} [Backup de Datos]`;
   }
 
   getDescription(): string {
