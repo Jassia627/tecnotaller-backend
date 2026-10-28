@@ -3,7 +3,7 @@ import { WorkOrderController } from './work-orders.controller';
 import { WorkOrderService } from './work-orders.service';
 import { WorkOrderRepository } from './work-orders.repository';
 import { asyncHandler } from '../../shared/utils/async-handler';
-import { authMiddleware } from '../../shared/middlewares/auth';
+import { authMiddleware, optionalAuthMiddleware } from '../../shared/middlewares/auth';
 import { authorizeRoles } from '../../shared/middlewares/authorize-roles';
 import { ROLES } from '../../shared/types';
 import { guidGenerator } from '../../shared/utils/guid';
@@ -16,14 +16,14 @@ export function createWorkOrdersRouter(): Router {
 
   const router = Router();
 
-  // Endpoint público para que clientes creen órdenes (requiere autenticación como cliente)
+  // Seguimiento público por guía (Accesible sin login para clientes con número de orden, o autenticado si tiene sesión)
+  router.get('/track/:guideNumber', optionalAuthMiddleware, asyncHandler(controller.trackByGuide.bind(controller)));
+
+  // Endpoint para que clientes creen órdenes (requiere autenticación como cliente)
   router.post('/client/create', authMiddleware, asyncHandler(controller.createAsClient.bind(controller)));
 
   router.use(authMiddleware);
 
-  // Seguimiento por guía (RF-15) - Requiere autenticación
-  // Cliente puede ver sus órdenes, técnico/admin todas
-  router.get('/track/:guideNumber', asyncHandler(controller.trackByGuide.bind(controller)));
 
   router.post('/', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.create.bind(controller)));
   router.get('/', authorizeRoles(ROLES.ADMINISTRADOR, ROLES.TECNICO), asyncHandler(controller.list.bind(controller)));

@@ -199,4 +199,62 @@ describe('Patrones de Diseño Creacionales en TecnoTaller', () => {
       expect(order.scheduledTime).toBe('2026-10-15T10:00:00.000Z');
     });
   });
+
+  // ==========================================================================
+  // 5. ABSTRACT FACTORY (Documentos Técnicos: PDF, CSV, JSON)
+  // ==========================================================================
+  describe('5. Patrón Abstract Factory (Exportación de Documentos Técnicos)', () => {
+    const receiptData = {
+      guideNumber: 'ORD-777',
+      customerName: 'Carlos Gómez',
+      deviceBrand: 'Dell',
+      deviceModel: 'XPS 15',
+      deviceSerial: 'DELL-SN-009',
+      problemDescription: 'Falla en conector de carga',
+      receivedAt: '2026-10-26T10:00:00Z',
+      estimatedCost: 150,
+    };
+
+    it('la factoría PDF debe generar la familia completa de documentos en PDF', async () => {
+      const { DocumentExporterProducer, PdfDocumentFactory } = await import(
+        '../modules/work-orders/document-export.factory'
+      );
+      const factory = DocumentExporterProducer.getFactory('pdf');
+      expect(factory).toBeInstanceOf(PdfDocumentFactory);
+
+      const receipt = factory.createReceiptExporter().exportReceipt(receiptData);
+      expect(receipt.filename).toBe('ticket-ORD-777.pdf');
+      expect(receipt.mimeType).toBe('application/pdf');
+      expect(receipt.content).toContain('[PDF - TICKET DE RECEPCIÓN]');
+    });
+
+    it('la factoría CSV debe generar la familia completa de documentos tabulares', async () => {
+      const { DocumentExporterProducer, CsvDocumentFactory } = await import(
+        '../modules/work-orders/document-export.factory'
+      );
+      const factory = DocumentExporterProducer.getFactory('csv');
+      expect(factory).toBeInstanceOf(CsvDocumentFactory);
+
+      const receipt = factory.createReceiptExporter().exportReceipt(receiptData);
+      expect(receipt.filename).toBe('ticket-ORD-777.csv');
+      expect(receipt.mimeType).toBe('text/csv');
+      expect(receipt.content).toContain('guia,cliente,marca,modelo');
+    });
+
+    it('la factoría JSON debe generar la familia completa en JSON estructurado', async () => {
+      const { DocumentExporterProducer, JsonDocumentFactory } = await import(
+        '../modules/work-orders/document-export.factory'
+      );
+      const factory = DocumentExporterProducer.getFactory('json');
+      expect(factory).toBeInstanceOf(JsonDocumentFactory);
+
+      const receipt = factory.createReceiptExporter().exportReceipt(receiptData);
+      expect(receipt.filename).toBe('ticket-ORD-777.json');
+      expect(receipt.mimeType).toBe('application/json');
+      const parsed = JSON.parse(receipt.content);
+      expect(parsed.documentType).toBe('RECEIPT');
+      expect(parsed.guideNumber).toBe('ORD-777');
+    });
+  });
 });
+

@@ -59,3 +59,51 @@ export async function authMiddleware(
     next(err);
   }
 }
+
+/**
+ * Middleware de autenticación opcional:
+ * Si viene token Bearer válido, inyecta req.user.
+ * Si NO viene token, no arroja 401 y permite continuar como usuario anónimo/público.
+ */
+export async function optionalAuthMiddleware(
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      next();
+      return;
+    }
+
+    const token = authHeader.slice(7);
+
+    // Soporte para tokens de desarrollo local
+    if (process.env.NODE_ENV === 'development' && token.startsWith('dev-')) {
+      const role = token.includes('admin') ? 'administrador' : token.includes('tecnico') ? 'tecnico' : 'cliente';
+      req.user = {
+        id: '00000000-0000-0000-0000-000000000000',
+        email: 'dev@tecnotaller.local',
+        role,
+      };
+      next();
+      return;
+    }
+
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (!error && data?.user) {
+      req.user = {
+        id: data.user.id,
+        email: data.user.email ?? '',
+        role: (data.user.user_metadata?.role as string) ?? 'cliente',
+      };
+    }
+
+    next();
+  } catch {
+    next();
+  }
+}
+
