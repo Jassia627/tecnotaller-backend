@@ -3,10 +3,57 @@
  * Solo se inicializa cuando DATA_PROVIDER=postgres.
  */
 import { Pool, PoolConfig } from 'pg';
+import { readFileSync, existsSync } from 'fs';
 import { env } from './env';
 import { logger } from '../shared/utils/logger';
 
 let pool: Pool | null = null;
+
+/**
+ * Ruta al bundle de certificados CA de Amazon RDS.
+ * En EC2, este archivo debe descargarse desde:
+ * https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
+ * 
+ * Se recomienda colocarlo en /etc/ssl/certs/rds-ca-bundle.pem o configurar
+ * la ruta mediante la variable de entorno RDS_CA_BUNDLE_PATH.
+ */
+function getRdsCaCertificate(): string | undefined {
+  const caPath = env.rds.caBundlePath;
+  
+  if (!caPath) {
+    logger.warn('RDS_CA_BUNDLE_PATH no configurado. SSL usará validación por defecto del sistema.');
+    return undefined;
+  }
+
+  if (!existsSync(caPath)) {
+    throw new Error(
+      `Certificado CA de RDS no encontrado en: ${caPath}. ` +
+      `Descargue el bundle desde https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem`
+    );
+  }
+
+  return readFileSync(caPath, 'utf-8');
+}
+
+/**
+ * Valida que todas las variables requeridas para RDS estén configuradas.
+ * Lanza error descriptivo si falta alguna.
+ */
+export function validateRdsConfig(): void {
+  const missing: string[] = [];
+  
+  if (!env.rds.host) missing.push('RDS_HOST');
+  if (!env.rds.database) missing.push('RDS_DATABASE');
+  if (!env.rds.user) missing.push('RDS_USER');
+  if (!env.rds.password) missing.push('RDS_PASSWORD');
+  
+  if (missing.length > 0) {
+    throw new Error(
+      `Variables de RDS faltantes: ${missing.join(', ')}. ` +
+      `Todas son requeridas cuando DATA_PROVIDER=postgres.`
+    );
+  }
+}
 
 /**
  * Obtiene o crea el pool de conexiones PostgreSQL.
@@ -16,18 +63,7 @@ export function getPostgresPool(): Pool {
   if (pool) return pool;
 
   // Validar configuración requerida
-  if (!env.rds.host) {
-    throw new Error('RDS_HOST no está configurado');
-  }
-  if (!env.rds.database) {
-    throw new Error('RDS_DATABASE no está configurado');
-  }
-  if (!env.rds.user) {
-    throw new Error('RDS_USER no está configurado');
-  }
-  if (!env.rds.password) {
-    throw new Error('RDS_PASSWORD no está configurado');
-  }
+  validateRdsConfig();
 
   const config: PoolConfig = {
     host: env.rds.host,
@@ -42,15 +78,29 @@ export function getPostgresPool(): Pool {
 
   // Configurar SSL si está habilitado
   if (env.rds.ssl) {
+    const caCert = getRdsCaCertificate();
+    
     config.ssl = {
-      rejectUnauthorized: env.nodeEnv === 'production', // Validar certificados en producción
+      // En producción: validar certificados con el CA bundle de RDS
+      // En desarrollo: permitir conexión sin validación estricta
+      rejectUnauthorized: env.nodeEnv === 'production',
+      // Incluir el certificado CA si está disponible
+      ...(caCert && { ca: caCert }),
     };
+    
+    logger.info(
+      { 
+        rejectUnauthorized: env.nodeEnv === 'production',
+        hasCaCert: !!caCert 
+      },
+      'Configuración SSL para RDS'
+    );
   }
 
   pool = new Pool(config);
 
   // Manejar errores del pool
-  pool.on('error', (err) => {
+  pool.on('error', (err: Error) => {
     logger.error({ err }, 'Error inesperado en el pool de PostgreSQL');
   });
 
