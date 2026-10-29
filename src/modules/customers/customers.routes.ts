@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { CustomerController } from './customers.controller';
 import { CustomerService } from './customers.service';
-import { CustomerRepository } from './customers.repository';
+import { createCustomerRepository } from './customers.repository.factory';
 import { asyncHandler } from '../../shared/utils/async-handler';
 import { authMiddleware } from '../../shared/middlewares/auth';
 import { authorizeRoles } from '../../shared/middlewares/authorize-roles';
@@ -9,7 +9,8 @@ import { ROLES } from '../../shared/types';
 import { ForbiddenError } from '../../shared/errors/app-error';
 
 export function createCustomersRouter(): Router {
-  const repository = new CustomerRepository();
+  // Usar factory para seleccionar el repositorio según DATA_PROVIDER
+  const repository = createCustomerRepository();
   const service = new CustomerService(repository);
   const controller = new CustomerController(service);
 

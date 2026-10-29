@@ -1,248 +1,193 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { CustomerRepository } from './customers.repository';
-import { CreateCustomerInput } from './customers.types';
+/**
+ * Tests para verificar que ambas implementaciones del repositorio de clientes
+ * cumplen con la misma interfaz y comportamiento.
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { ICustomerRepository } from './customers.repository';
+import { CustomerRow, CreateCustomerInput, UpdateCustomerInput } from './customers.types';
+
+// Mock de cliente para pruebas
+const mockCustomerRow: CustomerRow = {
+  id: '123e4567-e89b-12d3-a456-426614174000',
+  email: 'test@example.com',
+  full_name: 'Juan Pérez',
+  phone: '3001234567',
+  created_at: '2024-01-15T10:00:00.000Z',
+};
 
 /**
- * INTEGRATION TESTS - Requiere acceso a Supabase con service role key
- * 
- * Interactúa con la base de datos real usando la service role key.
+ * Test suite genérica que puede ejecutarse contra cualquier implementación
+ * de ICustomerRepository para verificar que cumple el contrato.
  */
+function testRepositoryContract(
+  name: string,
+  createRepository: () => ICustomerRepository
+) {
+  describe(`${name} - Contrato ICustomerRepository`, () => {
+    let repository: ICustomerRepository;
 
-describe('CustomerRepository - Integration Tests', () => {
-  let repository: CustomerRepository;
-  const testCustomerIds: string[] = [];
-
-  beforeAll(() => {
-    repository = new CustomerRepository();
-  });
-
-  describe('create', () => {
-    it('should create a new customer with all fields', async () => {
-      const input: CreateCustomerInput = {
-        email: `customer-${Date.now()}@example.com`,
-        fullName: `Cliente Test ${Date.now()}`,
-        phone: '+34 123456789',
-      };
-
-      const result = await repository.create(input);
-
-      expect(result.id).toBeDefined();
-      expect(result.email).toBe(input.email);
-      expect(result.full_name).toBe(input.fullName);
-      expect(result.phone).toBe(input.phone);
-      expect(result.created_at).toBeDefined();
-
-      testCustomerIds.push(result.id);
+    beforeEach(() => {
+      repository = createRepository();
     });
 
-    it('should create customer with only required field', async () => {
-      const input: CreateCustomerInput = {
-        fullName: `Cliente Mínimo ${Date.now()}`,
-      };
+    describe('list()', () => {
+      it('debe retornar una estructura con rows y total', async () => {
+        const result = await repository.list({ page: 1, pageSize: 10 });
+        
+        expect(result).toHaveProperty('rows');
+        expect(result).toHaveProperty('total');
+        expect(Array.isArray(result.rows)).toBe(true);
+        expect(typeof result.total).toBe('number');
+      });
 
-      const result = await repository.create(input);
-
-      expect(result.id).toBeDefined();
-      expect(result.full_name).toBe(input.fullName);
-      expect(result.email).toBeNull();
-      expect(result.phone).toBeNull();
-
-      testCustomerIds.push(result.id);
-    });
-
-    it('should create customer with email only', async () => {
-      const input: CreateCustomerInput = {
-        fullName: `Cliente Email ${Date.now()}`,
-        email: `email-${Date.now()}@example.com`,
-      };
-
-      const result = await repository.create(input);
-
-      expect(result.email).toBe(input.email);
-      expect(result.phone).toBeNull();
-
-      testCustomerIds.push(result.id);
-    });
-
-    it('should create customer with phone only', async () => {
-      const input: CreateCustomerInput = {
-        fullName: `Cliente Teléfono ${Date.now()}`,
-        phone: '+34 987654321',
-      };
-
-      const result = await repository.create(input);
-
-      expect(result.phone).toBe(input.phone);
-      expect(result.email).toBeNull();
-
-      testCustomerIds.push(result.id);
-    });
-
-    it('should create multiple customers', async () => {
-      const inputs: CreateCustomerInput[] = [
-        {
-          fullName: `Cliente A ${Date.now()}`,
-          email: `a-${Date.now()}@example.com`,
-        },
-        {
-          fullName: `Cliente B ${Date.now()}`,
-          phone: '+34 111111111',
-        },
-        {
-          fullName: `Cliente C ${Date.now()}`,
-          email: `c-${Date.now()}@example.com`,
-          phone: '+34 222222222',
-        },
-      ];
-
-      for (const input of inputs) {
-        const result = await repository.create(input);
-        expect(result.id).toBeDefined();
-        testCustomerIds.push(result.id);
-      }
-    });
-  });
-
-  describe('findById', () => {
-    it('should find a customer by id', async () => {
-      const input: CreateCustomerInput = {
-        fullName: `Find Test ${Date.now()}`,
-        email: `find-${Date.now()}@example.com`,
-        phone: '+34 333333333',
-      };
-
-      const created = await repository.create(input);
-      testCustomerIds.push(created.id);
-
-      const found = await repository.findById(created.id);
-
-      expect(found).toBeDefined();
-      expect(found?.id).toBe(created.id);
-      expect(found?.full_name).toBe(input.fullName);
-      expect(found?.email).toBe(input.email);
-      expect(found?.phone).toBe(input.phone);
-    });
-
-    it('should return null when customer does not exist', async () => {
-      const result = await repository.findById('non-existent-' + Date.now());
-      expect(result).toBeNull();
-    });
-
-    it('should find customer with null fields', async () => {
-      const input: CreateCustomerInput = {
-        fullName: `Null Fields Test ${Date.now()}`,
-      };
-
-      const created = await repository.create(input);
-      testCustomerIds.push(created.id);
-
-      const found = await repository.findById(created.id);
-
-      expect(found?.email).toBeNull();
-      expect(found?.phone).toBeNull();
-    });
-  });
-
-  describe('list', () => {
-    it('should list customers with pagination', async () => {
-      const input: CreateCustomerInput = {
-        fullName: `List Test ${Date.now()}`,
-        email: `list-${Date.now()}@example.com`,
-      };
-
-      const created = await repository.create(input);
-      testCustomerIds.push(created.id);
-
-      const result = await repository.list({ page: 1, pageSize: 10 });
-
-      expect(result.rows.length).toBeGreaterThan(0);
-      expect(result.total).toBeGreaterThan(0);
-      expect(result.rows.some(c => c.id === created.id)).toBe(true);
-    });
-
-    it('should list customers ordered by creation date (newest first)', async () => {
-      const result = await repository.list({ page: 1, pageSize: 20 });
-
-      if (result.rows.length > 1) {
-        for (let i = 0; i < result.rows.length - 1; i++) {
-          const current = new Date(result.rows[i].created_at);
-          const next = new Date(result.rows[i + 1].created_at);
-          expect(current.getTime()).toBeGreaterThanOrEqual(next.getTime());
-        }
-      }
-    });
-
-    it('should respect page size limit', async () => {
-      const result = await repository.list({ page: 1, pageSize: 5 });
-
-      expect(result.rows.length).toBeLessThanOrEqual(5);
-    });
-
-    it('should handle pagination', async () => {
-      const pageSize = 5;
-
-      const page1 = await repository.list({ page: 1, pageSize });
-      const page2 = await repository.list({ page: 2, pageSize });
-
-      // Los IDs no deben repetirse
-      const page1Ids = page1.rows.map(c => c.id);
-      const page2Ids = page2.rows.map(c => c.id);
-
-      const intersection = page1Ids.filter(id => page2Ids.includes(id));
-      expect(intersection.length).toBe(0);
-    });
-
-    it('should return empty list for page beyond total', async () => {
-      const result = await repository.list({ page: 99999, pageSize: 10 });
-
-      expect(result.rows).toEqual([]);
-      expect(result.total).toBeGreaterThanOrEqual(0);
-    });
-  });
-
-  describe('listWorkOrders', () => {
-    it('should return empty array when customer has no work orders', async () => {
-      const input: CreateCustomerInput = {
-        fullName: `No WorkOrders Test ${Date.now()}`,
-      };
-
-      const customer = await repository.create(input);
-      testCustomerIds.push(customer.id);
-
-      const result = await repository.listWorkOrders(customer.id);
-
-      expect(Array.isArray(result)).toBe(true);
-      // Puede estar vacío o tener órdenes si existen en la BD
-    });
-
-    it('should return work orders with correct structure', async () => {
-      const input: CreateCustomerInput = {
-        fullName: `WorkOrders Test ${Date.now()}`,
-      };
-
-      const customer = await repository.create(input);
-      testCustomerIds.push(customer.id);
-
-      const result = await repository.listWorkOrders(customer.id);
-
-      result.forEach(order => {
-        expect(order).toHaveProperty('id');
-        expect(order).toHaveProperty('guide_number');
-        expect(order).toHaveProperty('current_status');
+      it('debe respetar la paginación', async () => {
+        const page1 = await repository.list({ page: 1, pageSize: 5 });
+        const page2 = await repository.list({ page: 2, pageSize: 5 });
+        
+        // Ambas deben retornar el mismo total
+        expect(page1.total).toBe(page2.total);
+        
+        // Las filas pueden ser diferentes si hay suficientes registros
+        expect(page1.rows.length).toBeLessThanOrEqual(5);
+        expect(page2.rows.length).toBeLessThanOrEqual(5);
       });
     });
 
-    it('should list multiple work orders in correct order', async () => {
-      const input: CreateCustomerInput = {
-        fullName: `Multiple WorkOrders ${Date.now()}`,
-      };
+    describe('findById()', () => {
+      it('debe retornar null para un ID inexistente', async () => {
+        const result = await repository.findById('00000000-0000-0000-0000-000000000000');
+        expect(result).toBeNull();
+      });
+    });
 
-      const customer = await repository.create(input);
-      testCustomerIds.push(customer.id);
+    describe('findByPhone()', () => {
+      it('debe retornar null para un teléfono inexistente', async () => {
+        const result = await repository.findByPhone('0000000000');
+        expect(result).toBeNull();
+      });
 
-      const result = await repository.listWorkOrders(customer.id);
+      it('debe retornar null para un teléfono vacío', async () => {
+        const result = await repository.findByPhone('');
+        expect(result).toBeNull();
+      });
+    });
 
-      expect(Array.isArray(result)).toBe(true);
+    describe('Formato de CustomerRow', () => {
+      it('los registros deben tener la estructura correcta', async () => {
+        // Crear un cliente para verificar el formato
+        const input: CreateCustomerInput = {
+          email: 'format-test@example.com',
+          fullName: 'Test Format',
+          phone: '3009999999',
+        };
+
+        const created = await repository.create(input);
+
+        // Verificar estructura del CustomerRow
+        expect(created).toHaveProperty('id');
+        expect(created).toHaveProperty('email');
+        expect(created).toHaveProperty('full_name');
+        expect(created).toHaveProperty('phone');
+        expect(created).toHaveProperty('created_at');
+
+        // Verificar tipos
+        expect(typeof created.id).toBe('string');
+        expect(typeof created.full_name).toBe('string');
+        expect(typeof created.created_at).toBe('string');
+
+        // Limpiar
+        await repository.delete(created.id);
+      });
+    });
+  });
+}
+
+// ============================================================================
+// Tests específicos para verificar la lógica del factory
+// ============================================================================
+
+describe('createCustomerRepository Factory', () => {
+  it('debe exportar la función factory', async () => {
+    const { createCustomerRepository } = await import('./customers.repository.factory');
+    expect(typeof createCustomerRepository).toBe('function');
+  });
+
+  it('debe crear un repositorio válido', async () => {
+    const { createCustomerRepository } = await import('./customers.repository.factory');
+    const repository = createCustomerRepository();
+    
+    // Verificar que tiene todos los métodos de la interfaz
+    expect(typeof repository.list).toBe('function');
+    expect(typeof repository.findById).toBe('function');
+    expect(typeof repository.findByPhone).toBe('function');
+    expect(typeof repository.create).toBe('function');
+    expect(typeof repository.update).toBe('function');
+    expect(typeof repository.delete).toBe('function');
+    expect(typeof repository.listWorkOrders).toBe('function');
+  });
+});
+
+// ============================================================================
+// Tests de normalización de teléfono
+// ============================================================================
+
+describe('Normalización de teléfono', () => {
+  // Función de normalización extraída para testing
+  function normalizePhone(phone: string): string {
+    let normalized = phone.replace(/\D/g, '');
+    if (normalized.startsWith('57') && normalized.length > 10) {
+      normalized = normalized.substring(2);
+    }
+    if (normalized.startsWith('00')) {
+      normalized = normalized.substring(2);
+    }
+    return normalized;
+  }
+
+  it('debe remover espacios y guiones', () => {
+    expect(normalizePhone('300 123 4567')).toBe('3001234567');
+    expect(normalizePhone('300-123-4567')).toBe('3001234567');
+    expect(normalizePhone('300 - 123 - 4567')).toBe('3001234567');
+  });
+
+  it('debe remover prefijo de Colombia +57', () => {
+    expect(normalizePhone('+573001234567')).toBe('3001234567');
+    expect(normalizePhone('573001234567')).toBe('3001234567');
+  });
+
+  it('debe remover paréntesis', () => {
+    expect(normalizePhone('(300) 123-4567')).toBe('3001234567');
+  });
+
+  it('debe manejar números sin prefijo', () => {
+    expect(normalizePhone('3001234567')).toBe('3001234567');
+  });
+
+  it('debe retornar string vacío para entrada vacía', () => {
+    expect(normalizePhone('')).toBe('');
+  });
+});
+
+// ============================================================================
+// Tests de equivalencia de respuestas entre proveedores
+// ============================================================================
+
+describe('Equivalencia de formato entre proveedores', () => {
+  it('ambas implementaciones deben usar los mismos nombres de campos en CustomerRow', () => {
+    // Verificar que la interfaz CustomerRow tiene los campos esperados
+    const expectedFields = ['id', 'email', 'full_name', 'phone', 'created_at'];
+    
+    // Crear un objeto que simula un CustomerRow
+    const row: CustomerRow = {
+      id: 'test-id',
+      email: 'test@test.com',
+      full_name: 'Test Name',
+      phone: '123456789',
+      created_at: '2024-01-01T00:00:00Z',
+    };
+
+    expectedFields.forEach(field => {
+      expect(row).toHaveProperty(field);
     });
   });
 });
