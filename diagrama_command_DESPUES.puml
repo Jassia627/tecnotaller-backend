@@ -1,0 +1,210 @@
+@startuml diagrama_command_DESPUES
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classFontName Arial
+
+title Diagrama de Clases - WorkOrderService CON Patrón Command\n(Operaciones encapsuladas como objetos)
+
+' ============================================================================
+' CLIENTE (Rutas HTTP)
+' ============================================================================
+class WorkOrderRoutes {
+    -invoker: WorkOrderInvoker
+    -commandFactory: WorkOrderCommandFactory
+    +postTransitionStatus(req, res)
+    +postAssignTechnician(req, res)
+    +postRegisterExit(req, res)
+    +postAddPhoto(req, res)
+}
+
+' ============================================================================
+' INVOKER (Invocador)
+' ============================================================================
+class WorkOrderInvoker {
+    -commandHistory: CommandHistoryEntry[]
+    --
+    +executeCommand(command): WorkOrder
+    +undoLastCommand(): WorkOrder
+    +getHistory(): CommandHistory[]
+    +clearHistory(): void
+}
+
+note right of WorkOrderInvoker
+  **Invoker (Invocador):**
+  - Ejecuta comandos sin conocer
+    su implementación
+  - Mantiene historial de comandos
+  - Permite deshacer operaciones
+  - Centraliza logging/auditoría
+end note
+
+' ============================================================================
+' COMMAND INTERFACE
+' ============================================================================
+interface IWorkOrderCommand {
+    +execute(): WorkOrder
+    +getDescription(): string
+}
+
+interface IUndoableCommand extends IWorkOrderCommand {
+    +undo(): WorkOrder
+    +canUndo(): boolean
+}
+
+note left of IWorkOrderCommand
+  **Command Interface:**
+  Contrato que todos los
+  comandos deben cumplir.
+  
+  Cada comando encapsula:
+  - La operación a realizar
+  - Los parámetros necesarios
+  - La validación de reglas
+end note
+
+' ============================================================================
+' COMANDOS CONCRETOS
+' ============================================================================
+class TransitionStatusCommand implements IUndoableCommand {
+    -repository: IWorkOrderRepository
+    -orderId: string
+    -toStatus: OrderStatus
+    -userId: string
+    -previousStatus: OrderStatus
+    --
+    +execute(): WorkOrder
+    +undo(): WorkOrder
+    +canUndo(): boolean
+    +getDescription(): string
+}
+
+class AssignTechnicianCommand implements IUndoableCommand {
+    -repository: IWorkOrderRepository
+    -orderId: string
+    -input: AssignTechnicianInput
+    -previousTechnicianId: string
+    --
+    +execute(): WorkOrder
+    +undo(): WorkOrder
+    +canUndo(): boolean
+    +getDescription(): string
+}
+
+class RegisterExitCommand implements IWorkOrderCommand {
+    -repository: IWorkOrderRepository
+    -orderId: string
+    -input: ExitRegisterInput
+    --
+    +execute(): WorkOrder
+    +getDescription(): string
+}
+
+class AddPhotoCommand implements IWorkOrderCommand {
+    -repository: IWorkOrderRepository
+    -orderId: string
+    -storagePath: string
+    -kind: string
+    --
+    +execute(): WorkOrder
+    +getDescription(): string
+}
+
+note bottom of TransitionStatusCommand
+  **Concrete Commands:**
+  Cada comando encapsula
+  una operación específica
+  con toda su lógica de
+  validación y ejecución.
+end note
+
+' ============================================================================
+' FACTORY DE COMANDOS
+' ============================================================================
+class WorkOrderCommandFactory {
+    -repository: IWorkOrderRepository
+    --
+    +createTransitionStatusCommand(orderId, toStatus, userId): TransitionStatusCommand
+    +createAssignTechnicianCommand(orderId, input): AssignTechnicianCommand
+    +createRegisterExitCommand(orderId, input): RegisterExitCommand
+    +createAddPhotoCommand(orderId, storagePath, kind): AddPhotoCommand
+}
+
+' ============================================================================
+' REPOSITORIO (Receiver)
+' ============================================================================
+interface IWorkOrderRepository {
+    +findById(id): WorkOrderRow
+    +transitionStatus(id, from, to, userId): WorkOrderRow
+    +assignTechnician(id, technicianId): WorkOrderRow
+    +registerExit(id, data): WorkOrderRow
+    +addPhoto(workOrderId, storagePath, kind): void
+}
+
+note bottom of IWorkOrderRepository
+  **Receiver (Receptor):**
+  El repositorio actúa como
+  receptor que conoce cómo
+  realizar las operaciones
+  reales en la base de datos.
+end note
+
+' ============================================================================
+' ENTIDAD
+' ============================================================================
+class WorkOrder {
+    +id: string
+    +guideNumber: string
+    +currentStatus: OrderStatus
+    --
+    +canTransitionTo(next): boolean
+}
+
+' ============================================================================
+' RELACIONES
+' ============================================================================
+WorkOrderRoutes --> WorkOrderInvoker : "delega ejecución"
+WorkOrderRoutes --> WorkOrderCommandFactory : "crea comandos"
+
+WorkOrderInvoker --> IWorkOrderCommand : "ejecuta"
+WorkOrderInvoker o-- IWorkOrderCommand : "historial"
+
+IUndoableCommand --|> IWorkOrderCommand
+
+TransitionStatusCommand ..|> IUndoableCommand
+AssignTechnicianCommand ..|> IUndoableCommand
+RegisterExitCommand ..|> IWorkOrderCommand
+AddPhotoCommand ..|> IWorkOrderCommand
+
+WorkOrderCommandFactory ..> TransitionStatusCommand : "crea"
+WorkOrderCommandFactory ..> AssignTechnicianCommand : "crea"
+WorkOrderCommandFactory ..> RegisterExitCommand : "crea"
+WorkOrderCommandFactory ..> AddPhotoCommand : "crea"
+
+WorkOrderCommandFactory --> IWorkOrderRepository : "inyecta"
+
+TransitionStatusCommand --> IWorkOrderRepository : "usa"
+AssignTechnicianCommand --> IWorkOrderRepository : "usa"
+RegisterExitCommand --> IWorkOrderRepository : "usa"
+AddPhotoCommand --> IWorkOrderRepository : "usa"
+
+TransitionStatusCommand ..> WorkOrder : "retorna"
+AssignTechnicianCommand ..> WorkOrder : "retorna"
+RegisterExitCommand ..> WorkOrder : "retorna"
+AddPhotoCommand ..> WorkOrder : "retorna"
+
+' ============================================================================
+' NOTA DE BENEFICIOS
+' ============================================================================
+note as N1
+  **Beneficios del Patrón Command:**
+  
+  ✓ **Desacoplamiento**: El cliente no conoce cómo se ejecutan las operaciones
+  ✓ **Historial/Auditoría**: Cada comando se registra con timestamp
+  ✓ **Undo/Redo**: Comandos reversibles permiten deshacer cambios
+  ✓ **Extensibilidad**: Nuevos comandos se agregan sin modificar código existente
+  ✓ **Single Responsibility**: Cada comando tiene una única responsabilidad
+  ✓ **Testabilidad**: Comandos se pueden testear de forma aislada
+end note
+
+@enduml

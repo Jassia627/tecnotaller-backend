@@ -1,0 +1,124 @@
+@startuml diagrama_command_ANTES
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classFontName Arial
+
+title Diagrama de Clases - WorkOrderService SIN Patrón Command\n(Acoplamiento directo entre Servicio y Operaciones)
+
+' ============================================================================
+' CLIENTE (Rutas HTTP)
+' ============================================================================
+class WorkOrderRoutes {
+    -service: WorkOrderService
+    +postTransitionStatus(req, res)
+    +postAssignTechnician(req, res)
+    +postRegisterExit(req, res)
+    +postAddPhoto(req, res)
+}
+
+note right of WorkOrderRoutes
+  Las rutas invocan directamente
+  los métodos del servicio.
+  No hay abstracción entre
+  la solicitud y la ejecución.
+end note
+
+' ============================================================================
+' SERVICIO (Receptor de todas las operaciones)
+' ============================================================================
+class WorkOrderService {
+    -repository: IWorkOrderRepository
+    -guid: GuidGenerator
+    --
+    +create(input, initialStatus, appointmentId): WorkOrder
+    +getById(id): WorkOrder
+    +list(options): {items, total}
+    +**transitionStatus(id, to, userId): WorkOrder**
+    +**assignTechnician(id, input): WorkOrder**
+    +**registerExit(id, input): WorkOrder**
+    +**addPhoto(id, storagePath, kind): void**
+    +getHistory(id): StatusHistoryEntry[]
+    +trackByGuide(guideNumber): {order, history}
+    +duplicateOrder(originalOrderId, newDescription): WorkOrder
+}
+
+note left of WorkOrderService
+  **PROBLEMA:**
+  El servicio tiene múltiples
+  responsabilidades mezcladas:
+  - Validación de reglas de negocio
+  - Llamadas directas al repositorio
+  - Lógica de cada operación
+  
+  Esto viola SRP y hace difícil:
+  - Agregar logging/auditoría
+  - Implementar undo/redo
+  - Encolar operaciones
+  - Testear operaciones aisladas
+end note
+
+' ============================================================================
+' REPOSITORIO
+' ============================================================================
+interface IWorkOrderRepository {
+    +findById(id): WorkOrderRow
+    +transitionStatus(id, from, to, userId): WorkOrderRow
+    +assignTechnician(id, technicianId): WorkOrderRow
+    +registerExit(id, data): WorkOrderRow
+    +addPhoto(workOrderId, storagePath, kind): void
+}
+
+class WorkOrderRepository implements IWorkOrderRepository {
+    +findById(id): WorkOrderRow
+    +transitionStatus(id, from, to, userId): WorkOrderRow
+    +assignTechnician(id, technicianId): WorkOrderRow
+    +registerExit(id, data): WorkOrderRow
+    +addPhoto(workOrderId, storagePath, kind): void
+}
+
+' ============================================================================
+' ENTIDAD
+' ============================================================================
+class WorkOrder {
+    +id: string
+    +guideNumber: string
+    +customerId: string
+    +technicianId: string
+    +currentStatus: OrderStatus
+    --
+    +canTransitionTo(next): boolean
+    +transitionTo(next): void
+}
+
+' ============================================================================
+' RELACIONES
+' ============================================================================
+WorkOrderRoutes --> WorkOrderService : "llama directamente"
+WorkOrderService --> IWorkOrderRepository : "usa"
+WorkOrderRepository ..|> IWorkOrderRepository
+WorkOrderService ..> WorkOrder : "crea/retorna"
+
+' ============================================================================
+' NOTAS DE PROBLEMAS
+' ============================================================================
+note bottom of WorkOrderService
+  **Problemas del diseño actual:**
+  
+  1. **Alto acoplamiento**: Las rutas conocen todos los
+     métodos específicos del servicio
+  
+  2. **Sin historial**: No hay forma de rastrear qué
+     operaciones se ejecutaron ni cuándo
+  
+  3. **Sin reversibilidad**: No hay mecanismo para
+     deshacer operaciones
+  
+  4. **Difícil extensión**: Agregar nuevas operaciones
+     requiere modificar el servicio (viola OCP)
+  
+  5. **Sin colas**: No se pueden encolar operaciones
+     para ejecución diferida
+end note
+
+@enduml

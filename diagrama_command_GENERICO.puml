@@ -1,0 +1,170 @@
+@startuml diagrama_command_GENERICO
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 12
+skinparam classFontName Arial
+skinparam packageStyle rectangle
+
+title Patrón Command - Estructura Genérica\n(Gang of Four - Behavioral Pattern)
+
+' ============================================================================
+' CLIENT
+' ============================================================================
+class Client {
+    +createCommand()
+}
+
+note top of Client
+  **Client**
+  Crea los comandos concretos
+  y configura el receiver
+end note
+
+' ============================================================================
+' INVOKER
+' ============================================================================
+class Invoker {
+    -command: ICommand
+    -history: ICommand[]
+    --
+    +setCommand(cmd: ICommand)
+    +executeCommand()
+    +undoCommand()
+}
+
+note right of Invoker
+  **Invoker (Invocador)**
+  - Almacena referencia al comando
+  - Solicita la ejecución
+  - Puede mantener historial
+  - NO conoce la implementación
+end note
+
+' ============================================================================
+' COMMAND INTERFACE
+' ============================================================================
+interface ICommand <<interface>> {
+    +execute(): void
+    +undo(): void
+}
+
+note left of ICommand
+  **Command (Interfaz)**
+  Declara la interfaz para
+  ejecutar una operación.
+  Opcionalmente declara
+  método undo() para
+  reversibilidad.
+end note
+
+' ============================================================================
+' CONCRETE COMMANDS
+' ============================================================================
+class ConcreteCommandA {
+    -receiver: Receiver
+    -state: any
+    --
+    +execute(): void
+    +undo(): void
+}
+
+class ConcreteCommandB {
+    -receiver: Receiver
+    -state: any
+    --
+    +execute(): void
+    +undo(): void
+}
+
+class ConcreteCommandC {
+    -receiver: Receiver
+    -state: any
+    --
+    +execute(): void
+    +undo(): void
+}
+
+note bottom of ConcreteCommandA
+  **ConcreteCommand**
+  - Implementa execute()
+  - Invoca operación(es) en Receiver
+  - Almacena estado para undo
+  - Vincula acción con receptor
+end note
+
+' ============================================================================
+' RECEIVER
+' ============================================================================
+class Receiver {
+    +action(): void
+    +anotherAction(): void
+}
+
+note right of Receiver
+  **Receiver (Receptor)**
+  Sabe cómo realizar las
+  operaciones asociadas.
+  Cualquier clase puede
+  actuar como receptor.
+end note
+
+' ============================================================================
+' RELACIONES
+' ============================================================================
+Client --> Invoker : "configura"
+Client ..> ConcreteCommandA : "crea"
+Client ..> ConcreteCommandB : "crea"
+Client ..> ConcreteCommandC : "crea"
+
+Invoker o--> ICommand : "command"
+
+ConcreteCommandA ..|> ICommand
+ConcreteCommandB ..|> ICommand
+ConcreteCommandC ..|> ICommand
+
+ConcreteCommandA --> Receiver : "receiver"
+ConcreteCommandB --> Receiver : "receiver"
+ConcreteCommandC --> Receiver : "receiver"
+
+' ============================================================================
+' SECUENCIA DE EJECUCIÓN
+' ============================================================================
+note as N1
+  **Secuencia de Ejecución:**
+  
+  1. **Client** crea un ConcreteCommand
+     y le pasa el Receiver
+  
+  2. **Client** pasa el comando al Invoker
+     mediante setCommand()
+  
+  3. **Invoker** llama a execute()
+     en el momento apropiado
+  
+  4. **ConcreteCommand** invoca
+     operaciones en el Receiver
+  
+  5. **Receiver** realiza la
+     acción real
+end note
+
+' ============================================================================
+' PARTICIPANTES
+' ============================================================================
+note as N2
+  **Participantes del Patrón:**
+  
+  • **Command**: Declara interfaz para ejecutar operación
+  
+  • **ConcreteCommand**: Define vínculo entre Receiver
+    y acción. Implementa execute() delegando al Receiver
+  
+  • **Client**: Crea ConcreteCommand y establece su Receiver
+  
+  • **Invoker**: Solicita al comando que ejecute la petición
+  
+  • **Receiver**: Sabe realizar las operaciones asociadas
+    a la petición. Cualquier clase puede ser un Receiver
+end note
+
+@enduml
