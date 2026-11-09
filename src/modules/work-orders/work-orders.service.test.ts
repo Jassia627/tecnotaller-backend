@@ -374,4 +374,104 @@ describe('WorkOrderService', () => {
       expect(result).toBeInstanceOf(WorkOrder);
     });
   });
+
+  describe('assignTechnician', () => {
+    it('should assign a technician when not previously assigned', async () => {
+      const workOrderId = 'wo-101';
+      const input = { technicianId: 'tech-1' };
+
+      const mockRow: WorkOrderRow = {
+        id: workOrderId,
+        guide_number: 'WO-101',
+        customer_id: null,
+        technician_id: null,
+        device_brand: 'Motorola',
+        device_model: 'G5',
+        device_serial: 'MOTO1',
+        problem_description: 'Batería inflada',
+        device_password_encrypted: null,
+        accessories: null,
+        current_status: 'INGRESADO',
+        created_at: '2024-01-01T00:00:00Z',
+      };
+
+      const updatedRow: WorkOrderRow = {
+        ...mockRow,
+        technician_id: 'tech-1',
+      };
+
+      mockRepository.findById.mockResolvedValue(mockRow);
+      mockRepository.assignTechnician.mockResolvedValue(updatedRow);
+
+      const result = await service.assignTechnician(workOrderId, input);
+
+      expect(mockRepository.assignTechnician).toHaveBeenCalledWith(workOrderId, 'tech-1');
+      expect(result.technicianId).toBe('tech-1');
+    });
+
+    it('should throw ForbiddenError when order already has a technician', async () => {
+      const workOrderId = 'wo-102';
+      const input = { technicianId: 'tech-2' };
+
+      const mockRow: WorkOrderRow = {
+        id: workOrderId,
+        guide_number: 'WO-102',
+        customer_id: null,
+        technician_id: 'tech-1',
+        device_brand: 'Motorola',
+        device_model: 'G5',
+        device_serial: 'MOTO1',
+        problem_description: 'Batería inflada',
+        device_password_encrypted: null,
+        accessories: null,
+        current_status: 'INGRESADO',
+        created_at: '2024-01-01T00:00:00Z',
+      };
+
+      mockRepository.findById.mockResolvedValue(mockRow);
+
+      await expect(service.assignTechnician(workOrderId, input)).rejects.toThrow(ForbiddenError);
+    });
+  });
+
+  describe('command pattern undo and history', () => {
+    it('should record executed commands in history and support undo', async () => {
+      const workOrderId = 'wo-undo-1';
+      const userId = 'user-undo';
+
+      const initialRow: WorkOrderRow = {
+        id: workOrderId,
+        guide_number: 'WO-UNDO',
+        customer_id: null,
+        technician_id: null,
+        device_brand: 'LG',
+        device_model: 'V30',
+        device_serial: 'LG123',
+        problem_description: 'Test undo',
+        device_password_encrypted: null,
+        accessories: null,
+        current_status: 'INGRESADO',
+        created_at: '2024-01-01T00:00:00Z',
+      };
+
+      const transitionedRow: WorkOrderRow = {
+        ...initialRow,
+        current_status: 'EN_REVISION',
+      };
+
+      mockRepository.findById.mockResolvedValue(initialRow);
+      mockRepository.transitionStatus.mockResolvedValue(transitionedRow);
+
+      await service.transitionStatus(workOrderId, 'EN_REVISION', userId);
+
+      const history = service.getCommandHistory();
+      expect(history.length).toBeGreaterThan(0);
+      expect(history[history.length - 1].description).toContain('Transición de estado');
+
+      // Simular undo de la transición
+      mockRepository.transitionStatus.mockResolvedValue(initialRow);
+      const undone = await service.undoLastAction();
+      expect(undone?.currentStatus).toBe('INGRESADO');
+    });
+  });
 });

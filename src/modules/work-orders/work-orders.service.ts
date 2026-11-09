@@ -10,12 +10,21 @@ import {
   StatusHistoryEntry,
   WorkOrder,
 } from './work-orders.types';
+import { WorkOrderCommandFactory, WorkOrderInvoker } from './work-order-commands';
 
 export class WorkOrderService {
+  private readonly commandFactory: WorkOrderCommandFactory;
+  private readonly invoker: WorkOrderInvoker;
+
   constructor(
     private readonly repository: IWorkOrderRepository,
     private readonly guid: GuidGenerator,
-  ) {}
+    commandFactory?: WorkOrderCommandFactory,
+    invoker?: WorkOrderInvoker,
+  ) {
+    this.commandFactory = commandFactory ?? new WorkOrderCommandFactory(this.repository);
+    this.invoker = invoker ?? new WorkOrderInvoker();
+  }
 
   async create(input: CreateWorkOrderInput, initialStatus: 'PENDIENTE' | 'ACEPTADA' = 'ACEPTADA', appointmentId?: string): Promise<WorkOrder> {
     const guideNumber = this.guid.generate().slice(0, 8).toUpperCase();
@@ -57,12 +66,8 @@ export class WorkOrderService {
   }
 
   async transitionStatus(id: string, to: OrderStatus, userId: string): Promise<WorkOrder> {
-    const order = await this.getById(id);
-    if (!order.canTransitionTo(to)) {
-      throw new ForbiddenError(`Transición de estado inválida: ${order.currentStatus} -> ${to}`);
-    }
-    const row = await this.repository.transitionStatus(id, order.currentStatus, to, userId);
-    return WorkOrder.fromRow(row);
+    const command = this.commandFactory.createTransitionStatusCommand(id, to, userId);
+    return this.invoker.executeCommand(command);
   }
 
   async getHistory(id: string): Promise<StatusHistoryEntry[]> {
@@ -100,38 +105,32 @@ export class WorkOrderService {
   }
 
   async addPhoto(id: string, storagePath: string, kind: 'inicial' | 'final'): Promise<void> {
-    await this.getById(id);
-    await this.repository.addPhoto(id, storagePath, kind);
+    const command = this.commandFactory.createAddPhotoCommand(id, storagePath, kind);
+    await this.invoker.executeCommand(command);
   }
 
   async registerExit(id: string, input: ExitRegisterInput): Promise<WorkOrder> {
-    // Obtener la orden actual para validar su estado
-    const order = await this.getById(id);
-    
-    // Validar que la orden esté en LISTO_PARA_ENTREGA
-    if (order.currentStatus !== 'LISTO_PARA_ENTREGA') {
-      throw new ForbiddenError(
-        `No se puede registrar salida. La orden debe estar en estado LISTO_PARA_ENTREGA, pero está en ${order.currentStatus}`
-      );
-    }
-
-    const row = await this.repository.registerExit(id, input);
-    return WorkOrder.fromRow(row);
+    const command = this.commandFactory.createRegisterExitCommand(id, input);
+    return this.invoker.executeCommand(command);
   }
 
   async assignTechnician(id: string, input: AssignTechnicianInput): Promise<WorkOrder> {
-    // Obtener la orden actual
-    const order = await this.getById(id);
-    
-    // Validar que la orden no tenga un técnico ya asignado
-    if (order.technicianId !== null) {
-      throw new ForbiddenError(
-        'Esta orden de servicio ya tiene un técnico asignado. No se puede reasignar.'
-      );
-    }
+    const command = this.commandFactory.createAssignTechnicianCommand(id, input);
+    return this.invoker.executeCommand(command);
+  }
 
-    const row = await this.repository.assignTechnician(id, input.technicianId);
-    return WorkOrder.fromRow(row);
+  /**
+   * PATRÓN COMMAND: Deshace la última acción reversible (ej. transición de estado).
+   */
+  async undoLastAction(): Promise<WorkOrder | null> {
+    return this.invoker.undoLastCommand();
+  }
+
+  /**
+   * PATRÓN COMMAND: Obtiene el historial de comandos ejecutados en memoria.
+   */
+  getCommandHistory(): Array<{ description: string; executedAt: Date }> {
+    return this.invoker.getHistory();
   }
 
   /**
