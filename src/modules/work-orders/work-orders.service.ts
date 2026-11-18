@@ -15,12 +15,21 @@ import {
   WorkOrderStateFactory,
   IWorkOrderContext 
 } from './work-order-states';
+import { WorkOrderCommandFactory, WorkOrderInvoker } from './work-order-commands';
 
 export class WorkOrderService {
+  private readonly commandFactory: WorkOrderCommandFactory;
+  private readonly invoker: WorkOrderInvoker;
+
   constructor(
     private readonly repository: IWorkOrderRepository,
     private readonly guid: GuidGenerator,
-  ) {}
+    commandFactory?: WorkOrderCommandFactory,
+    invoker?: WorkOrderInvoker,
+  ) {
+    this.commandFactory = commandFactory ?? new WorkOrderCommandFactory(this.repository);
+    this.invoker = invoker ?? new WorkOrderInvoker();
+  }
 
   /**
    * PATRÓN STATE: Crea el contexto para el StateManager a partir de una orden
@@ -75,10 +84,7 @@ export class WorkOrderService {
     userCustomerId?: string;
     userRole?: string;
   }): Promise<{ items: WorkOrder[]; total: number }> {
-    // Obtener la estrategia de autorización para el rol del usuario
     const authFilter = AuthorizationFilterFactory.createFilter(options.userRole);
-    
-    // Aplicar el filtro sin conocer detalles específicos del rol
     authFilter.applyFilter(options);
 
     const { rows, total } = await this.repository.list(options);
@@ -86,25 +92,14 @@ export class WorkOrderService {
   }
 
   /**
-   * PATRÓN STATE: Transición de estado usando el StateManager
-   * 
-   * El StateManager:
-   * - Valida si la transición es permitida según el estado actual
-   * - Ejecuta lógica de salida (onExit) del estado actual
-   * - Cambia al nuevo estado
-   * - Ejecuta lógica de entrada (onEnter) del nuevo estado
-   * - Mantiene historial de transiciones
+   * PATRÓN STATE + COMMAND: Transición de estado usando StateManager para validación
+   * y Command para ejecución con historial.
    */
   async transitionStatus(id: string, to: OrderStatus, userId: string): Promise<WorkOrder> {
     const order = await this.getById(id);
-    
-    // PATRÓN STATE: Usar el StateManager para validar y gestionar la transición
     const stateManager = this.createStateManager(order);
-    
-    // Obtener información del estado actual para mensajes de error
     const currentState = stateManager.getCurrentState();
     
-    // Validar transición usando el patrón State
     if (!stateManager.canTransitionTo(to)) {
       const allowedTransitions = stateManager.getAvailableTransitions();
       throw new ForbiddenError(
@@ -113,7 +108,6 @@ export class WorkOrderService {
       );
     }
 
-    // Verificar requisitos del estado destino
     const targetState = WorkOrderStateFactory.getState(to);
     if (targetState.requiresTechnician() && !order.technicianId) {
       throw new ForbiddenError(
@@ -121,12 +115,10 @@ export class WorkOrderService {
       );
     }
 
-    // Ejecutar transición (esto dispara onExit del estado actual y onEnter del nuevo)
     stateManager.transitionTo(to);
     
-    // Persistir el cambio en la base de datos
-    const row = await this.repository.transitionStatus(id, order.currentStatus, to, userId);
-    return WorkOrder.fromRow(row);
+    const command = this.commandFactory.createTransitionStatusCommand(id, to, userId);
+    return this.invoker.executeCommand(command);
   }
 
   /**
@@ -168,7 +160,6 @@ export class WorkOrderService {
     const row = await this.repository.findByGuideNumber(guideNumber);
     if (!row) throw new NotFoundError('No se encontró ninguna orden con esa guía');
     
-    // Si se proporciona customerId, validar que coincida (para clientes)
     if (customerId && row.customer_id !== customerId) {
       throw new ForbiddenError('No tienes permiso para rastrear esta orden');
     }
@@ -187,19 +178,15 @@ export class WorkOrderService {
   }
 
   async addPhoto(id: string, storagePath: string, kind: 'inicial' | 'final'): Promise<void> {
-    await this.getById(id);
-    await this.repository.addPhoto(id, storagePath, kind);
+    const command = this.commandFactory.createAddPhotoCommand(id, storagePath, kind);
+    await this.invoker.executeCommand(command);
   }
 
   async registerExit(id: string, input: ExitRegisterInput): Promise<WorkOrder> {
-    // Obtener la orden actual para validar su estado
     const order = await this.getById(id);
-    
-    // PATRÓN STATE: Usar el StateManager para validar el estado
     const stateManager = this.createStateManager(order);
     const currentState = stateManager.getCurrentState();
     
-    // Validar que la orden esté en LISTO_PARA_ENTREGA
     if (currentState.getName() !== 'LISTO_PARA_ENTREGA') {
       throw new ForbiddenError(
         `No se puede registrar salida. La orden debe estar en estado LISTO_PARA_ENTREGA, ` +
@@ -207,57 +194,46 @@ export class WorkOrderService {
       );
     }
 
-    const row = await this.repository.registerExit(id, input);
-    return WorkOrder.fromRow(row);
+    const command = this.commandFactory.createRegisterExitCommand(id, input);
+    return this.invoker.executeCommand(command);
   }
 
   async assignTechnician(id: string, input: AssignTechnicianInput): Promise<WorkOrder> {
-    // Obtener la orden actual
     const order = await this.getById(id);
-    
-    // PATRÓN STATE: Usar el StateManager para obtener información del estado
     const stateManager = this.createStateManager(order);
     const currentState = stateManager.getCurrentState();
     
-    // Validar que la orden no tenga un técnico ya asignado
     if (order.technicianId !== null) {
       throw new ForbiddenError(
         'Esta orden de servicio ya tiene un técnico asignado. No se puede reasignar.'
       );
     }
 
-    // Validar que no sea un estado terminal
     if (currentState.isTerminal()) {
       throw new ForbiddenError(
         `No se puede asignar técnico a una orden en estado terminal (${currentState.getName()})`
       );
     }
 
-    const row = await this.repository.assignTechnician(id, input.technicianId);
-    return WorkOrder.fromRow(row);
+    const command = this.commandFactory.createAssignTechnicianCommand(id, input);
+    return this.invoker.executeCommand(command);
   }
 
-  /**
-   * PATRÓN PROTOTYPE: Duplica una orden existente.
-   * Útil para:
-   * - Órdenes de garantía (mismo dispositivo regresa)
-   * - Dispositivos recurrentes (cliente frecuente con mismo equipo)
-   * - Crear seguimiento de reparaciones anteriores
-   * 
-   * @param originalOrderId ID de la orden a duplicar
-   * @param newProblemDescription Nueva descripción del problema (opcional)
-   * @returns Nueva orden creada basada en la original
-   */
+  async undoLastAction(): Promise<WorkOrder | null> {
+    return this.invoker.undoLastCommand();
+  }
+
+  getCommandHistory(): Array<{ description: string; executedAt: Date }> {
+    return this.invoker.getHistory();
+  }
+
   async duplicateOrder(originalOrderId: string, newProblemDescription?: string): Promise<WorkOrder> {
-    // Obtener orden original
     const original = await this.getById(originalOrderId);
     
-    // PATRÓN PROTOTYPE: Clonar la orden con nueva descripción si se proporciona
     const cloned = newProblemDescription 
       ? original.cloneWith({ problemDescription: newProblemDescription })
       : original.clone();
     
-    // Persistir el clon como nueva orden
     return this.create(cloned.toCreateInput(), 'PENDIENTE');
   }
 }
