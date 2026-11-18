@@ -1,0 +1,200 @@
+@startuml diagrama_state_DESPUES
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam classFontSize 11
+skinparam classFontName Arial
+
+title Diagrama de Clases - Manejo de Estados CON Patrón State\n(Cada estado es una clase con su propio comportamiento)
+
+' ============================================================================
+' INTERFAZ STATE
+' ============================================================================
+interface IWorkOrderState <<interface>> {
+    +getName(): OrderStatus
+    +getDescription(): string
+    +getAllowedTransitions(): OrderStatus[]
+    +canTransitionTo(nextState: OrderStatus): boolean
+    +onEnter(context: IWorkOrderContext): void
+    +onExit(context: IWorkOrderContext): void
+    +isTerminal(): boolean
+    +requiresTechnician(): boolean
+}
+
+note left of IWorkOrderState
+  **State Interface:**
+  Define el contrato que
+  todos los estados deben
+  cumplir.
+  
+  Incluye métodos para:
+  - Validar transiciones
+  - Ejecutar lógica al
+    entrar/salir del estado
+end note
+
+' ============================================================================
+' CONTEXTO
+' ============================================================================
+interface IWorkOrderContext <<interface>> {
+    +orderId: string
+    +guideNumber: string
+    +technicianId: string | null
+    +customerId: string | null
+    +deviceBrand: string
+    +deviceModel: string
+}
+
+' ============================================================================
+' CLASE BASE ABSTRACTA
+' ============================================================================
+abstract class BaseWorkOrderState {
+    +canTransitionTo(next): boolean
+    +onEnter(context): void
+    +onExit(context): void
+    +isTerminal(): boolean
+    +requiresTechnician(): boolean
+}
+
+BaseWorkOrderState ..|> IWorkOrderState
+
+' ============================================================================
+' ESTADOS CONCRETOS
+' ============================================================================
+class PendienteState extends BaseWorkOrderState {
+    +getName(): "PENDIENTE"
+    +getDescription(): string
+    +getAllowedTransitions(): ['ACEPTADA']
+    +onEnter(context): void
+}
+
+class AceptadaState extends BaseWorkOrderState {
+    +getName(): "ACEPTADA"
+    +getDescription(): string
+    +getAllowedTransitions(): ['EN_REVISION']
+    +onEnter(context): void
+}
+
+class EnRevisionState extends BaseWorkOrderState {
+    +getName(): "EN_REVISION"
+    +getDescription(): string
+    +getAllowedTransitions(): ['ESPERANDO_REPUESTO', 'EN_REPARACION']
+    +requiresTechnician(): true
+}
+
+class EsperandoRepuestoState extends BaseWorkOrderState {
+    +getName(): "ESPERANDO_REPUESTO"
+    +getDescription(): string
+    +getAllowedTransitions(): ['EN_REPARACION']
+    +requiresTechnician(): true
+}
+
+class EnReparacionState extends BaseWorkOrderState {
+    +getName(): "EN_REPARACION"
+    +getDescription(): string
+    +getAllowedTransitions(): ['REPARADO']
+    +requiresTechnician(): true
+}
+
+class ReparadoState extends BaseWorkOrderState {
+    +getName(): "REPARADO"
+    +getDescription(): string
+    +getAllowedTransitions(): ['LISTO_PARA_ENTREGA']
+}
+
+class ListoParaEntregaState extends BaseWorkOrderState {
+    +getName(): "LISTO_PARA_ENTREGA"
+    +getDescription(): string
+    +getAllowedTransitions(): ['ENTREGADO']
+    +onEnter(context): void
+}
+
+class EntregadoState extends BaseWorkOrderState {
+    +getName(): "ENTREGADO"
+    +getDescription(): string
+    +getAllowedTransitions(): []
+    +isTerminal(): true
+}
+
+note bottom of PendienteState
+  **Concrete States:**
+  Cada estado encapsula:
+  - Sus transiciones válidas
+  - Lógica al entrar/salir
+  - Requisitos (ej: técnico)
+  - Si es estado terminal
+end note
+
+' ============================================================================
+' STATE MANAGER (CONTEXTO DEL PATRÓN)
+' ============================================================================
+class WorkOrderStateManager {
+    -currentState: IWorkOrderState
+    -context: IWorkOrderContext
+    -stateHistory: TransitionEntry[]
+    --
+    +getCurrentState(): IWorkOrderState
+    +getCurrentStatus(): OrderStatus
+    +canTransitionTo(nextStatus): boolean
+    +getAvailableTransitions(): OrderStatus[]
+    +transitionTo(nextStatus): void
+    +getTransitionHistory(): TransitionEntry[]
+    +isCompleted(): boolean
+    +requiresTechnician(): boolean
+}
+
+note right of WorkOrderStateManager
+  **Context (State Manager):**
+  - Mantiene referencia al estado actual
+  - Delega comportamiento al estado
+  - Gestiona las transiciones
+  - Mantiene historial de cambios
+end note
+
+' ============================================================================
+' FACTORY
+' ============================================================================
+class WorkOrderStateFactory {
+    {static} -stateInstances: Map<OrderStatus, IWorkOrderState>
+    --
+    {static} +getState(status: OrderStatus): IWorkOrderState
+    {static} +getAllStates(): IWorkOrderState[]
+}
+
+note bottom of WorkOrderStateFactory
+  **Factory + Singleton:**
+  Crea y cachea instancias
+  de estados para optimizar
+  memoria.
+end note
+
+' ============================================================================
+' RELACIONES
+' ============================================================================
+WorkOrderStateManager o--> IWorkOrderState : "currentState"
+WorkOrderStateManager --> IWorkOrderContext : "context"
+WorkOrderStateManager ..> WorkOrderStateFactory : "obtiene estados"
+
+WorkOrderStateFactory ..> PendienteState : "crea"
+WorkOrderStateFactory ..> AceptadaState : "crea"
+WorkOrderStateFactory ..> EnRevisionState : "crea"
+WorkOrderStateFactory ..> EsperandoRepuestoState : "crea"
+WorkOrderStateFactory ..> EnReparacionState : "crea"
+WorkOrderStateFactory ..> ReparadoState : "crea"
+WorkOrderStateFactory ..> ListoParaEntregaState : "crea"
+WorkOrderStateFactory ..> EntregadoState : "crea"
+
+' ============================================================================
+' NOTA DE BENEFICIOS
+' ============================================================================
+note as N1
+  **Beneficios del Patrón State:**
+  
+  ✓ **Single Responsibility**: Cada estado tiene su propia clase
+  ✓ **Open/Closed**: Nuevos estados se agregan sin modificar existentes
+  ✓ **Comportamiento específico**: onEnter/onExit por estado
+  ✓ **Validación localizada**: Cada estado conoce sus transiciones
+  ✓ **Historial**: El manager registra todas las transiciones
+  ✓ **Testabilidad**: Estados se prueban de forma aislada
+end note
+
+@enduml

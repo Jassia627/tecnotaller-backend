@@ -10,12 +10,41 @@ import {
   StatusHistoryEntry,
   WorkOrder,
 } from './work-orders.types';
+import { 
+  WorkOrderStateManager, 
+  WorkOrderStateFactory,
+  IWorkOrderContext 
+} from './work-order-states';
 
 export class WorkOrderService {
   constructor(
     private readonly repository: IWorkOrderRepository,
     private readonly guid: GuidGenerator,
   ) {}
+
+  /**
+   * PATRÓN STATE: Crea el contexto para el StateManager a partir de una orden
+   */
+  private createStateContext(order: WorkOrder): IWorkOrderContext {
+    return {
+      orderId: order.id,
+      guideNumber: order.guideNumber,
+      technicianId: order.technicianId,
+      customerId: order.customerId,
+      deviceBrand: order.deviceBrand,
+      deviceModel: order.deviceModel,
+    };
+  }
+
+  /**
+   * PATRÓN STATE: Crea un StateManager para una orden existente
+   */
+  private createStateManager(order: WorkOrder): WorkOrderStateManager {
+    return new WorkOrderStateManager(
+      order.currentStatus,
+      this.createStateContext(order)
+    );
+  }
 
   async create(input: CreateWorkOrderInput, initialStatus: 'PENDIENTE' | 'ACEPTADA' = 'ACEPTADA', appointmentId?: string): Promise<WorkOrder> {
     const guideNumber = this.guid.generate().slice(0, 8).toUpperCase();
@@ -56,13 +85,71 @@ export class WorkOrderService {
     return { items: rows.map(WorkOrder.fromRow), total };
   }
 
+  /**
+   * PATRÓN STATE: Transición de estado usando el StateManager
+   * 
+   * El StateManager:
+   * - Valida si la transición es permitida según el estado actual
+   * - Ejecuta lógica de salida (onExit) del estado actual
+   * - Cambia al nuevo estado
+   * - Ejecuta lógica de entrada (onEnter) del nuevo estado
+   * - Mantiene historial de transiciones
+   */
   async transitionStatus(id: string, to: OrderStatus, userId: string): Promise<WorkOrder> {
     const order = await this.getById(id);
-    if (!order.canTransitionTo(to)) {
-      throw new ForbiddenError(`Transición de estado inválida: ${order.currentStatus} -> ${to}`);
+    
+    // PATRÓN STATE: Usar el StateManager para validar y gestionar la transición
+    const stateManager = this.createStateManager(order);
+    
+    // Obtener información del estado actual para mensajes de error
+    const currentState = stateManager.getCurrentState();
+    
+    // Validar transición usando el patrón State
+    if (!stateManager.canTransitionTo(to)) {
+      const allowedTransitions = stateManager.getAvailableTransitions();
+      throw new ForbiddenError(
+        `Transición de estado inválida: ${currentState.getName()} -> ${to}. ` +
+        `Transiciones permitidas desde ${currentState.getName()}: ${allowedTransitions.length > 0 ? allowedTransitions.join(', ') : 'ninguna (estado terminal)'}`
+      );
     }
+
+    // Verificar requisitos del estado destino
+    const targetState = WorkOrderStateFactory.getState(to);
+    if (targetState.requiresTechnician() && !order.technicianId) {
+      throw new ForbiddenError(
+        `El estado ${to} requiere que la orden tenga un técnico asignado`
+      );
+    }
+
+    // Ejecutar transición (esto dispara onExit del estado actual y onEnter del nuevo)
+    stateManager.transitionTo(to);
+    
+    // Persistir el cambio en la base de datos
     const row = await this.repository.transitionStatus(id, order.currentStatus, to, userId);
     return WorkOrder.fromRow(row);
+  }
+
+  /**
+   * PATRÓN STATE: Obtiene las transiciones disponibles para una orden
+   */
+  async getAvailableTransitions(id: string): Promise<{ 
+    currentStatus: OrderStatus; 
+    availableTransitions: OrderStatus[];
+    stateDescription: string;
+    isTerminal: boolean;
+    requiresTechnician: boolean;
+  }> {
+    const order = await this.getById(id);
+    const stateManager = this.createStateManager(order);
+    const currentState = stateManager.getCurrentState();
+
+    return {
+      currentStatus: currentState.getName(),
+      availableTransitions: stateManager.getAvailableTransitions(),
+      stateDescription: currentState.getDescription(),
+      isTerminal: currentState.isTerminal(),
+      requiresTechnician: currentState.requiresTechnician(),
+    };
   }
 
   async getHistory(id: string): Promise<StatusHistoryEntry[]> {
@@ -108,10 +195,15 @@ export class WorkOrderService {
     // Obtener la orden actual para validar su estado
     const order = await this.getById(id);
     
+    // PATRÓN STATE: Usar el StateManager para validar el estado
+    const stateManager = this.createStateManager(order);
+    const currentState = stateManager.getCurrentState();
+    
     // Validar que la orden esté en LISTO_PARA_ENTREGA
-    if (order.currentStatus !== 'LISTO_PARA_ENTREGA') {
+    if (currentState.getName() !== 'LISTO_PARA_ENTREGA') {
       throw new ForbiddenError(
-        `No se puede registrar salida. La orden debe estar en estado LISTO_PARA_ENTREGA, pero está en ${order.currentStatus}`
+        `No se puede registrar salida. La orden debe estar en estado LISTO_PARA_ENTREGA, ` +
+        `pero está en ${currentState.getName()} (${currentState.getDescription()})`
       );
     }
 
@@ -123,10 +215,21 @@ export class WorkOrderService {
     // Obtener la orden actual
     const order = await this.getById(id);
     
+    // PATRÓN STATE: Usar el StateManager para obtener información del estado
+    const stateManager = this.createStateManager(order);
+    const currentState = stateManager.getCurrentState();
+    
     // Validar que la orden no tenga un técnico ya asignado
     if (order.technicianId !== null) {
       throw new ForbiddenError(
         'Esta orden de servicio ya tiene un técnico asignado. No se puede reasignar.'
+      );
+    }
+
+    // Validar que no sea un estado terminal
+    if (currentState.isTerminal()) {
+      throw new ForbiddenError(
+        `No se puede asignar técnico a una orden en estado terminal (${currentState.getName()})`
       );
     }
 
