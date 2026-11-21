@@ -1,0 +1,56 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>TecnoTaller</title>
+<style>
+  html, body { margin:0; height:100%; }
+  body { background:var(--surface); color:var(--ink); font-family:var(--font-sans); overflow:hidden; }
+  .cover { position:relative; height:288px; overflow:hidden; }
+  .art { position:absolute; top:0; left:480px; width:480px; height:288px; overflow:hidden; }
+  .art svg { display:block; width:480px; height:288px; }
+  .navy { fill:var(--navy); }
+  .blue { fill:var(--blue); }
+  .tint { fill:var(--line); }
+  .spark { fill:var(--spark); }
+  .bar { fill:var(--blue-strong); }
+  .words { position:absolute; left:var(--space-8); bottom:var(--space-8); max-width:440px; }
+  .name { margin:0; font-family:var(--font-display); font-size:64px; line-height:.95; font-weight:700; letter-spacing:-.02em; color:var(--ink); }
+  .tag { margin:var(--space-2) 0 0 2px; font-size:14px; line-height:20px; color:var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 288" width="480" height="288">
+<!--
+  blocks      navy 112×264 slab bled off the top (la mitad taller) · blue 112×192 (la mitad cliente) · line tint 216×208 bleeding off the right edge · spark 48×24 once (acento puntual) — ≈30% of 960×288
+  arrangement two slanted slabs side by side like the split T, the tint field to their right, bottoms on one line space-6 above the edge, space-4 gutters
+  pattern     seven skewed blue-strong pills rising left to right on the tint — one per estado de la orden, from "saber en qué está tu equipo" and the italic T
+  scales      sides in space-2 multiples; gutters space-4; pill pitch space-6, width space-3; slab corners radius-md, pills radius-pill (half of 12)
+-->
+<g transform="skewX(-15) translate(70 0)">
+<rect class="navy" x="0" y="-24" width="112" height="288" rx="10"/>
+<rect class="blue" x="128" y="72" width="112" height="192" rx="10"/>
+</g>
+<rect class="tint" x="296" y="56" width="208" height="208" rx="10"/>
+<rect class="spark" x="400" y="24" width="48" height="16" rx="8"/>
+<g transform="translate(36 0)">
+<rect class="bar" x="264" y="200" width="12" height="40" rx="6" transform="skewX(-15) translate(53 0)"/>
+<rect class="bar" x="292" y="180" width="12" height="60" rx="6" transform="skewX(-15) translate(48 0)"/>
+<rect class="bar" x="320" y="160" width="12" height="80" rx="6" transform="skewX(-15) translate(42 0)"/>
+<rect class="bar" x="348" y="140" width="12" height="100" rx="6" transform="skewX(-15) translate(37 0)"/>
+<rect class="bar" x="376" y="120" width="12" height="120" rx="6" transform="skewX(-15) translate(32 0)"/>
+<rect class="bar" x="404" y="100" width="12" height="140" rx="6" transform="skewX(-15) translate(26 0)"/>
+<rect class="bar" x="432" y="80" width="12" height="160" rx="6" transform="skewX(-15) translate(21 0)"/>
+</g>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">TecnoTaller</h1>
+<p class="tag">Saber en qué está tu equipo, de la recepción a la entrega.</p>
+</div>
+</div>
+</body>
+</html>

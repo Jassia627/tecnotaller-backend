@@ -1,6 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { supabase as defaultSupabase } from '../../config/supabase';
 import { BadRequestError, NotFoundError, ConflictError } from '../../shared/errors/app-error';
+import { getCurrentTenantId, requireCurrentTenantId } from '../../shared/context/tenant-context';
 import {
   POSTGRES_ERROR_CODES,
   POSTGREST_ERROR_CODES,
@@ -57,9 +58,13 @@ export class ProductRepository implements IProductRepository {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
+    const tenantId = getCurrentTenantId();
     let query = this.db
       .from(DB_TABLES.PRODUCTS)
       .select('*', { count: 'exact' });
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
 
     if (!includeInactive) {
       query = query.eq('active', true);
@@ -74,11 +79,15 @@ export class ProductRepository implements IProductRepository {
   }
 
   async findById(id: string): Promise<ProductRow | null> {
-    const { data, error } = await this.db
+    const tenantId = getCurrentTenantId();
+    let query = this.db
       .from(DB_TABLES.PRODUCTS)
       .select('*')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query.single();
 
     if (error) {
       if (
@@ -96,6 +105,7 @@ export class ProductRepository implements IProductRepository {
     const { data, error } = await this.db
       .from(DB_TABLES.PRODUCTS)
       .insert({
+        tenant_id: requireCurrentTenantId(),
         sku: input.sku,
         name: input.name,
         description: input.description,
@@ -141,10 +151,15 @@ export class ProductRepository implements IProductRepository {
     if (Object.keys(patch).length === 0) {
       throw new BadRequestError('No hay campos para actualizar');
     }
-    const { data, error } = await this.db
+    const tenantId = getCurrentTenantId();
+    let updateQuery = this.db
       .from(DB_TABLES.PRODUCTS)
       .update(patch)
-      .eq('id', id)
+      .eq('id', id);
+    if (tenantId) {
+      updateQuery = updateQuery.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await updateQuery
       .select('*')
       .single();
 
@@ -153,10 +168,15 @@ export class ProductRepository implements IProductRepository {
   }
 
   async setActive(id: string, active: boolean): Promise<ProductRow> {
-    const { data, error } = await this.db
+    const tenantId = getCurrentTenantId();
+    let query = this.db
       .from(DB_TABLES.PRODUCTS)
       .update({ active })
-      .eq('id', id)
+      .eq('id', id);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query
       .select('*')
       .single();
 
@@ -165,10 +185,15 @@ export class ProductRepository implements IProductRepository {
   }
 
   async listMovements(productId: string): Promise<InventoryMovement[]> {
-    const { data, error } = await this.db
+    const tenantId = getCurrentTenantId();
+    let query = this.db
       .from(DB_TABLES.INVENTORY_MOVEMENTS)
       .select('*')
-      .eq('product_id', productId)
+      .eq('product_id', productId);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -236,10 +261,15 @@ export class ProductRepository implements IProductRepository {
         newStock += input.quantity;
       }
 
-      const { data: updatedProduct, error: updateError } = await this.db
+      const tenantId = getCurrentTenantId();
+      let updateQuery = this.db
         .from(DB_TABLES.PRODUCTS)
         .update({ stock: newStock })
-        .eq('id', productId)
+        .eq('id', productId);
+      if (tenantId) {
+        updateQuery = updateQuery.eq('tenant_id', tenantId);
+      }
+      const { data: updatedProduct, error: updateError } = await updateQuery
         .select('*')
         .single();
 
@@ -247,6 +277,7 @@ export class ProductRepository implements IProductRepository {
 
       // Insertar en historial de movimientos si la tabla existe
       const { error: insertError } = await this.db.from(DB_TABLES.INVENTORY_MOVEMENTS).insert({
+        tenant_id: requireCurrentTenantId(),
         product_id: productId,
         type: input.type,
         quantity: input.quantity,
@@ -280,11 +311,16 @@ export class ProductRepository implements IProductRepository {
   }
 
   async findByStockThreshold(threshold: number): Promise<ProductRow[]> {
-    const { data, error } = await this.db
+    const tenantId = getCurrentTenantId();
+    let query = this.db
       .from(DB_TABLES.PRODUCTS)
       .select('*')
       .lte('stock', threshold)
-      .eq('active', true)
+      .eq('active', true);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query
       .order('stock', { ascending: true });
 
     if (error) throw error;

@@ -1,8 +1,8 @@
 import { supabase } from '../../config/supabase';
+import { getCurrentTenantId, requireCurrentTenantId } from '../../shared/context/tenant-context';
 import { Photo, PhotoRow } from './photos.types';
 
 function mapRow(row: PhotoRow): Photo {
-  // Generar URL pública desde el storage path
   const publicUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/work-order-photos/${row.storage_path}`;
   
   return {
@@ -23,10 +23,9 @@ export interface IPhotoRepository {
 
 export class PhotoRepository implements IPhotoRepository {
   async upload(workOrderId: string, kind: 'inicial' | 'final', fileBuffer: Buffer, fileName: string): Promise<Photo> {
-    // Generar path en storage
-    const storagePath = `${workOrderId}/${kind}/${Date.now()}-${fileName}`;
+    const tenantId = requireCurrentTenantId();
+    const storagePath = `${tenantId}/${workOrderId}/${kind}/${Date.now()}-${fileName}`;
     
-    // Subir a Supabase Storage
     const { error: uploadError } = await supabase.storage
       .from('work-order-photos')
       .upload(storagePath, fileBuffer, {
@@ -36,10 +35,10 @@ export class PhotoRepository implements IPhotoRepository {
 
     if (uploadError) throw uploadError;
 
-    // Guardar referencia en BD
     const { data, error } = await supabase
       .from('order_photos')
       .insert({
+        tenant_id: tenantId,
         work_order_id: workOrderId,
         kind,
         storage_path: storagePath,
@@ -52,24 +51,30 @@ export class PhotoRepository implements IPhotoRepository {
   }
 
   async listByWorkOrder(workOrderId: string): Promise<Photo[]> {
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('order_photos')
       .select('id, work_order_id, kind, storage_path, uploaded_at')
       .eq('work_order_id', workOrderId)
       .order('uploaded_at', { ascending: true });
+    if (tenantId) query = query.eq('tenant_id', tenantId);
 
+    const { data, error } = await query;
     if (error) throw error;
     return (data as PhotoRow[]).map(mapRow);
   }
 
   async listByWorkOrderAndKind(workOrderId: string, kind: 'inicial' | 'final'): Promise<Photo[]> {
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('order_photos')
       .select('id, work_order_id, kind, storage_path, uploaded_at')
       .eq('work_order_id', workOrderId)
       .eq('kind', kind)
       .order('uploaded_at', { ascending: true });
+    if (tenantId) query = query.eq('tenant_id', tenantId);
 
+    const { data, error } = await query;
     if (error) throw error;
     return (data as PhotoRow[]).map(mapRow);
   }

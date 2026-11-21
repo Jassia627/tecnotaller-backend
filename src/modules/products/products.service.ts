@@ -1,4 +1,6 @@
 import { NotFoundError } from '../../shared/errors/app-error';
+import { getCurrentTenantId } from '../../shared/context/tenant-context';
+import { planLimitService } from '../../shared/services/plan-limits.service';
 import { IProductRepository } from './products.repository';
 import {
   CreateProductInput,
@@ -28,6 +30,10 @@ export class ProductService {
   }
 
   async create(input: CreateProductInput): Promise<Product> {
+    const tenantId = getCurrentTenantId();
+    if (tenantId) {
+      await planLimitService.assertCanCreateProduct(tenantId);
+    }
     const row = await this.repository.create(input);
     return Product.fromRow(row);
   }

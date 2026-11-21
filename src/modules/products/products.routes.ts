@@ -4,6 +4,7 @@ import { ProductService } from './products.service';
 import { ProductRepository } from './products.repository';
 import { asyncHandler } from '../../shared/utils/async-handler';
 import { authMiddleware } from '../../shared/middlewares/auth';
+import { resolveTenantMiddleware } from '../../shared/middlewares/resolve-tenant';
 import { authorizeRoles } from '../../shared/middlewares/authorize-roles';
 import { ROLES } from '../../shared/types';
 
@@ -17,8 +18,8 @@ export function createProductsRouter(): Router {
   router.get('/admin/all', authMiddleware, authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.listAll.bind(controller)));
   router.get('/inventory/low-stock', authMiddleware, authorizeRoles(ROLES.ADMINISTRADOR), asyncHandler(controller.listLowStock.bind(controller)));
 
-  router.get('/', asyncHandler(controller.listPublic.bind(controller)));
-  router.get('/:id', asyncHandler(controller.getById.bind(controller)));
+  router.get('/', resolveTenantMiddleware, asyncHandler(controller.listPublic.bind(controller)));
+  router.get('/:id', resolveTenantMiddleware, asyncHandler(controller.getById.bind(controller)));
 
   router.use(authMiddleware);
 

@@ -7,6 +7,7 @@ export interface AuthUser {
   role: Role;
   fullName: string;
   phone?: string;
+  tenantId?: string | null;
 }
 
 export interface AuthSession {

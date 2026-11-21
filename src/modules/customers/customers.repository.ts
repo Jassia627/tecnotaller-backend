@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase';
+import { getCurrentTenantId, requireCurrentTenantId } from '../../shared/context/tenant-context';
 import { CreateCustomerInput, UpdateCustomerInput, CustomerRow } from './customers.types';
 
 export interface ICustomerRepository {
@@ -15,19 +16,26 @@ export class CustomerRepository implements ICustomerRepository {
   async list(options: { page: number; pageSize: number }): Promise<{ rows: CustomerRow[]; total: number }> {
     const from = (options.page - 1) * options.pageSize;
     const to = from + options.pageSize - 1;
+    const tenantId = getCurrentTenantId();
 
-    const { data, count, error } = await supabase
+    let query = supabase
       .from('customers')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(from, to);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+
+    const { data, count, error } = await query;
 
     if (error) throw error;
     return { rows: (data as CustomerRow[]) ?? [], total: count ?? 0 };
   }
 
   async findById(id: string): Promise<CustomerRow | null> {
-    const { data, error } = await supabase.from('customers').select('*').eq('id', id).single();
+    const tenantId = getCurrentTenantId();
+    let query = supabase.from('customers').select('*').eq('id', id);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+    const { data, error } = await query.single();
     if (error) {
       if (error.code === 'PGRST116') return null;
       throw error;
@@ -46,11 +54,14 @@ export class CustomerRepository implements ICustomerRepository {
     
     if (!normalizedPhone) return null;
 
-    // Buscar clientes con teléfono no nulo
-    const { data, error } = await supabase
+    // Buscar clientes con teléfono no nulo en el mismo taller
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('customers')
       .select('*')
       .not('phone', 'is', null);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+    const { data, error } = await query;
 
     if (error) throw error;
     if (!data || data.length === 0) return null;
@@ -87,9 +98,11 @@ export class CustomerRepository implements ICustomerRepository {
   }
 
   async create(input: CreateCustomerInput): Promise<CustomerRow> {
+    const tenantId = requireCurrentTenantId();
     const { data, error } = await supabase
       .from('customers')
       .insert({
+        tenant_id: tenantId,
         email: input.email ?? null,
         full_name: input.fullName,
         phone: input.phone ?? null,
@@ -101,23 +114,27 @@ export class CustomerRepository implements ICustomerRepository {
   }
 
   async update(id: string, input: UpdateCustomerInput): Promise<CustomerRow> {
+    const tenantId = getCurrentTenantId();
     const updateData: Record<string, unknown> = {};
     if (input.email !== undefined) updateData.email = input.email ?? null;
     if (input.fullName !== undefined) updateData.full_name = input.fullName;
     if (input.phone !== undefined) updateData.phone = input.phone ?? null;
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('customers')
       .update(updateData)
-      .eq('id', id)
-      .select('*')
-      .single();
+      .eq('id', id);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+    const { data, error } = await query.select('*').single();
     if (error) throw error;
     return data as CustomerRow;
   }
 
   async delete(id: string): Promise<void> {
-    const { error } = await supabase.from('customers').delete().eq('id', id);
+    const tenantId = getCurrentTenantId();
+    let query = supabase.from('customers').delete().eq('id', id);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+    const { error } = await query;
     if (error) throw error;
   }
 

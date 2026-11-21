@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase';
+import { getCurrentTenantId, requireCurrentTenantId } from '../../shared/context/tenant-context';
 import {
   CreateWorkOrderInput,
   OrderStatus,
@@ -22,7 +23,10 @@ export interface IWorkOrderRepository {
 
 export class WorkOrderRepository implements IWorkOrderRepository {
   async findById(id: string): Promise<WorkOrderRow | null> {
-    const { data, error } = await supabase.from('work_orders').select('*').eq('id', id).single();
+    const tenantId = getCurrentTenantId();
+    let query = supabase.from('work_orders').select('*').eq('id', id);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+    const { data, error } = await query.single();
     if (error) {
       if (error.code === 'PGRST116' || error.code === '22P02') return null;
       throw error;
@@ -31,7 +35,10 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   }
 
   async findByGuideNumber(guideNumber: string): Promise<WorkOrderRow | null> {
-    const { data, error } = await supabase.from('work_orders').select('*').eq('guide_number', guideNumber).single();
+    const tenantId = getCurrentTenantId();
+    let query = supabase.from('work_orders').select('*').eq('guide_number', guideNumber);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+    const { data, error } = await query.single();
     if (error) {
       if (error.code === 'PGRST116' || error.code === '22P02') return null;
       throw error;
@@ -40,7 +47,10 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   }
 
   async findByAppointmentId(appointmentId: string): Promise<WorkOrderRow | null> {
-    const { data, error } = await supabase.from('work_orders').select('*').eq('appointment_id', appointmentId).single();
+    const tenantId = getCurrentTenantId();
+    let query = supabase.from('work_orders').select('*').eq('appointment_id', appointmentId);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+    const { data, error } = await query.single();
     if (error) {
       if (error.code === 'PGRST116' || error.code === '22P02') return null;
       throw error;
@@ -63,6 +73,8 @@ export class WorkOrderRepository implements IWorkOrderRepository {
     const to = from + pageSize - 1;
 
     let query = supabase.from('work_orders').select('*', { count: 'exact' });
+    const tenantId = getCurrentTenantId();
+    if (tenantId) query = query.eq('tenant_id', tenantId);
 
     // Aplicar filtros
     if (options.status) query = query.eq('current_status', options.status);
@@ -97,22 +109,23 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   }
 
   async create(input: CreateWorkOrderInput, guideNumber: string, initialStatus: 'PENDIENTE' | 'ACEPTADA' = 'ACEPTADA', appointmentId?: string): Promise<WorkOrderRow> {
+    const tenantId = requireCurrentTenantId();
     let finalCustomerId: string | null = input.customerId ?? null;
     let finalTechnicianId: string | null = input.technicianId ?? null;
 
-    // Verificar existencia de customer_id en BD; si no existe, asignar null para evitar fallos de Foreign Key
+    // Verificar existencia de customer_id en BD del mismo taller
     if (finalCustomerId) {
-      const { data: cust } = await supabase.from('customers').select('id').eq('id', finalCustomerId).maybeSingle();
+      const { data: cust } = await supabase.from('customers').select('id').eq('id', finalCustomerId).eq('tenant_id', tenantId).maybeSingle();
       if (!cust) {
         finalCustomerId = null;
       }
     }
 
-    // Verificar existencia de technician_id en BD; si no existe, asignar null
+    // Verificar existencia de technician_id en BD del mismo taller
     if (finalTechnicianId) {
       const { data: tech } = await supabase.from('technicians').select('id').eq('id', finalTechnicianId).maybeSingle();
       if (!tech) {
-        const { data: prof } = await supabase.from('profiles').select('id').eq('id', finalTechnicianId).maybeSingle();
+        const { data: prof } = await supabase.from('profiles').select('id').eq('id', finalTechnicianId).eq('tenant_id', tenantId).maybeSingle();
         if (!prof) {
           finalTechnicianId = null;
         }
@@ -122,6 +135,7 @@ export class WorkOrderRepository implements IWorkOrderRepository {
     const { data, error } = await supabase
       .from('work_orders')
       .insert({
+        tenant_id: tenantId,
         guide_number: guideNumber,
         customer_id: finalCustomerId,
         technician_id: finalTechnicianId,
@@ -151,6 +165,7 @@ export class WorkOrderRepository implements IWorkOrderRepository {
     }
 
     const { error: historyErr } = await supabase.from('order_status_history').insert({
+      tenant_id: tenantId,
       work_order_id: created.id,
       from_status: 'INGRESADO',
       to_status: 'INGRESADO',
@@ -183,12 +198,15 @@ export class WorkOrderRepository implements IWorkOrderRepository {
       // Fall through
     }
 
+    const tenantId = requireCurrentTenantId();
+
     // Fallback: Implementar transición localmente
     // Actualizar estado
     const { data: updated, error: updateError } = await supabase
       .from('work_orders')
       .update({ current_status: to })
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .select('*')
       .single();
 
@@ -198,6 +216,7 @@ export class WorkOrderRepository implements IWorkOrderRepository {
     const { error: historyError } = await supabase
       .from('order_status_history')
       .insert({
+        tenant_id: tenantId,
         work_order_id: id,
         from_status: from,
         to_status: to,
@@ -226,7 +245,9 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   }
 
   async addPhoto(workOrderId: string, storagePath: string, kind: 'inicial' | 'final'): Promise<void> {
+    const tenantId = requireCurrentTenantId();
     const { error } = await supabase.from('order_photos').insert({
+      tenant_id: tenantId,
       work_order_id: workOrderId,
       storage_path: storagePath,
       kind,
@@ -235,7 +256,8 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   }
 
   async registerExit(id: string, data: { finalState: string; repairsPerformed: string; partsUsed?: string; observations?: string }): Promise<WorkOrderRow> {
-    const { data: row, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('work_orders')
       .update({
         exit_final_state: data.finalState,
@@ -243,9 +265,9 @@ export class WorkOrderRepository implements IWorkOrderRepository {
         exit_parts_used: data.partsUsed ?? null,
         exit_observations: data.observations ?? null,
       })
-      .eq('id', id)
-      .select('*')
-      .single();
+      .eq('id', id);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+    const { data: row, error } = await query.select('*').single();
     if (error) throw error;
     return row as WorkOrderRow;
   }
@@ -260,15 +282,16 @@ export class WorkOrderRepository implements IWorkOrderRepository {
   }
 
   async assignTechnician(id: string, technicianId: string): Promise<WorkOrderRow> {
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('work_orders')
       .update({ 
         technician_id: technicianId,
         assigned_time: new Date().toISOString(),
       })
-      .eq('id', id)
-      .select('*')
-      .single();
+      .eq('id', id);
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+    const { data, error } = await query.select('*').single();
 
     if (error) throw error;
     return data as WorkOrderRow;

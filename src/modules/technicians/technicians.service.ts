@@ -1,4 +1,6 @@
 import { NotFoundError, ConflictError } from '../../shared/errors/app-error';
+import { getCurrentTenantId } from '../../shared/context/tenant-context';
+import { planLimitService } from '../../shared/services/plan-limits.service';
 import { ITechnicianRepository } from './technicians.repository';
 import { RegisterTechnicianInput, Technician, UpdateTechnicianInput } from './technicians.types';
 
@@ -10,6 +12,10 @@ export class TechnicianService {
   }
 
   async register(input: RegisterTechnicianInput): Promise<Technician> {
+    const tenantId = getCurrentTenantId();
+    if (tenantId) {
+      await planLimitService.assertCanCreateTechnician(tenantId);
+    }
     return this.repository.register(input);
   }
 

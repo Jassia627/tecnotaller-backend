@@ -1,0 +1,135 @@
+/* TecnoTaller — generated from tokens.json */
+:root, [data-theme="light"] {
+  --surface: #f5f8fc; /* Fondo de página del portal y del panel. */
+  --surface-raised: #ffffff; /* Tarjetas, tablas, modales y formularios sobre surface. */
+  --surface-sunken: #edf1f6; /* Campos de texto, filas alternas, fondo del estado Ingresado. */
+  --line: #d6dfea; /* Bordes de tarjetas, divisores y tablas (1px). */
+  --ink: #09213d; /* Texto principal sobre surface, surface-raised y surface-sunken (≥14:1 en ambos temas). */
+  --ink-muted: #4b5d75; /* Texto secundario, etiquetas y metadatos sobre surface, surface-raised y surface-sunken (≥5.9:1). */
+  --navy: #09213d; /* Azul noche de marca: mitad 'taller' del logo, barra lateral del panel, encabezados de marca. En oscuro se aclara para no perderse en el fondo. */
+  --blue: #0074f9; /* Azul eléctrico de marca: mitad 'cliente' del logo, ilustraciones, íconos y rellenos grandes. Como texto solo a 24px o más (4.3:1 sobre blanco). */
+  --blue-strong: #005fd1; /* Enlaces, botón primario, anillo de foco y texto del estado En revisión (≥5.1:1 sobre surface y blue-soft). */
+  --on-blue: #ffffff; /* Texto e íconos sobre un relleno blue-strong (5.9:1 claro, 6.8:1 oscuro). */
+  --blue-soft: #e5f0ff; /* Fondo del estado En revisión, filas seleccionadas, avisos informativos. */
+  --spark: #ff8a1f; /* Acento chispa: destacados puntuales (ofertas en el catálogo, punto de notificación). Nunca como texto ni como color de botón. */
+  --amber: #8f4a00; /* Texto e ícono del estado Esperando repuesto y alertas de stock bajo, sobre amber-soft (≥6:1). */
+  --amber-soft: #fff0de; /* Fondo del estado Esperando repuesto y de alertas de stock bajo. */
+  --teal: #00737a; /* Texto e ícono del estado En reparación, sobre teal-soft (≥4.9:1). */
+  --teal-soft: #ddf5f5; /* Fondo del estado En reparación. */
+  --green: #1c7a3e; /* Texto del estado Reparado sobre green-soft; relleno sólido del estado Listo para entrega con on-green. */
+  --green-soft: #e2f5e8; /* Fondo del estado Reparado y de mensajes de éxito. */
+  --on-green: #ffffff; /* Texto sobre relleno green (5.4:1 claro, 10:1 oscuro). */
+  --danger: #ba0000; /* Errores, garantía vencida, acciones destructivas; texto sobre danger-soft (≥4.7:1). */
+  --danger-soft: #fde7e7; /* Fondo de errores y alertas críticas. */
+  --shadow-card: 0 1px 2px rgba(9,33,61,.06), 0 4px 12px rgba(9,33,61,.06); /* Tarjetas elevadas del portal del cliente; en el panel se prefiere borde line. */
+}
+[data-theme="dark"] {
+  --surface: #07152a;
+  --surface-raised: #0e2340;
+  --surface-sunken: #16304f;
+  --line: #1f3656;
+  --ink: #eaf1fa;
+  --ink-muted: #9db0c8;
+  --navy: #1a3a66;
+  --blue: #0074f9;
+  --blue-strong: #4d9bff;
+  --on-blue: #04101f;
+  --blue-soft: #0d2a52;
+  --spark: #ff8a1f;
+  --amber: #ffb366;
+  --amber-soft: #3a2408;
+  --teal: #4fd1d9;
+  --teal-soft: #08333a;
+  --green: #5fd48a;
+  --green-soft: #0d3320;
+  --on-green: #04101f;
+  --danger: #ff7a7a;
+  --danger-soft: #3d0f12;
+}
+:root {
+  --space-1: 4px; /* Separación ícono–texto. */
+  --space-2: 8px; /* Relleno de etiquetas de estado; espacio entre controles pequeños. */
+  --space-3: 12px; /* Espacio entre botones y entre campos de un formulario. */
+  --space-4: 16px; /* Relleno de tarjetas y celdas de tabla. */
+  --space-6: 24px; /* Separación entre bloques de una página; márgenes del portal. */
+  --space-8: 32px; /* Separación entre secciones. */
+  --radius-sm: 6px; /* Campos, chips pequeños. */
+  --radius-md: 10px; /* Botones y tarjetas. */
+  --radius-lg: 16px; /* Paneles grandes, modales, tarjeta de orden en el portal. */
+  --radius-pill: 999px; /* Etiquetas de estado de la orden. */
+  --font-display: "Sora", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --text-display: 700 48px/52px var(--font-display);
+  --text-h1: 700 32px/38px var(--font-display);
+  --text-h2: 600 24px/30px var(--font-display);
+  --text-h3: 600 18px/24px var(--font-display);
+  --text-body: 400 15px/22px var(--font-sans);
+  --text-body-strong: 600 15px/22px var(--font-sans);
+  --text-small: 400 13px/18px var(--font-sans);
+  --text-label: 600 12px/16px var(--font-sans);
+  --text-codigo: 500 13px/18px var(--font-mono);
+}
+.display {
+  font-family: var(--font-display);
+  font-size: 48px;
+  line-height: 52px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h1 {
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 38px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h2 {
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.body {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.body-strong {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.small {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.codigo {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  letter-spacing: 0;
+}

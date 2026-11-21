@@ -1,0 +1,17 @@
+<!-- @dsCard group="Estructura" height=440 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Drawer</title>
+<style>#root{height:440px;background:var(--surface)} .demo-bg{position:absolute;inset:0;padding:24px;display:grid;gap:12px;align-content:start} .demo-bg i{display:block;height:16px;border-radius:8px;background:var(--surface-sunken)} .kv{display:grid;grid-template-columns:130px 1fr;gap:8px 16px;font-size:14px;margin:0} .kv dt{color:var(--ink-muted)} .kv dd{margin:0}</style></head>
+<body><div id="root"></div>
+<script>
+var T = window.TecnoTaller, h = React.createElement;
+function App(){
+  return h("div",{style:{position:"relative",height:"100%"}},
+    h("div",{className:"demo-bg"},h("i",{style:{width:"30%",height:"24px"}}),h("i"),h("i",{style:{width:"80%"}}),h("i"),h("i",{style:{width:"65%"}})),
+    h("div",{style:{position:"absolute",inset:0}},
+      h(T.Drawer,{enLinea:true,tamano:"formulario",clave:h(React.Fragment,null,"OT-2026-00184 ",h(T.EstadoOrden,{estado:"reparacion"})),titulo:"iPhone 13 128 GB",subtitulo:"Laura Gómez · Técnico: Andrés Montoya",onCerrar:function(){},
+        pie:h(React.Fragment,null,h(T.Button,null,"Cerrar"),h(T.Button,{variant:"primary"},"Pasar a Reparado"))},
+        h("dl",{className:"kv"},h("dt",null,"Falla reportada"),h("dd",null,"Pantalla con líneas verdes; el táctil no responde abajo."),h("dt",null,"Accesorios"),h("dd",null,"Cargador, funda"),h("dt",null,"Daños físicos"),h("dd",null,"Rayón en la esquina superior derecha del marco.")))));
+}
+ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+</script></body></html>

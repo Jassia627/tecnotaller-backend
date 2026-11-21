@@ -4,6 +4,7 @@ import { WorkOrderService } from './work-orders.service';
 import { WorkOrderRepository } from './work-orders.repository';
 import { asyncHandler } from '../../shared/utils/async-handler';
 import { authMiddleware, optionalAuthMiddleware } from '../../shared/middlewares/auth';
+import { resolveTenantMiddleware } from '../../shared/middlewares/resolve-tenant';
 import { authorizeRoles } from '../../shared/middlewares/authorize-roles';
 import { ROLES } from '../../shared/types';
 import { guidGenerator } from '../../shared/utils/guid';
@@ -17,7 +18,7 @@ export function createWorkOrdersRouter(): Router {
   const router = Router();
 
   // Seguimiento público por guía (Accesible sin login para clientes con número de orden, o autenticado si tiene sesión)
-  router.get('/track/:guideNumber', optionalAuthMiddleware, asyncHandler(controller.trackByGuide.bind(controller)));
+  router.get('/track/:guideNumber', optionalAuthMiddleware, resolveTenantMiddleware, asyncHandler(controller.trackByGuide.bind(controller)));
 
   // Endpoint para que clientes creen órdenes (requiere autenticación como cliente)
   router.post('/client/create', authMiddleware, asyncHandler(controller.createAsClient.bind(controller)));

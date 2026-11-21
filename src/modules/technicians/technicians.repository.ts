@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase';
+import { getCurrentTenantId, requireCurrentTenantId } from '../../shared/context/tenant-context';
 import { ConflictError } from '../../shared/errors/app-error';
 import { RegisterTechnicianInput, Technician, UpdateTechnicianInput } from './technicians.types';
 
@@ -17,13 +18,14 @@ interface AuthUser {
 }
 
 async function getTechnicianWithEmail(id: string): Promise<Technician | null> {
-  // Obtener perfil de técnico
-  const { data: profile, error: profileError } = await supabase
+  const tenantId = getCurrentTenantId();
+  let query = supabase
     .from('profiles')
     .select('id, full_name, phone, role, active, created_at')
     .eq('id', id)
-    .eq('role', 'tecnico')
-    .single();
+    .eq('role', 'tecnico');
+  if (tenantId) query = query.eq('tenant_id', tenantId);
+  const { data: profile, error: profileError } = await query.single();
 
   if (profileError || !profile) return null;
 
@@ -57,12 +59,14 @@ export interface ITechnicianRepository {
 
 export class TechnicianRepository implements ITechnicianRepository {
   async list(): Promise<Technician[]> {
-    // Obtener todos los técnicos de profiles
-    const { data: profiles, error: profileError } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('profiles')
       .select('id, full_name, phone, role, active, created_at')
       .eq('role', 'tecnico')
       .order('created_at', { ascending: false });
+    if (tenantId) query = query.eq('tenant_id', tenantId);
+    const { data: profiles, error: profileError } = await query;
 
     if (profileError) throw profileError;
     if (!profiles) return [];
@@ -80,6 +84,7 @@ export class TechnicianRepository implements ITechnicianRepository {
   }
 
   async register(input: RegisterTechnicianInput): Promise<Technician> {
+    const tenantId = requireCurrentTenantId();
     const { data, error } = await supabase.auth.admin.createUser({
       email: input.email,
       password: input.password,
@@ -88,6 +93,7 @@ export class TechnicianRepository implements ITechnicianRepository {
         full_name: input.fullName,
         phone: input.phone ?? null,
         role: 'tecnico',
+        tenant_id: tenantId,
       },
     });
 
@@ -97,6 +103,15 @@ export class TechnicianRepository implements ITechnicianRepository {
       }
       throw error;
     }
+
+    await supabase.from('profiles').upsert({
+      id: data.user.id,
+      full_name: input.fullName,
+      phone: input.phone ?? null,
+      role: 'tecnico',
+      tenant_id: tenantId,
+      active: true,
+    });
 
     const tech = await this.findById(data.user.id);
     if (!tech) throw new Error('No se pudo crear el técnico');

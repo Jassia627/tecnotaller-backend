@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase';
+import { getCurrentTenantId, requireCurrentTenantId } from '../../shared/context/tenant-context';
 import { SupplierRow, CreateSupplierInput, UpdateSupplierInput } from './suppliers.types';
 
 export interface ISupplierRepository {
@@ -13,11 +14,16 @@ export class SupplierRepository implements ISupplierRepository {
   async list(options: { page: number; pageSize: number }): Promise<{ rows: SupplierRow[]; total: number }> {
     const from = (options.page - 1) * options.pageSize;
     const to = from + options.pageSize - 1;
+    const tenantId = getCurrentTenantId();
 
-    const { data, count, error } = await supabase
+    let query = supabase
       .from('suppliers')
       .select('*', { count: 'exact' })
-      .eq('active', true)
+      .eq('active', true);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, count, error } = await query
       .order('created_at', { ascending: false })
       .range(from, to);
 
@@ -26,12 +32,16 @@ export class SupplierRepository implements ISupplierRepository {
   }
 
   async findById(id: string): Promise<SupplierRow | null> {
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('suppliers')
       .select('*')
       .eq('id', id)
-      .eq('active', true)
-      .single();
+      .eq('active', true);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query.single();
 
     if (error) {
       if (error.code === 'PGRST116') return null;
@@ -44,6 +54,7 @@ export class SupplierRepository implements ISupplierRepository {
     const { data, error } = await supabase
       .from('suppliers')
       .insert({
+        tenant_id: requireCurrentTenantId(),
         name: input.name,
         contact_person: input.contactPerson,
         email: input.email,
@@ -70,10 +81,15 @@ export class SupplierRepository implements ISupplierRepository {
     if (input.city !== undefined) updateData.city = input.city;
     if (input.country !== undefined) updateData.country = input.country;
 
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('suppliers')
       .update(updateData)
-      .eq('id', id)
+      .eq('id', id);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query
       .select('*')
       .single();
 
@@ -82,10 +98,15 @@ export class SupplierRepository implements ISupplierRepository {
   }
 
   async changeStatus(id: string, active: boolean): Promise<SupplierRow> {
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('suppliers')
       .update({ active })
-      .eq('id', id)
+      .eq('id', id);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query
       .select('*')
       .single();
 

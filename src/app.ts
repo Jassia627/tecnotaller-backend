@@ -22,6 +22,8 @@ import { createTechnicianAvailabilityRouter } from './modules/technician-availab
 import { createPurchaseRequestsRouter } from './modules/purchase-requests/purchase-requests.routes';
 import { createInventoryRouter } from './modules/inventory/inventory.routes';
 import { createSuppliersRouter } from './modules/suppliers/suppliers.routes';
+import { createSuperAdminRouter } from './modules/super-admin/super-admin.routes';
+import { createTenantRouter } from './modules/tenant/tenant.routes';
 
 export function createApp(): Express {
   const app = express();
@@ -42,6 +44,8 @@ export function createApp(): Express {
 
 
   app.use('/api/v1/auth', createAuthRouter());
+  app.use('/api/v1/super-admin', createSuperAdminRouter());
+  app.use('/api/v1/tenant', createTenantRouter());
   app.use('/api/v1/products', createProductsRouter());
   app.use('/api/v1/services', createServicesRouter());
   app.use('/api/v1/appointments', createAppointmentsRouter());

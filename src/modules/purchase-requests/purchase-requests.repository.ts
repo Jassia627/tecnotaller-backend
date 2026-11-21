@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase';
+import { getCurrentTenantId, requireCurrentTenantId } from '../../shared/context/tenant-context';
 import {
   PurchaseRequestRow,
   PurchaseRequestItemRow,
@@ -13,6 +14,7 @@ export interface IPurchaseRequestRepository {
   list(options: { page: number; pageSize: number }): Promise<{ rows: PurchaseRequestRow[]; total: number }>;
   findById(id: string): Promise<PurchaseRequestRow | null>;
   findItemsById(purchaseRequestId: string): Promise<PurchaseRequestItemRow[]>;
+  findItemsByPurchaseRequestIds(purchaseRequestIds: string[]): Promise<PurchaseRequestItemRow[]>;
   create(input: CreatePurchaseRequestInput, userId: string): Promise<PurchaseRequestRow>;
   updateStatus(id: string, input: UpdatePurchaseRequestStatusInput): Promise<PurchaseRequestRow>;
   markAsReceived(id: string): Promise<PurchaseRequestRow>;
@@ -22,10 +24,15 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
   async list(options: { page: number; pageSize: number }): Promise<{ rows: PurchaseRequestRow[]; total: number }> {
     const from = (options.page - 1) * options.pageSize;
     const to = from + options.pageSize - 1;
+    const tenantId = getCurrentTenantId();
 
-    const { data, count, error } = await supabase
+    let query = supabase
       .from('purchase_requests')
-      .select('*', { count: 'exact' })
+      .select('*', { count: 'exact' });
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, count, error } = await query
       .order('created_at', { ascending: false })
       .range(from, to);
 
@@ -34,11 +41,15 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
   }
 
   async findById(id: string): Promise<PurchaseRequestRow | null> {
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('purchase_requests')
       .select('*')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query.single();
 
     if (error) {
       if (error.code === 'PGRST116') return null;
@@ -48,10 +59,33 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
   }
 
   async findItemsById(purchaseRequestId: string): Promise<PurchaseRequestItemRow[]> {
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('purchase_request_items')
       .select('*')
-      .eq('purchase_request_id', purchaseRequestId)
+      .eq('purchase_request_id', purchaseRequestId);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return (data as PurchaseRequestItemRow[]) ?? [];
+  }
+
+  async findItemsByPurchaseRequestIds(purchaseRequestIds: string[]): Promise<PurchaseRequestItemRow[]> {
+    if (purchaseRequestIds.length === 0) return [];
+
+    const tenantId = getCurrentTenantId();
+    let query = supabase
+      .from('purchase_request_items')
+      .select('*')
+      .in('purchase_request_id', purchaseRequestIds);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query
       .order('created_at', { ascending: true });
 
     if (error) throw error;
@@ -61,12 +95,14 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
   async create(input: CreatePurchaseRequestInput, userId: string): Promise<PurchaseRequestRow> {
     // Calcular totales
     const totalAmount = input.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+    const tenantId = requireCurrentTenantId();
 
     try {
       // PASO 1: Crear la solicitud de compra
       const { data: purchaseRequest, error: prError } = await supabase
         .from('purchase_requests')
         .insert({
+          tenant_id: tenantId,
           supplier_id: input.supplierId ?? null,
           status: 'PENDIENTE',
           total_items: input.items.length,
@@ -83,6 +119,7 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
 
       // PASO 2: Crear los items
       const itemsToInsert = input.items.map((item) => ({
+        tenant_id: tenantId,
         purchase_request_id: purchaseRequest.id,
         product_id: item.productId ?? null,
         part_id: item.partId ?? null,
@@ -116,10 +153,15 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
       );
     }
 
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let updateQuery = supabase
       .from('purchase_requests')
       .update({ status: input.status })
-      .eq('id', id)
+      .eq('id', id);
+    if (tenantId) {
+      updateQuery = updateQuery.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await updateQuery
       .select('*')
       .single();
 
@@ -150,10 +192,12 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
     }
 
     // PASO 2: Actualizar estado a RECIBIDO primero (marcar transacción iniciada)
+    const tenantId = requireCurrentTenantId();
     const { data: updatedPurchase, error: statusError } = await supabase
       .from('purchase_requests')
       .update({ status: 'RECIBIDO' })
       .eq('id', id)
+      .eq('tenant_id', tenantId)
       .select('*')
       .single();
 
@@ -189,6 +233,7 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
 
           // Registrar movimiento de inventario
           const { error: movementError } = await supabase.from('inventory_movements').insert({
+            tenant_id: tenantId,
             product_id: item.product_id,
             type: 'IN',
             quantity: item.quantity,
@@ -224,6 +269,7 @@ export class PurchaseRequestRepository implements IPurchaseRequestRepository {
 
           // Registrar movimiento de inventario para repuestos
           const { error: movementError } = await supabase.from('inventory_movements_parts').insert({
+            tenant_id: tenantId,
             part_id: item.part_id,
             type: 'IN',
             quantity: item.quantity,

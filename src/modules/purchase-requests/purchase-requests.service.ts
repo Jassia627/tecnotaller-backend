@@ -13,12 +13,21 @@ export class PurchaseRequestService {
 
   async list(options: { page: number; pageSize: number }): Promise<{ items: PurchaseRequest[]; total: number }> {
     const { rows, total } = await this.repository.list(options);
+    if (rows.length === 0) {
+      return { items: [], total };
+    }
 
-    const items = await Promise.all(
-      rows.map(async (row) => {
-        const itemRows = await this.repository.findItemsById(row.id);
-        return mapPurchaseRequestRow(row, itemRows.map(mapPurchaseRequestItemRow));
-      }),
+    const allItemRows = await this.repository.findItemsByPurchaseRequestIds(rows.map((r) => r.id));
+    const itemsByPurchaseId = new Map<string, ReturnType<typeof mapPurchaseRequestItemRow>[]>();
+
+    for (const itemRow of allItemRows) {
+      const list = itemsByPurchaseId.get(itemRow.purchase_request_id) ?? [];
+      list.push(mapPurchaseRequestItemRow(itemRow));
+      itemsByPurchaseId.set(itemRow.purchase_request_id, list);
+    }
+
+    const items = rows.map((row) =>
+      mapPurchaseRequestRow(row, itemsByPurchaseId.get(row.id) ?? []),
     );
 
     return { items, total };

@@ -1,0 +1,1261 @@
+<!doctype html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TecnoTaller — Identidad visual y prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&family=Sora:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --surface:#F5F8FC;--surface-raised:#FFFFFF;--surface-sunken:#EDF1F6;--line:#D6DFEA;
+  --ink:#09213D;--ink-muted:#4B5D75;--navy:#09213D;--blue:#0074F9;--blue-strong:#005FD1;--on-blue:#FFFFFF;--blue-soft:#E5F0FF;
+  --spark:#FF8A1F;--amber:#8F4A00;--amber-soft:#FFF0DE;--teal:#00737A;--teal-soft:#DDF5F5;
+  --green:#1C7A3E;--green-soft:#E2F5E8;--on-green:#FFFFFF;--danger:#C62828;--danger-soft:#FDE7E7;
+  --sidebar:#09213D;--sidebar-ink:#C9D6E8;
+  --font-display:"Sora","Segoe UI",system-ui,sans-serif;--font-sans:"Inter","Segoe UI",system-ui,sans-serif;--font-mono:"JetBrains Mono",ui-monospace,monospace;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--space-8:32px;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;--radius-pill:999px;
+  --shadow-card:0 1px 2px rgba(9,33,61,.06),0 4px 12px rgba(9,33,61,.06);
+}
+[data-theme="dark"]{
+  --surface:#07152A;--surface-raised:#0E2340;--surface-sunken:#16304F;--line:#1F3656;
+  --ink:#EAF1FA;--ink-muted:#9DB0C8;--navy:#1A3A66;--blue-strong:#4D9BFF;--on-blue:#04101F;--blue-soft:#0D2A52;
+  --amber:#FFB366;--amber-soft:#3A2408;--teal:#4FD1D9;--teal-soft:#08333A;
+  --green:#5FD48A;--green-soft:#0D3320;--on-green:#04101F;--danger:#FF7A7A;--danger-soft:#3D0F12;
+  --sidebar:#040D1B;--shadow-card:0 1px 2px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--font-sans);font-size:15px;line-height:22px;background:var(--surface);color:var(--ink);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--font-display);margin:0;letter-spacing:-.01em}
+h1{font-size:32px;line-height:38px}h2{font-size:24px;line-height:30px}h3{font-size:18px;line-height:24px}
+p{margin:0}
+a{color:var(--blue-strong)}
+button,input,select,textarea{font:inherit;color:inherit}
+.muted{color:var(--ink-muted)}.small{font-size:13px;line-height:18px}.label{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.02em;color:var(--ink-muted);text-transform:uppercase}
+.mono{font-family:var(--font-mono);font-size:13px;font-weight:500}
+.hidden{display:none!important}
+
+/* ---------- Top bar (prototype switcher) ---------- */
+.proto-bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:var(--space-4);padding:10px var(--space-6);background:var(--surface-raised);border-bottom:1px solid var(--line)}
+.proto-bar .brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:18px;white-space:nowrap}
+.brand .t1{color:var(--ink)}.brand .t2{color:var(--blue)}
+.seg{display:flex;background:var(--surface-sunken);border-radius:var(--radius-pill);padding:4px;gap:2px;margin:0 auto}
+.seg button{border:0;background:transparent;padding:6px 16px;border-radius:var(--radius-pill);font-weight:600;font-size:14px;color:var(--ink-muted);cursor:pointer;white-space:nowrap}
+.seg button[aria-selected="true"]{background:var(--surface-raised);color:var(--ink);box-shadow:var(--shadow-card)}
+.icon-btn{border:1px solid var(--line);background:var(--surface-raised);width:38px;height:38px;border-radius:var(--radius-md);display:grid;place-items:center;cursor:pointer;color:var(--ink);position:relative}
+.icon-btn svg{width:18px;height:18px}
+.icon-btn:focus-visible,.btn:focus-visible,.seg button:focus-visible,.tab:focus-visible,.side a:focus-visible{outline:2px solid var(--blue-strong);outline-offset:2px}
+
+/* ---------- Generic UI ---------- */
+.btn{height:40px;padding:0 var(--space-4);border-radius:var(--radius-md);border:1px solid var(--line);background:var(--surface-raised);color:var(--ink);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:var(--space-2);white-space:nowrap}
+.btn:hover{background:var(--surface-sunken)}
+.btn svg{width:16px;height:16px}
+.btn-primary{background:var(--blue-strong);border-color:var(--blue-strong);color:var(--on-blue)}
+.btn-primary:hover{background:var(--blue-strong);filter:brightness(1.08)}
+.btn-danger{color:var(--danger)}
+.btn-sm{height:32px;padding:0 var(--space-3);font-size:13px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.card{background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-lg);padding:var(--space-6)}
+.card-flat{background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-md);padding:var(--space-4)}
+.grid{display:grid;gap:var(--space-4)}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.row{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.stack>*+*{margin-top:var(--space-4)}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;font-weight:600}
+.input,select.input,textarea.input{height:40px;border:1px solid var(--line);background:var(--surface-sunken);border-radius:var(--radius-sm);padding:0 var(--space-3);width:100%}
+textarea.input{height:auto;min-height:88px;padding:var(--space-3);resize:vertical}
+.input:focus{outline:2px solid var(--blue-strong);outline-offset:1px;background:var(--surface-raised)}
+.chips{display:flex;gap:var(--space-2);flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface-raised);border-radius:var(--radius-pill);padding:4px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--blue-soft);border-color:var(--blue-strong);color:var(--blue-strong);font-weight:600}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-pill);font-size:12px;font-weight:600;background:var(--surface-sunken);color:var(--ink-muted)}
+.tag-spark{background:var(--spark);color:#2B1500}
+.tag-danger{background:var(--danger-soft);color:var(--danger)}
+.tag-ok{background:var(--green-soft);color:var(--green)}
+.tag-warn{background:var(--amber-soft);color:var(--amber)}
+.notice{display:flex;gap:var(--space-3);padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);font-size:14px}
+.notice svg{width:20px;height:20px;flex:none;margin-top:1px}
+.notice-info{background:var(--blue-soft);color:var(--ink)}.notice-info svg{color:var(--blue-strong)}
+.notice-warn{background:var(--amber-soft);color:var(--ink)}.notice-warn svg{color:var(--amber)}
+.notice-ok{background:var(--green-soft);color:var(--ink)}.notice-ok svg{color:var(--green)}
+
+/* estados */
+.estado{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 10px 0 6px;border-radius:var(--radius-pill);font-size:12px;font-weight:600;white-space:nowrap}
+.estado svg{width:16px;height:16px;flex:none}
+.e-ingresado{background:var(--surface-sunken);color:var(--ink-muted)}
+.e-revision{background:var(--blue-soft);color:var(--blue-strong)}
+.e-repuesto{background:var(--amber-soft);color:var(--amber)}
+.e-reparacion{background:var(--teal-soft);color:var(--teal)}
+.e-reparado{background:var(--green-soft);color:var(--green)}
+.e-listo{background:var(--green);color:var(--on-green)}
+.e-entregado{background:var(--ink);color:var(--surface)}
+
+/* timeline */
+.traza{list-style:none;margin:0;padding:0}
+.paso{display:grid;grid-template-columns:32px 1fr;column-gap:var(--space-3);position:relative;padding-bottom:var(--space-6)}
+.paso:last-child{padding-bottom:0}
+.paso::before{content:"";position:absolute;left:15px;top:32px;bottom:0;width:2px;background:var(--line)}
+.paso:last-child::before{display:none}
+.paso.hecho::before{background:var(--blue)}
+.punto{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--surface-sunken);color:var(--ink-muted);position:relative;z-index:1}
+.punto svg{width:17px;height:17px}
+.hecho .punto{background:var(--blue);color:#fff}
+.actual .punto{background:var(--blue-soft);color:var(--blue-strong);box-shadow:0 0 0 2px var(--blue-strong)}
+.paso-t{font-weight:600;line-height:32px}
+.pendiente .paso-t{color:var(--ink-muted);font-weight:400}
+.paso-m{grid-column:2;font-size:13px;line-height:18px;color:var(--ink-muted)}
+
+/* progress (horizontal) */
+.progress{display:flex;gap:4px;margin-top:var(--space-3)}
+.progress span{flex:1;height:6px;border-radius:3px;background:var(--surface-sunken);transform:skewX(-15deg)}
+.progress span.on{background:var(--blue)}
+
+/* tables */
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:var(--radius-md);background:var(--surface-raised)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{text-align:left;font-size:12px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:.02em;padding:10px var(--space-4);border-bottom:1px solid var(--line);background:var(--surface-sunken);white-space:nowrap}
+td.mono{white-space:nowrap}
+td{padding:12px var(--space-4);border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--blue-soft)}
+
+/* ---------- Identity view ---------- */
+.wrap{max-width:1160px;margin:0 auto;padding:var(--space-8) var(--space-6)}
+.id-hero{display:grid;grid-template-columns:1.1fr 1fr;gap:var(--space-8);align-items:center;padding:var(--space-8);border-radius:var(--radius-lg);background:var(--surface-raised);border:1px solid var(--line);overflow:hidden;position:relative}
+.id-hero h1{font-size:56px;line-height:56px;letter-spacing:-.03em}
+.id-hero .bars{position:absolute;right:-20px;bottom:-10px;display:flex;gap:12px;align-items:flex-end;opacity:.9}
+.id-hero .bars span{width:14px;border-radius:7px;background:var(--blue-strong);transform:skewX(-15deg)}
+.sec{margin-top:var(--space-8)}
+.sec-h{display:flex;align-items:baseline;gap:var(--space-3);margin-bottom:var(--space-4)}
+.sec-h .num{font-family:var(--font-mono);color:var(--blue-strong);font-size:13px}
+.logo-tile{border-radius:var(--radius-lg);border:1px solid var(--line);display:grid;place-items:center;aspect-ratio:4/3;padding:var(--space-6);position:relative}
+.logo-tile .cap{position:absolute;left:12px;bottom:10px;font-size:12px;font-weight:600}
+.swatch{border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--line);background:var(--surface-raised)}
+.swatch .c{height:96px}
+.swatch .i{padding:10px 12px}
+.swatch .i b{display:block;font-size:14px}
+.type-row{display:grid;grid-template-columns:160px 1fr;gap:var(--space-4);align-items:baseline;padding:var(--space-4) 0;border-bottom:1px solid var(--line)}
+.do{border-top:3px solid var(--green)}.dont{border-top:3px solid var(--danger)}
+.idea svg{width:100%;height:120px;background:#fff;border-radius:var(--radius-md);padding:12px;margin-bottom:10px}
+
+/* ---------- Portal (client) ---------- */
+.portal-nav{display:flex;align-items:center;gap:var(--space-6);padding:14px var(--space-6);background:var(--surface-raised);border-bottom:1px solid var(--line)}
+.portal-nav nav{display:flex;gap:4px;flex-wrap:wrap}
+.tab{border:0;background:transparent;padding:8px 12px;border-radius:var(--radius-sm);font-weight:600;font-size:14px;color:var(--ink-muted);cursor:pointer}
+.tab:hover{background:var(--surface-sunken);color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--blue-strong);background:var(--blue-soft)}
+.badge-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--spark);border:2px solid var(--surface-raised)}
+.p-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:var(--space-8);align-items:center;background:var(--navy);color:#fff;border-radius:var(--radius-lg);padding:var(--space-8);position:relative;overflow:hidden}
+.p-hero h1{font-size:40px;line-height:46px;color:#fff}
+.p-hero p{color:#C9D6E8}
+.p-hero .track{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:var(--radius-lg);padding:var(--space-6)}
+.p-hero .track .input{background:#fff;color:#09213D;border-color:transparent}
+.p-hero .btn-primary{background:#0074F9;border-color:#0074F9;color:#fff}
+.prod{background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-card)}
+.prod .ph{height:140px;display:grid;place-items:center;background:var(--surface-sunken);color:var(--blue);position:relative}
+.prod .ph svg{width:64px;height:64px}
+.prod .ph .tag{position:absolute;top:10px;left:10px}
+.prod .bd{padding:var(--space-4);display:flex;flex-direction:column;gap:6px;flex:1}
+.price{font-family:var(--font-display);font-weight:700;font-size:20px}
+.svc{display:flex;gap:var(--space-4);align-items:flex-start}
+.svc .ic{width:44px;height:44px;border-radius:var(--radius-md);background:var(--blue-soft);color:var(--blue-strong);display:grid;place-items:center;flex:none}
+.svc .ic svg{width:22px;height:22px}
+.slots{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-2)}
+.slot{border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px;text-align:center;font-size:13px;cursor:pointer;background:var(--surface-raised)}
+.slot[aria-pressed="true"]{border-color:var(--blue-strong);background:var(--blue-soft);color:var(--blue-strong);font-weight:600}
+.slot[disabled]{opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.notif{display:flex;gap:var(--space-3);padding:var(--space-3) 0;border-bottom:1px solid var(--line)}
+.notif:last-child{border-bottom:0}
+.notif .ic{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;flex:none}
+.notif .ic svg{width:18px;height:18px}
+.wa{background:#E7F8EE;border-radius:12px 12px 12px 4px;padding:10px 12px;font-size:14px;color:#0b2a1a;max-width:320px}
+[data-theme="dark"] .wa{background:#123824;color:#DDF5E7}
+
+/* ---------- Admin ---------- */
+.admin{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 59px)}
+.side{background:var(--sidebar);color:var(--sidebar-ink);padding:var(--space-6) var(--space-3);display:flex;flex-direction:column;gap:2px}
+.side .brand{padding:0 var(--space-3) var(--space-6);display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:17px;color:#fff}
+.side .brand .t2{color:#4D9BFF}
+.side .grp{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#7F93AE;padding:var(--space-4) var(--space-3) 6px}
+.side a{display:flex;align-items:center;gap:10px;padding:9px var(--space-3);border-radius:var(--radius-sm);color:var(--sidebar-ink);text-decoration:none;font-weight:500;font-size:14px;cursor:pointer}
+.side a svg{width:18px;height:18px;flex:none}
+.side a:hover{background:rgba(255,255,255,.06);color:#fff}
+.side a[aria-current="page"]{background:#0074F9;color:#fff}
+.side .count{margin-left:auto;font-size:12px;background:rgba(255,255,255,.12);padding:0 7px;border-radius:var(--radius-pill)}
+.side .me{margin-top:auto;display:flex;gap:10px;align-items:center;padding:var(--space-3);border-top:1px solid rgba(255,255,255,.1)}
+.avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;background:var(--blue-soft);color:var(--blue-strong);flex:none}
+.side .avatar{background:#1A3A66;color:#fff}
+.main{padding:var(--space-6) var(--space-8);min-width:0}
+.page-h{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--space-4);margin-bottom:var(--space-6);flex-wrap:wrap}
+.kpi .v{font-family:var(--font-display);font-weight:700;font-size:30px;line-height:36px;margin-top:4px}
+.kpi .d{font-size:13px}
+.up{color:var(--green)}.down{color:var(--danger)}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:180px;padding-top:var(--space-4)}
+.bar-chart .b{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bar-chart .b i{display:block;width:100%;max-width:36px;border-radius:6px 6px 2px 2px;background:var(--blue)}
+.bar-chart .b.cur i{background:var(--blue-strong)}
+.bar-chart .b span{font-size:12px;color:var(--ink-muted)}
+.hbar{display:grid;grid-template-columns:150px 1fr 40px;gap:var(--space-3);align-items:center;font-size:14px;margin-bottom:10px}
+.hbar .t{height:10px;border-radius:5px;background:var(--surface-sunken);overflow:hidden}
+.hbar .t i{display:block;height:100%;background:var(--blue);border-radius:5px}
+.pipeline{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:var(--space-2)}
+.pipeline .col{background:var(--surface-sunken);border-radius:var(--radius-md);padding:var(--space-3);min-height:84px}
+.pipeline .col b{font-family:var(--font-display);font-size:24px;display:block;margin-top:6px}
+.stock{display:flex;align-items:center;gap:8px}
+.stock .m{width:60px;height:6px;border-radius:3px;background:var(--surface-sunken);overflow:hidden}
+.stock .m i{display:block;height:100%;background:var(--green)}
+.stock.low .m i{background:var(--amber)}
+.stock.out .m i{background:var(--danger)}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(4,16,31,.45);z-index:80;display:flex;justify-content:flex-end;animation:dFade .2s ease-out}
+.drawer{width:min(760px,100%);height:100%;background:var(--surface);display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.2);animation:dSlide .24s cubic-bezier(.2,.8,.2,1)}
+.drawer.sm{width:min(480px,100%)}
+.still,.still .drawer{animation:none}
+.drawer-h{flex:none;background:var(--surface-raised);border-bottom:1px solid var(--line);padding:var(--space-4) var(--space-6);display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3)}
+.drawer-h h2{font-size:22px;line-height:28px}
+.kicker .estado{font-family:var(--font-sans)}
+.kicker{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--ink-muted);margin-bottom:2px;flex-wrap:wrap}
+.drawer-b{flex:1;overflow:auto;padding:var(--space-6)}
+.drawer-foot{flex:none;display:flex;gap:var(--space-3);justify-content:flex-end;align-items:center;padding:var(--space-3) var(--space-6);border-top:1px solid var(--line);background:var(--surface-raised)}
+.drawer-foot .grow{margin-right:auto}
+.drawer-confirm{flex:none;display:flex;gap:var(--space-3);align-items:center;padding:var(--space-3) var(--space-6);background:var(--amber-soft);border-top:1px solid var(--line)}
+.drawer-confirm span{margin-right:auto;font-size:14px}
+@keyframes dSlide{from{transform:translateX(100%)}to{transform:none}}
+@keyframes dUp{from{transform:translateY(100%)}to{transform:none}}
+@keyframes dFade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.scrim,.drawer,.more-sheet,.more-sheet .sh{animation:none!important}}
+/* identity: drawer anatomy */
+.anat{position:relative;border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;background:var(--surface);height:340px}
+.anat .bg{position:absolute;inset:0;padding:20px;display:grid;gap:10px;align-content:start}
+.anat .bg i{display:block;height:14px;border-radius:7px;background:var(--surface-sunken)}
+.anat .sc{position:absolute;inset:0;background:rgba(4,16,31,.35)}
+.anat .pn{position:absolute;top:0;right:0;bottom:0;width:58%;background:var(--surface);display:flex;flex-direction:column;box-shadow:-6px 0 20px rgba(0,0,0,.15)}
+.anat .ph1{background:var(--surface-raised);border-bottom:1px solid var(--line);padding:12px 14px}
+.anat .pb{flex:1;padding:12px 14px;display:grid;gap:8px;align-content:start}
+.anat .pb i{display:block;height:34px;border-radius:8px;background:var(--surface-raised);border:1px solid var(--line)}
+.anat .pf{background:var(--surface-raised);border-top:1px solid var(--line);padding:10px 14px;display:flex;justify-content:flex-end;gap:8px}
+.anat .pf b{height:24px;border-radius:6px;width:70px;background:var(--surface-sunken)}
+.anat .pf b.p{background:var(--blue-strong);width:96px}
+.anat .n{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--spark);color:#2B1500;font-size:12px;font-weight:700;display:grid;place-items:center;box-shadow:0 0 0 3px var(--surface)}
+.rule-n{font-family:var(--font-mono);font-size:12px;color:var(--blue-strong);margin-right:6px}
+.subtabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:var(--space-4);overflow:auto}
+.subtabs .tab{border-radius:0;border-bottom:2px solid transparent;background:none}
+.subtabs .tab[aria-selected="true"]{border-bottom-color:var(--blue-strong);background:none}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:8px var(--space-4);font-size:14px}
+.kv dt{color:var(--ink-muted)}.kv dd{margin:0}
+.dmg{display:grid;grid-template-columns:150px 1fr;gap:var(--space-4);align-items:start}
+.log{border-left:2px solid var(--line);padding-left:var(--space-4);margin-left:6px}
+.log .it{position:relative;padding-bottom:var(--space-4)}
+.log .it::before{content:"";position:absolute;left:-23px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--surface-raised);border:2px solid var(--blue)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:12px 18px;border-radius:var(--radius-md);font-weight:600;font-size:14px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;gap:10px;align-items:center}
+.toast svg{width:18px;height:18px}
+
+/* bottom nav (mobile) */
+.bnav{display:none}
+.bnav[hidden]{display:none!important}
+.subtabs .tab{white-space:nowrap}
+.more-sheet{position:fixed;inset:0;z-index:90;background:rgba(4,16,31,.45);display:flex;align-items:flex-end;animation:dFade .2s ease-out}
+.more-sheet .sh{animation:dUp .24s cubic-bezier(.2,.8,.2,1)}
+.more-sheet .sh{background:var(--surface-raised);width:100%;border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:var(--space-4) var(--space-4) calc(var(--space-6) + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-2)}
+.more-sheet .sh .grab{grid-column:1/-1;width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto var(--space-2)}
+.more-sheet .sh button{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius-md);padding:14px;font-weight:600;cursor:pointer;color:var(--ink)}
+.more-sheet .sh button svg{width:20px;height:20px;color:var(--blue-strong)}
+.seg .s{display:none}
+@media (max-width:1100px) and (min-width:821px){
+  .admin{grid-template-columns:76px 1fr}
+  .side{padding:var(--space-4) var(--space-2);align-items:center}
+  .side .brand span,.side .grp,.side .me div:last-child,.side .count{display:none}
+  .side .brand{padding:0 0 var(--space-4)}
+  .side a{font-size:0;gap:0;justify-content:center;width:48px;height:44px;padding:0}
+  .side a svg{width:22px;height:22px}
+  .side .me{border:0;padding:var(--space-2) 0}
+  .main{padding:var(--space-6)}
+}
+@media (max-width:900px){
+  .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .id-hero,.p-hero{grid-template-columns:1fr}
+  .wrap{padding:var(--space-6) var(--space-4)}
+  #agendarGrid,#trkGrid{grid-template-columns:1fr!important}
+}
+@media (max-width:820px){
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  .proto-bar{padding:8px var(--space-4);gap:var(--space-3)}
+  .proto-bar .brand>span{display:none}
+  .seg{margin:0;flex:1;justify-content:space-between}
+  .seg button{flex:1;padding:6px 8px;font-size:13px}
+  .seg .l{display:none}.seg .s{display:inline}
+  /* portal */
+  .portal-nav{padding:10px var(--space-4)}
+  .portal-nav nav{display:none}
+  /* admin */
+  .admin{grid-template-columns:1fr;min-height:0}
+  .side{display:none}
+  .main{padding:var(--space-4)}
+  .page-h{margin-bottom:var(--space-4)}
+  .page-h h1{font-size:26px;line-height:32px}
+  .pipeline{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 calc(-1 * var(--space-4));padding:0 var(--space-4) 4px}
+  .pipeline .col{flex:0 0 112px;scroll-snap-align:start}
+  .card{padding:var(--space-4)}
+  /* bottom navs */
+  .bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--surface-raised);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));justify-content:space-around}
+  .bnav button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;font-size:11px;font-weight:600;color:var(--ink-muted);cursor:pointer;border-radius:var(--radius-md);min-width:0}
+  .bnav button svg{width:22px;height:22px}
+  .bnav button[aria-current="page"]{color:var(--blue-strong)}
+  .bnav button[aria-current="page"] svg{background:var(--blue-soft);border-radius:var(--radius-pill);width:44px;padding:2px 11px;height:26px}
+  .bnav .cta svg{background:var(--blue-strong);color:var(--on-blue);border-radius:50%;width:40px;height:40px;padding:9px;margin-top:-18px;box-shadow:0 4px 12px rgba(0,95,209,.35)}
+  .bnav.dark{background:var(--sidebar);border-top-color:rgba(255,255,255,.08)}
+  .bnav.dark button{color:#9DB0C8}
+  .bnav.dark button[aria-current="page"]{color:#fff}
+  .bnav.dark button[aria-current="page"] svg{background:#0074F9}
+  .toast{bottom:calc(88px + env(safe-area-inset-bottom));width:max-content;max-width:calc(100% - 32px)}
+  /* tables → cards */
+  .table-wrap.rcards{border:0;background:none;overflow:visible}
+  .rcards table,.rcards tbody{display:block}
+  .rcards thead{display:none}
+  .rcards tr{display:grid;grid-template-columns:1fr 1fr;gap:6px var(--space-3);background:var(--surface-raised);border:1px solid var(--line);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-3)}
+  .rcards td{display:block;padding:0;border:0;font-size:14px;min-width:0}
+  .rcards td[data-l]::before{content:attr(data-l);display:block;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:1px}
+  .rcards td.full,.rcards td:first-child{grid-column:1/-1}
+  .rcards td:first-child::before{display:none!important}
+  .rcards td:empty{display:none}
+  .rcards tr:has(td[colspan]){display:block}
+  /* drawer */
+  .drawer,.drawer.sm{width:100%}
+  .drawer-h{padding:var(--space-3) var(--space-4)}
+  .drawer-h h2{font-size:20px;line-height:26px}
+  .drawer-b{padding:var(--space-4)}
+  .drawer-foot{padding:var(--space-3) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom))}
+  .drawer-foot .btn{flex:1;justify-content:center;height:46px}
+  .drawer-foot .grow{display:none}
+  .drawer-confirm{flex-wrap:wrap;padding:var(--space-3) var(--space-4)}
+  .drawer-confirm span{width:100%}
+  .drawer-confirm .btn{flex:1;justify-content:center}
+  .anat .pn{width:100%}
+  .notif .end{display:none}
+  #ordChips,#catChips{flex-wrap:nowrap;overflow-x:auto;width:calc(100% + 2*var(--space-4));margin-left:calc(-1*var(--space-4));padding:0 var(--space-4) 2px;scrollbar-width:none}
+  #ordChips .chip,#catChips .chip{flex:none}
+  #ordSearch{max-width:none!important}
+}
+@media (min-width:601px) and (max-width:820px){
+  .rcards tbody{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-3)}
+  .rcards tr{margin:0}
+  .rcards tr:has(td[colspan]){grid-column:1/-1}
+}
+@media (max-width:600px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:var(--space-2)}
+  .kpi .v{font-size:22px;line-height:28px}
+  .kpi .label{font-size:11px}
+  .prods{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:var(--space-3)}
+  .prod .ph{height:104px}.prod .ph svg{width:48px;height:48px}
+  .prod .bd{padding:var(--space-3)}
+  .prod .bd b{font-size:14px;line-height:19px}
+  .price{font-size:17px}
+  .prod .btn{width:100%;justify-content:center;padding:0 6px}
+  .p-hero{padding:var(--space-6) var(--space-4)}
+  .p-hero h1{font-size:28px;line-height:34px}
+  .id-hero{padding:var(--space-6)}
+  .page-h>.row,.page-h>form,.page-h>.input{width:100%;max-width:none!important}
+  #trackForm .input{flex:1;width:auto}
+  .bar-chart{gap:6px}
+  .logo-tile{aspect-ratio:auto;min-height:150px}
+  .id-hero h1{font-size:40px;line-height:42px}
+  .slots{grid-template-columns:repeat(3,1fr)}
+  .kv,.dmg,.type-row{grid-template-columns:1fr}
+  .hbar{grid-template-columns:110px 1fr 32px}
+}
+</style>
+</head>
+<body>
+
+<!-- ======= SVG sprite ======= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="logo" viewBox="-8 -8 456 336"><path fill="#09213D" d="M0,95 C20,35 50,0 100,0 L350,0 C290,10 245,40 220,75 C210,90 195,95 180,95 Z"/><path fill="#0074F9" d="M180,95 C195,95 210,90 220,75 C245,40 290,10 350,0 L432,0 C405,70 375,95 330,95 Z"/><path fill="#09213D" d="M150,115 L218,115 C212,118 210,124 208,130 L170,280 C163,300 150,310 130,310 L92,310 Z"/><path fill="#0074F9" d="M218,115 L296,115 L256,265 C246,295 222,310 190,310 L130,310 C150,310 163,300 170,280 L208,130 C210,124 212,118 218,115 Z"/></symbol>
+    <symbol id="logo-inv" viewBox="-8 -8 456 336"><path fill="#FFFFFF" d="M0,95 C20,35 50,0 100,0 L350,0 C290,10 245,40 220,75 C210,90 195,95 180,95 Z"/><path fill="#4D9BFF" d="M180,95 C195,95 210,90 220,75 C245,40 290,10 350,0 L432,0 C405,70 375,95 330,95 Z"/><path fill="#FFFFFF" d="M150,115 L218,115 C212,118 210,124 208,130 L170,280 C163,300 150,310 130,310 L92,310 Z"/><path fill="#4D9BFF" d="M218,115 L296,115 L256,265 C246,295 222,310 190,310 L130,310 C150,310 163,300 170,280 L208,130 C210,124 212,118 218,115 Z"/></symbol>
+    <symbol id="logo-mono" viewBox="-8 -8 456 336"><path fill="currentColor" d="M0,95 C20,35 50,0 100,0 L432,0 C405,70 375,95 330,95 Z"/><path fill="currentColor" d="M150,115 L296,115 L256,265 C246,295 222,310 190,310 L92,310 Z"/></symbol>
+  </defs>
+</svg>
+
+<!-- ======= Prototype bar ======= -->
+<header class="proto-bar">
+  <div class="brand"><svg width="34" height="25" viewBox="-8 -8 456 336" aria-hidden="true"><use class="logo-swap" href="#logo"/></svg><span><span class="t1">Tecno</span><span class="t2">Taller</span></span></div>
+  <div class="seg" role="tablist" aria-label="Vista">
+    <button role="tab" data-view="identidad" aria-selected="true"><span class="l">Identidad</span><span class="s">Marca</span></button>
+    <button role="tab" data-view="portal" aria-selected="false"><span class="l">Portal del cliente</span><span class="s">Portal</span></button>
+    <button role="tab" data-view="admin" aria-selected="false"><span class="l">Panel administrativo</span><span class="s">Panel</span></button>
+  </div>
+  <button class="icon-btn" id="themeBtn" aria-label="Cambiar tema claro/oscuro" title="Tema claro / oscuro"></button>
+</header>
+
+<!-- =================== IDENTIDAD =================== -->
+<section id="v-identidad" class="view">
+  <div class="wrap">
+    <div class="id-hero">
+      <div>
+        <div class="label" style="margin-bottom:12px">Manual de identidad · v1 · 2026</div>
+        <h1>Tecno<span style="color:var(--blue)">Taller</span></h1>
+        <p class="muted" style="font-size:18px;line-height:28px;margin-top:16px;max-width:460px">Saber en qué está tu equipo, de la recepción a la entrega. Gestión comercial y técnica para centros de venta y reparación de dispositivos.</p>
+        <div class="row" style="margin-top:24px">
+          <button class="btn btn-primary" data-go="portal">Ver portal del cliente</button>
+          <button class="btn" data-go="admin">Ver panel administrativo</button>
+        </div>
+      </div>
+      <div style="display:grid;place-items:center;padding:24px"><svg viewBox="-8 -8 456 336" style="width:100%;max-width:360px" aria-label="Isotipo TecnoTaller"><use class="logo-swap" href="#logo"/></svg></div>
+      <div class="bars" aria-hidden="true"><span style="height:24px"></span><span style="height:36px"></span><span style="height:48px"></span><span style="height:60px"></span><span style="height:72px"></span><span style="height:84px"></span><span style="height:96px"></span></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">01</span><h2>Concepto</h2></div>
+      <div class="grid g3">
+        <div class="card-flat"><div class="row" style="gap:8px"><span style="width:14px;height:14px;border-radius:4px;background:#09213D"></span><b>La mitad taller</b></div><p class="muted small" style="margin-top:8px">El azul noche representa al técnico, el inventario y el registro: lo que pasa adentro.</p></div>
+        <div class="card-flat"><div class="row" style="gap:8px"><span style="width:14px;height:14px;border-radius:4px;background:#0074F9"></span><b>La mitad cliente</b></div><p class="muted small" style="margin-top:8px">El azul eléctrico es el cliente y su equipo: lo que ve desde el portal.</p></div>
+        <div class="card-flat"><div class="row" style="gap:8px"><span style="width:14px;height:14px;border-radius:4px;background:var(--blue-strong);transform:skewX(-15deg)"></span><b>La curva y la inclinación</b></div><p class="muted small" style="margin-top:8px">La unión es el traspaso del equipo; la itálica da sensación de avance, como la línea de estados.</p></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">02</span><h2>Logo y versiones</h2></div>
+      <div class="grid g4">
+        <div class="logo-tile" style="background:#fff"><div style="text-align:center"><svg viewBox="-8 -8 456 336" style="width:110px"><use href="#logo"/></svg><div style="font-family:var(--font-display);font-weight:700;font-size:22px;margin-top:6px;transform:skewX(-8deg)"><span style="color:#09213D">Tecno</span><span style="color:#0074F9">Taller</span></div></div><span class="cap" style="color:#4B5D75">Principal</span></div>
+        <div class="logo-tile" style="background:#09213D"><div style="text-align:center"><svg viewBox="-8 -8 456 336" style="width:110px"><use href="#logo-inv"/></svg><div style="font-family:var(--font-display);font-weight:700;font-size:22px;margin-top:6px;transform:skewX(-8deg)"><span style="color:#fff">Tecno</span><span style="color:#4D9BFF">Taller</span></div></div><span class="cap" style="color:#9DB0C8">Sobre fondo oscuro</span></div>
+        <div class="logo-tile" style="background:var(--surface-sunken);color:var(--ink)"><svg viewBox="-8 -8 456 336" style="width:120px"><use href="#logo-mono"/></svg><span class="cap muted">Una tinta</span></div>
+        <div class="logo-tile" style="background:var(--surface-sunken)"><svg viewBox="0 0 512 512" style="width:96px"><rect width="512" height="512" rx="112" fill="#09213D"/><g transform="translate(70 120) scale(0.86)"><use href="#logo-inv" width="456" height="336" x="-8" y="-8"/></g></svg><span class="cap muted">Ícono de app</span></div>
+      </div>
+      <div class="grid g3" style="margin-top:16px">
+        <div class="card-flat do"><b>Área de protección</b><p class="muted small" style="margin-top:6px">Deja alrededor del logo un espacio igual a la altura del tallo de la T.</p></div>
+        <div class="card-flat do"><b>Tamaño mínimo</b><p class="muted small" style="margin-top:6px">Isotipo 24 px · logo completo 120 px de ancho.</p></div>
+        <div class="card-flat dont"><b>No hacer</b><p class="muted small" style="margin-top:6px">Cambiar colores, invertir la inclinación, añadir sombras o degradados, o poner el bicolor sobre azul noche.</p></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">03</span><h2>Color</h2></div>
+      <div class="grid g4" id="swatches"></div>
+      <p class="muted small" style="margin-top:12px">El azul eléctrico se usa como texto solo a 24 px o más; para enlaces y botones usa <b>Azul acción</b>. Todos los pares de texto y fondo cumplen contraste AA en tema claro y oscuro (usa el botón ☾ arriba para comprobarlo).</p>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">04</span><h2>Estados de la orden</h2><span class="muted small">la firma de la marca</span></div>
+      <div class="card">
+        <div class="row" id="estadosRow"></div>
+        <div class="progress" id="idProgress" style="max-width:520px;margin-top:20px"></div>
+        <p class="muted small" style="margin-top:16px;max-width:680px">Cada estado tiene color, ícono y nombre fijos, iguales en el portal, el panel, los correos y WhatsApp. El color nunca va solo: siempre acompaña al nombre y al ícono. "Listo para entrega" es el único verde sólido, porque es el que el cliente está esperando.</p>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">05</span><h2>Tipografía</h2></div>
+      <div class="card">
+        <div class="type-row"><div><b>Sora</b><div class="muted small">Titulares · 600/700</div></div><div style="font-family:var(--font-display);font-weight:700;font-size:40px;line-height:46px">Tu equipo, en buenas manos</div></div>
+        <div class="type-row"><div><b>Inter</b><div class="muted small">Interfaz · 400/600</div></div><div style="font-size:17px;line-height:26px">Recibimos tu Samsung A54 con cargador y funda. La pantalla tiene un rayón en la esquina superior derecha.</div></div>
+        <div class="type-row" style="border-bottom:0"><div><b>JetBrains Mono</b><div class="muted small">Datos · 500</div></div><div class="mono" style="font-size:16px">OT-2026-00184 · IMEI 356938035643809 · REP-PAN-IP13</div></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">06</span><h2>Componentes</h2></div>
+      <div class="grid g2">
+        <div class="card stack">
+          <div class="label">Botones</div>
+          <div class="row"><button class="btn btn-primary">Crear orden</button><button class="btn">Ver historial</button><button class="btn btn-danger">Anular orden</button></div>
+          <div class="label">Campos</div>
+          <div class="field"><label for="dm1">Número de orden</label><input id="dm1" class="input mono" value="OT-2026-00184"></div>
+          <div class="label">Avisos</div>
+          <div class="notice notice-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01" stroke-linecap="round"/></svg><span>Tu equipo pasó a revisión. Te avisamos con el diagnóstico.</span></div>
+          <div class="notice notice-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 4 2.5 20h19z" stroke-linejoin="round"/><path d="M12 10v4M12 17h.01" stroke-linecap="round"/></svg><span>Stock bajo: quedan 2 baterías iPhone 11.</span></div>
+        </div>
+        <div class="card"><div class="label" style="margin-bottom:16px">Línea de seguimiento</div><ol class="traza" id="idTraza"></ol></div>
+      </div>
+    </div>
+
+    <div class="sec" id="sec-drawers">
+      <div class="sec-h"><span class="num">07</span><h2>Drawers</h2><span class="muted small">regla de interacción</span></div>
+      <div class="card" style="margin-bottom:16px;border-left:0;background:var(--navy);color:#fff;border-color:transparent">
+        <p style="font-family:var(--font-display);font-weight:600;font-size:22px;line-height:30px;color:#fff;max-width:820px">En TecnoTaller todo lo que se abre desde una pantalla se abre en un drawer. Nunca usamos modales centrados, ventanas emergentes del navegador ni páginas nuevas para ver un detalle, crear o editar.</p>
+        <p style="color:#C9D6E8;margin-top:10px;max-width:760px">Así el técnico o el cliente nunca pierde de vista la lista en la que estaba: el drawer se desliza encima, se resuelve la tarea y se vuelve al mismo punto.</p>
+      </div>
+      <div class="grid g2" style="align-items:start">
+        <div>
+          <div class="anat" aria-label="Anatomía de un drawer">
+            <div class="bg"><i style="width:40%;height:22px"></i><i></i><i style="width:85%"></i><i></i><i style="width:70%"></i><i></i><i style="width:60%"></i></div>
+            <div class="sc"></div>
+            <div class="pn">
+              <div class="ph1"><div class="mono muted" style="font-size:11px">OT-2026-00184</div><div style="font-family:var(--font-display);font-weight:700;font-size:16px">iPhone 13 128 GB</div><div class="row" style="gap:6px;margin-top:6px"><span class="estado e-reparacion" style="height:20px;font-size:11px">En reparación</span></div></div>
+              <div class="pb"><div class="row" style="gap:12px;font-size:12px;font-weight:600;border-bottom:1px solid var(--line);padding-bottom:6px"><span style="color:var(--blue-strong)">Recepción</span><span class="muted">Diagnóstico</span><span class="muted">Repuestos</span></div><i></i><i></i><i style="height:60px"></i></div>
+              <div class="pf"><b></b><b class="p"></b></div>
+            </div>
+            <span class="n" style="top:14px;right:calc(58% - 34px)">1</span>
+            <span class="n" style="top:130px;right:calc(58% - 34px)">2</span>
+            <span class="n" style="bottom:12px;right:calc(58% - 34px)">3</span>
+          </div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn btn-primary" id="demoRecord">Ver drawer de registro</button>
+            <button class="btn" id="demoForm">Ver drawer de formulario</button>
+          </div>
+        </div>
+        <div class="card-flat">
+          <ol style="margin:0;padding-left:20px;display:grid;gap:10px;font-size:14px;line-height:21px">
+            <li><b>Encabezado fijo.</b> Código o tipo en mono (<span class="mono">OT-2026-00184</span>), título en Sora, estado de la orden y botón cerrar. Si el drawer se abrió desde otro, lleva flecha de volver.</li>
+            <li><b>Cuerpo con scroll.</b> Solo el cuerpo se desplaza. Si el registro tiene varias partes, se organizan en pestañas dentro del drawer, nunca en otro drawer.</li>
+            <li><b>Pie fijo con las acciones.</b> Una sola acción primaria (<span style="color:var(--blue-strong);font-weight:600">azul acción</span>) a la derecha y Cancelar a su izquierda. En celular queda solo la acción primaria a todo el ancho, al alcance del pulgar; se cierra con la X.</li>
+          </ol>
+        </div>
+      </div>
+      <div class="grid g3" style="margin-top:16px">
+        <div class="card-flat"><div class="label" style="margin-bottom:6px">Registro · 760 px</div><b>Ver y trabajar un registro</b><p class="muted small" style="margin-top:6px">Detalle de orden, ficha de cliente. Lleva pestañas cuando hay mucha información.</p></div>
+        <div class="card-flat"><div class="label" style="margin-bottom:6px">Formulario · 480 px</div><b>Crear o editar</b><p class="muted small" style="margin-top:6px">Nueva orden, registrar cliente, agregar repuesto, ajustar stock, apartar un producto.</p></div>
+        <div class="card-flat"><div class="label" style="margin-bottom:6px">Inferior · celular</div><b>Menús y atajos</b><p class="muted small" style="margin-top:6px">El menú "Más" del panel sube desde abajo con una agarradera.</p></div>
+      </div>
+      <div class="grid g2" style="margin-top:16px">
+        <div class="card-flat do"><b>Comportamiento</b><ul class="small" style="margin:8px 0 0;padding-left:18px;line-height:22px"><li>Entra desde la derecha en 240 ms; en celular ocupa toda la pantalla.</li><li>Fondo azul noche al 45 %. Se cierra con la X, la tecla Esc o tocando fuera.</li><li>Un drawer a la vez: abrir otro desde adentro lo reemplaza y aparece "volver".</li><li>Si hay cambios sin guardar, al cerrar aparece una barra ámbar para confirmar, dentro del mismo drawer.</li><li>Al guardar, el drawer cierra o muestra el resultado, y un aviso breve confirma la acción.</li></ul></div>
+        <div class="card-flat dont"><b>Nunca</b><ul class="small" style="margin:8px 0 0;padding-left:18px;line-height:22px"><li>Modales centrados o ventanas <span class="mono">alert()</span> / <span class="mono">confirm()</span> del navegador.</li><li>Navegar a otra página para ver o editar un registro.</li><li>Drawers encima de drawers.</li><li>Más de una acción primaria en el pie.</li><li>Animaciones si el usuario pidió reducir movimiento.</li></ul></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">08</span><h2>Voz</h2></div>
+      <div class="grid g2">
+        <div class="card-flat do"><b>Así sí</b><ul class="small" style="margin:8px 0 0;padding-left:18px;line-height:22px"><li>"Tu iPhone 13 está en reparación. Te avisamos cuando esté listo."</li><li>"Falta un repuesto: pantalla OLED. Llega el jueves 21."</li><li>Fechas y horas concretas: "jueves 21, 3:00 p. m."</li></ul></div>
+        <div class="card-flat dont"><b>Así no</b><ul class="small" style="margin:8px 0 0;padding-left:18px;line-height:22px"><li>"La orden #184 cambió a estado 4."</li><li>Tecnicismos sin explicar.</li><li>"Pronto", "en unos días", exclamaciones en avisos de demora.</li></ul></div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-h"><span class="num">09</span><h2>Ideas para evolucionar el logo</h2></div>
+      <div class="grid g4">
+        <div class="card-flat idea"><svg viewBox="-20 -20 500 360"><use href="#logo"/><circle cx="380" cy="-6" r="0"/><g fill="#0074F9"><circle cx="395" cy="135" r="14"/><circle cx="435" cy="135" r="14" opacity=".6"/><circle cx="475" cy="135" r="14" opacity=".3"/></g></svg><b>T de traza</b><p class="muted small">Tres puntos que avanzan, como la línea de estados.</p></div>
+        <div class="card-flat idea"><svg viewBox="-8 -8 456 336"><path fill="#09213D" d="M0,95 C20,35 50,0 100,0 L350,0 C290,10 245,40 220,75 C210,90 195,95 180,95 Z"/><path fill="#0074F9" d="M180,95 C195,95 210,90 220,75 C245,40 290,10 350,0 L432,0 C405,70 375,95 330,95 Z"/><path fill="#09213D" d="M150,115 L218,115 L176,270 L150,320 L128,290 Z"/><path fill="#0074F9" d="M218,115 L296,115 L256,265 L176,270 Z"/></svg><b>Tallo-destornillador</b><p class="muted small">La punta del tallo sugiere una herramienta.</p></div>
+        <div class="card-flat idea"><svg viewBox="-8 -8 456 336"><path fill="#09213D" d="M0,95 C20,35 50,0 100,0 L300,0 L230,70 L200,95 Z"/><path fill="#0074F9" d="M200,95 L230,70 L300,0 L432,0 C405,70 375,95 330,95 Z"/><path fill="#09213D" d="M150,115 L218,115 L180,260 L150,310 L92,310 Z"/><path fill="#0074F9" d="M218,115 L296,115 L256,265 C246,295 222,310 190,310 L150,310 L180,260 Z"/><circle cx="300" cy="0" r="10" fill="#FF8A1F"/></svg><b>Corte de circuito</b><p class="muted small">La unión como pista de circuito a 45°.</p></div>
+        <div class="card-flat idea"><svg viewBox="0 0 460 336"><g transform="translate(150 20) scale(.36)"><use href="#logo" width="456" height="336" x="-8" y="-8"/></g><text x="230" y="250" text-anchor="middle" font-family="Sora,sans-serif" font-weight="700" font-size="64" transform="skewX(-12) translate(50 0)"><tspan fill="#09213D">Tecno</tspan><tspan fill="#0074F9">Taller</tspan></text></svg><b>Wordmark inclinado</b><p class="muted small">Palabra y símbolo con la misma inclinación.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== PORTAL =================== -->
+<section id="v-portal" class="view hidden">
+  <div class="portal-nav">
+    <div class="brand" style="display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:18px"><svg width="32" height="24" viewBox="-8 -8 456 336" aria-hidden="true"><use class="logo-swap" href="#logo"/></svg><span><span class="t1">Tecno</span><span class="t2" style="color:var(--blue)">Taller</span></span></div>
+    <nav role="tablist" aria-label="Portal" id="portalTabs">
+      <button class="tab" role="tab" data-p="inicio" aria-selected="true">Inicio</button>
+      <button class="tab" role="tab" data-p="catalogo" aria-selected="false">Catálogo</button>
+      <button class="tab" role="tab" data-p="servicios" aria-selected="false">Servicios</button>
+      <button class="tab" role="tab" data-p="agendar" aria-selected="false">Agendar servicio</button>
+      <button class="tab" role="tab" data-p="seguimiento" aria-selected="false">Seguimiento</button>
+      <button class="tab" role="tab" data-p="historial" aria-selected="false">Mis servicios</button>
+    </nav>
+    <div class="row" style="margin-left:auto">
+      <button class="icon-btn" aria-label="Notificaciones" id="bellBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><span class="badge-dot"></span></button>
+      <div class="avatar" title="Laura Gómez">LG</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- inicio -->
+    <div class="pv" id="p-inicio">
+      <div class="p-hero">
+        <div>
+          <div class="label" style="color:#9DB0C8;margin-bottom:12px">Hola, Laura</div>
+          <h1>Tu equipo, en buenas manos. Y siempre sabes en qué va.</h1>
+          <p style="margin-top:14px;font-size:17px;line-height:26px">Reparación de celulares, portátiles, tablets y consolas con diagnóstico registrado, repuestos garantizados y seguimiento en línea.</p>
+          <div class="row" style="margin-top:24px"><button class="btn btn-primary" data-pgo="agendar">Agendar servicio</button><button class="btn" data-pgo="servicios" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.3)">Ver servicios y precios</button></div>
+        </div>
+        <div class="track">
+          <b style="color:#fff">Consulta tu orden</b>
+          <p class="small" style="margin:6px 0 14px">Escribe el número que aparece en tu recibo.</p>
+          <div class="row" style="flex-wrap:nowrap"><input class="input mono" id="heroOrder" value="OT-2026-00184" aria-label="Número de orden"><button class="btn btn-primary" id="heroTrack">Consultar</button></div>
+          <p class="small" style="margin-top:10px">Prueba también <span class="mono">OT-2026-00179</span> o <span class="mono">OT-2026-00188</span></p>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="row between" style="margin-bottom:16px"><h2>Tus equipos en el taller</h2><a href="#" data-pgo="historial">Ver todos</a></div>
+        <div class="grid g2" id="myActive"></div>
+      </div>
+      <div class="sec">
+        <div class="row between" style="margin-bottom:16px"><h2>Destacados de la tienda</h2><a href="#" data-pgo="catalogo">Ir al catálogo</a></div>
+        <div class="grid g4 prods" id="featured"></div>
+      </div>
+    </div>
+
+    <!-- catálogo -->
+    <div class="pv hidden" id="p-catalogo">
+      <div class="page-h"><div><h1>Catálogo</h1><p class="muted">Equipos nuevos y reacondicionados con garantía.</p></div><input class="input" style="max-width:280px" placeholder="Buscar producto…" id="catSearch" aria-label="Buscar producto"></div>
+      <div class="chips" id="catChips" style="margin-bottom:20px"></div>
+      <div class="grid g4 prods" id="catGrid"></div>
+    </div>
+
+    <!-- servicios -->
+    <div class="pv hidden" id="p-servicios">
+      <div class="page-h"><div><h1>Servicios técnicos</h1><p class="muted">Precios de referencia. El valor final se confirma después del diagnóstico.</p></div></div>
+      <div class="grid g3" id="svcGrid"></div>
+      <div class="notice notice-info" style="margin-top:20px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Todas las reparaciones tienen <b>90 días de garantía</b> sobre la falla atendida y los repuestos instalados.</span></div>
+    </div>
+
+    <!-- agendar -->
+    <div class="pv hidden" id="p-agendar">
+      <div class="page-h"><div><h1>Agendar servicio</h1><p class="muted">Cuéntanos qué le pasa a tu equipo y elige cuándo traerlo.</p></div></div>
+      <div class="grid" style="grid-template-columns:1.4fr 1fr;align-items:start" id="agendarGrid">
+        <form class="card stack" id="agendarForm">
+          <div class="label">1 · Tu equipo</div>
+          <div class="grid g2">
+            <div class="field"><label for="fTipo">Tipo de equipo</label><select class="input" id="fTipo"><option>Celular</option><option>Portátil</option><option>Tablet</option><option>Consola</option><option>Smartwatch</option></select></div>
+            <div class="field"><label for="fModelo">Marca y modelo</label><input class="input" id="fModelo" placeholder="Ej. Samsung Galaxy S23" required></div>
+          </div>
+          <div class="field"><label for="fServ">Servicio</label><select class="input" id="fServ"></select></div>
+          <div class="field"><label for="fFalla">¿Qué le pasa?</label><textarea class="input" id="fFalla" placeholder="Ej. Se cayó y la pantalla quedó negra, pero vibra cuando llaman." required></textarea></div>
+          <div class="field"><label>Accesorios que vas a entregar</label><div class="chips" id="fAcc"><button type="button" class="chip" aria-pressed="false">Cargador</button><button type="button" class="chip" aria-pressed="false">Cable</button><button type="button" class="chip" aria-pressed="false">Funda</button><button type="button" class="chip" aria-pressed="false">Memoria SD</button><button type="button" class="chip" aria-pressed="false">SIM</button><button type="button" class="chip" aria-pressed="false">Caja</button></div></div>
+          <div class="label" style="padding-top:8px">2 · Fecha y hora</div>
+          <div class="chips" id="fDias"></div>
+          <div class="slots" id="fSlots"></div>
+          <div class="label" style="padding-top:8px">3 · Contacto</div>
+          <div class="grid g2">
+            <div class="field"><label for="fNombre">Nombre</label><input class="input" id="fNombre" value="Laura Gómez"></div>
+            <div class="field"><label for="fTel">Celular (WhatsApp)</label><input class="input" id="fTel" value="300 555 0142"></div>
+          </div>
+          <div class="row between" style="padding-top:8px"><span class="muted small">Te enviaremos la confirmación por WhatsApp y correo.</span><button class="btn btn-primary" type="submit">Confirmar cita</button></div>
+        </form>
+        <div class="stack">
+          <div class="card" id="agendarResumen"></div>
+          <div class="card-flat"><b>¿Qué pasa después?</b><ol class="small muted" style="padding-left:18px;margin:8px 0 0;line-height:22px"><li>Traes tu equipo y revisamos su estado contigo.</li><li>Recibes el número de orden y el registro de recepción.</li><li>Te enviamos el diagnóstico y el valor para aprobar.</li><li>Sigues cada paso desde <b>Seguimiento</b>.</li></ol></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- seguimiento -->
+    <div class="pv hidden" id="p-seguimiento">
+      <div class="page-h"><div><h1>Seguimiento</h1><p class="muted">Consulta en qué está tu equipo, sin llamar al taller.</p></div>
+        <form class="row" id="trackForm" style="flex-wrap:nowrap"><input class="input mono" id="trackInput" style="width:220px" value="OT-2026-00184" aria-label="Número de orden"><button class="btn btn-primary">Consultar</button></form>
+      </div>
+      <div id="trackOut"></div>
+    </div>
+
+    <!-- historial -->
+    <div class="pv hidden" id="p-historial">
+      <div class="page-h"><div><h1>Mis servicios</h1><p class="muted">Todas tus órdenes, garantías y comprobantes.</p></div></div>
+      <div class="table-wrap rcards"><table><thead><tr><th>Orden</th><th>Equipo</th><th>Servicio</th><th>Ingreso</th><th>Estado</th><th>Garantía</th><th></th></tr></thead><tbody id="histBody"></tbody></table></div>
+    </div>
+
+    <!-- notificaciones -->
+    <div class="pv hidden" id="p-notificaciones">
+      <div class="page-h"><div><h1>Notificaciones</h1><p class="muted">Así te avisamos de cada cambio.</p></div></div>
+      <div class="grid g2" style="align-items:start">
+        <div class="card" id="notifList"></div>
+        <div class="card stack"><div class="label">Vista previa en WhatsApp</div>
+          <div class="wa"><b>TecnoTaller</b><br>Hola Laura 👋 Tu <b>iPhone 13</b> (orden OT-2026-00184) pasó a <b>En reparación</b>. Técnico: Andrés M. Te avisamos cuando esté listo.<div style="text-align:right;font-size:11px;opacity:.6">9:41 a. m.</div></div>
+          <div class="wa"><b>TecnoTaller</b><br>Tu <b>Samsung A54</b> está <b>listo para entrega</b> ✅ Puedes recogerlo de lunes a sábado, 8:00 a. m. a 6:30 p. m. Total: $185.000.<div style="text-align:right;font-size:11px;opacity:.6">Ayer</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== ADMIN =================== -->
+<section id="v-admin" class="view hidden">
+  <div class="admin">
+    <aside class="side" id="adminNav">
+      <div class="brand"><svg width="32" height="24" viewBox="-8 -8 456 336" aria-hidden="true"><use href="#logo-inv"/></svg><span>Tecno<span class="t2">Taller</span></span></div>
+      <div class="grp">General</div>
+      <a data-a="dashboard" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>Inicio</a>
+      <a data-a="ordenes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4.96 16.84L11.37 10.44A4.7 4.7 0 0 1 17.79 4.23L15.11 6.91A1.4 1.4 0 0 0 17.09 8.89L19.77 6.21A4.7 4.7 0 0 1 13.56 12.63L7.16 19.04A1.55 1.55 0 0 1 4.96 16.84Z"/></svg>Órdenes<span class="count" id="cntOrd"></span></a>
+      <div class="grp">Comercial</div>
+      <a data-a="inventario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"><path d="M3.5 8 12 4l8.5 4v8L12 20l-8.5-4z"/><path d="M3.5 8 12 12l8.5-4M12 12v8"/></svg>Inventario y repuestos</a>
+      <a data-a="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M3 19c.8-3 3.2-5 6-5s5.2 2 6 5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14c1.6.7 2.6 2.4 3 5"/></svg>Clientes</a>
+      <div class="grp">Taller</div>
+      <a data-a="tecnicos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M5 20c1-3.5 3.8-6 7-6s6 2.5 7 6"/></svg>Técnicos</a>
+      <a data-a="garantias"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4" stroke-linecap="round"/></svg>Garantías</a>
+      <a data-a="reportes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Reportes</a>
+      <div class="me"><div class="avatar">CR</div><div><div style="color:#fff;font-weight:600;font-size:14px">Carolina Ríos</div><div class="small" style="color:#7F93AE">Administradora</div></div></div>
+    </aside>
+    <main class="main">
+      <!-- dashboard -->
+      <div class="av" id="a-dashboard">
+        <div class="page-h"><div><div class="label">Jueves 19 de noviembre</div><h1>Buenos días, Carolina</h1></div><button class="btn btn-primary" id="newOrderBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nueva orden</button></div>
+        <div class="grid g4 kpis" id="kpis"></div>
+        <div class="card" style="margin-top:16px"><div class="row between"><h3>Órdenes por estado</h3><a href="#" data-ago="ordenes">Ver órdenes</a></div><div class="pipeline" id="pipeline" style="margin-top:16px"></div></div>
+        <div class="grid g2" style="margin-top:16px;align-items:start">
+          <div class="card"><div class="row between" style="margin-bottom:12px"><h3>Para hoy</h3><span class="muted small">Entregas y órdenes atrasadas</span></div><div id="todayList"></div></div>
+          <div class="card"><div class="row between" style="margin-bottom:12px"><h3>Alertas de inventario</h3><a href="#" data-ago="inventario">Inventario</a></div><div id="stockAlerts"></div></div>
+        </div>
+      </div>
+
+      <!-- ordenes -->
+      <div class="av hidden" id="a-ordenes">
+        <div class="page-h"><div><h1>Órdenes de servicio</h1><p class="muted">Haz clic en una orden para ver su recepción, diagnóstico, repuestos e historial.</p></div><button class="btn btn-primary" id="newOrderBtn2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nueva orden</button></div>
+        <div class="row" style="margin-bottom:16px"><input class="input" id="ordSearch" style="max-width:300px" placeholder="Buscar por orden, cliente o equipo…" aria-label="Buscar orden"><div class="chips" id="ordChips"></div></div>
+        <div class="table-wrap rcards"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Equipo</th><th>Técnico</th><th>Ingreso</th><th>Entrega est.</th><th>Estado</th></tr></thead><tbody id="ordBody"></tbody></table></div>
+      </div>
+
+      <!-- inventario -->
+      <div class="av hidden" id="a-inventario">
+        <div class="page-h"><div><h1>Inventario y repuestos</h1><p class="muted">Las existencias se descuentan solas cuando un repuesto se asocia a una orden.</p></div><button class="btn btn-primary" id="addItemBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Agregar ítem</button></div>
+        <div class="subtabs" role="tablist" id="invTabs"><button class="tab" role="tab" data-inv="rep" aria-selected="true">Repuestos y piezas</button><button class="tab" role="tab" data-inv="prod" aria-selected="false">Dispositivos para la venta</button></div>
+        <div class="table-wrap rcards"><table><thead id="invHead"></thead><tbody id="invBody"></tbody></table></div>
+      </div>
+
+      <!-- clientes -->
+      <div class="av hidden" id="a-clientes">
+        <div class="page-h"><div><h1>Clientes</h1><p class="muted">Datos de contacto e historial de equipos.</p></div><button class="btn btn-primary" id="addCliBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Registrar cliente</button></div>
+        <div class="table-wrap rcards"><table><thead><tr><th>Cliente</th><th>Documento</th><th>Celular</th><th>Correo</th><th>Órdenes</th><th>Última visita</th></tr></thead><tbody id="cliBody"></tbody></table></div>
+      </div>
+
+      <!-- tecnicos -->
+      <div class="av hidden" id="a-tecnicos">
+        <div class="page-h"><div><h1>Técnicos</h1><p class="muted">Carga de trabajo y especialidades.</p></div><button class="btn btn-primary" id="addTecBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Agregar técnico</button></div>
+        <div class="grid g3" id="tecGrid"></div>
+      </div>
+
+      <!-- garantias -->
+      <div class="av hidden" id="a-garantias">
+        <div class="page-h"><div><h1>Garantías</h1><p class="muted">90 días sobre la falla atendida y los repuestos instalados.</p></div></div>
+        <div class="grid g3 kpis" id="garKpis" style="margin-bottom:16px"></div>
+        <div class="table-wrap rcards"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Equipo</th><th>Cubre</th><th>Entregado</th><th>Vence</th><th>Estado</th><th></th></tr></thead><tbody id="garBody"></tbody></table></div>
+      </div>
+
+      <!-- reportes -->
+      <div class="av hidden" id="a-reportes">
+        <div class="page-h"><div><h1>Reportes</h1><p class="muted">Últimos 6 meses.</p></div><div class="row"><select class="input" style="width:auto" aria-label="Periodo"><option>Últimos 6 meses</option><option>Este año</option></select><button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Exportar</button></div></div>
+        <div class="grid g4 kpis" id="repKpis"></div>
+        <div class="grid g2" style="margin-top:16px;align-items:start">
+          <div class="card"><h3>Órdenes atendidas por mes</h3><div class="bar-chart" id="chartOrd"></div></div>
+          <div class="card"><h3>Ingresos por mes</h3><p class="muted small">Servicios + venta de equipos, millones COP</p><div class="bar-chart" id="chartIng"></div></div>
+          <div class="card"><h3>Fallas más frecuentes</h3><div style="margin-top:16px" id="topFallas"></div></div>
+          <div class="card"><h3>Tiempo promedio por estado</h3><div style="margin-top:16px" id="tiempos"></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<nav class="bnav" id="bnavPortal" aria-label="Portal" hidden>
+  <button data-pgo="inicio" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"><path d="M4 10.5 12 4l8 6.5V20h-5v-6H9v6H4z"/></svg>Inicio</button>
+  <button data-pgo="catalogo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"><path d="M5 8h14l-1 12H6z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/></svg>Tienda</button>
+  <button data-pgo="agendar" class="cta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Agendar</button>
+  <button data-pgo="seguimiento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>Seguimiento</button>
+  <button data-pgo="historial"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Mis servicios</button>
+</nav>
+<nav class="bnav dark" id="bnavAdmin" aria-label="Panel" hidden>
+  <button data-ago="dashboard" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/></svg>Inicio</button>
+  <button data-ago="ordenes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4.96 16.84L11.37 10.44A4.7 4.7 0 0 1 17.79 4.23L15.11 6.91A1.4 1.4 0 0 0 17.09 8.89L19.77 6.21A4.7 4.7 0 0 1 13.56 12.63L7.16 19.04A1.55 1.55 0 0 1 4.96 16.84Z"/></svg>Órdenes</button>
+  <button data-ago="inventario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"><path d="M3.5 8 12 4l8.5 4v8L12 20l-8.5-4z"/><path d="M3.5 8 12 12l8.5-4M12 12v8"/></svg>Inventario</button>
+  <button data-ago="reportes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Reportes</button>
+  <button id="moreBtn"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>Más</button>
+</nav>
+<div id="drawerRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- helpers ---------- */
+var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var cop=function(n){return "$"+Math.round(n).toLocaleString("es-CO")};
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]})}
+var I={
+  ingresado:'<path d="M4 13h4l1.5 2.5h5L16 13h4"/><path d="M5.5 6h13L20 13v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5z"/>',
+  revision:'<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/><path d="M9 11h4"/>',
+  repuesto:'<path d="M3.5 8 12 4l8.5 4v8L12 20l-8.5-4z"/><path d="M3.5 8 12 12l8.5-4M12 12v8"/>',
+  reparacion:'<path d="M4.96 16.84L11.37 10.44A4.7 4.7 0 0 1 17.79 4.23L15.11 6.91A1.4 1.4 0 0 0 17.09 8.89L19.77 6.21A4.7 4.7 0 0 1 13.56 12.63L7.16 19.04A1.55 1.55 0 0 1 4.96 16.84Z"/>',
+  reparado:'<circle cx="12" cy="12" r="8"/><path d="m8.5 12.2 2.4 2.3 4.6-4.8"/>',
+  listo:'<path d="M5 8h14l-1 11H6z"/><path d="M9 8V7a3 3 0 0 1 6 0v1"/>',
+  entregado:'<path d="M4 12h11"/><path d="m11 8 4 4-4 4"/><path d="M15 5h4a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-4"/>',
+  celular:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  portatil:'<rect x="4.5" y="5" width="15" height="10" rx="1.5"/><path d="M2.5 18.5h19"/>',
+  tablet:'<rect x="4.5" y="3" width="15" height="18" rx="2.5"/><path d="M11 18h2"/>',
+  consola:'<path d="M7 8h10a4 4 0 0 1 4 4.5l-.6 3a2.5 2.5 0 0 1-4.3 1.2L14.5 15h-5l-1.6 1.7a2.5 2.5 0 0 1-4.3-1.2l-.6-3A4 4 0 0 1 7 8z"/><path d="M8 11v3M6.5 12.5h3M15.5 12h.01M17.5 13.5h.01"/>',
+  reloj:'<rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9 6l.5-3h5l.5 3M9 18l.5 3h5l.5-3M12 10v2.5l1.5 1"/>',
+  audio:'<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>',
+  pantalla:'<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="m9 8 3 3-2 2 4 3"/>',
+  bateria:'<rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 10.5v3"/><path d="m11 9-2 3h4l-2 3"/>',
+  agua:'<path d="M12 3.5s6 6.5 6 10.5a6 6 0 0 1-12 0c0-4 6-10.5 6-10.5z"/>',
+  software:'<rect x="3" y="4.5" width="18" height="13" rx="2"/><path d="m9 9.5-2 1.5 2 1.5M15 9.5l2 1.5-2 1.5M8 21h8"/>',
+  carga:'<path d="M9 3v4M15 3v4M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5"/>',
+  limpieza:'<path d="M4 20h16"/><path d="M7 20c0-5 2-8 5-8s5 3 5 8"/><path d="M12 12V4"/>',
+  check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  warn:'<path d="M12 4 2.5 20h19z"/><path d="M12 10v4M12 17h.01"/>',
+  clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>',
+  moon:'<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>',
+  x:'<path d="M6 6l12 12M18 6 6 18"/>',
+  back:'<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  minus:'<path d="M5 12h14"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  doc:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>'
+};
+function ic(n,extra){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" '+(extra||"")+'>'+I[n]+'</svg>'}
+var ESTADOS=["ingresado","revision","repuesto","reparacion","reparado","listo","entregado"];
+var NOM={ingresado:"Ingresado",revision:"En revisión",repuesto:"Esperando repuesto",reparacion:"En reparación",reparado:"Reparado",listo:"Listo para entrega",entregado:"Entregado"};
+function estado(e){return '<span class="estado e-'+e+'">'+ic(e)+NOM[e]+'</span>'}
+function prog(e){var k=ESTADOS.indexOf(e);return '<div class="progress" aria-hidden="true">'+ESTADOS.map(function(_,i){return '<span class="'+(i<=k?"on":"")+'"></span>'}).join("")+'</div>'}
+function toast(msg){var t=document.createElement("div");t.className="toast";t.innerHTML=ic("check")+esc(msg);$("#toastRoot").appendChild(t);setTimeout(function(){t.remove()},2600)}
+
+/* ---------- data ---------- */
+var TEC=[{id:"am",nombre:"Andrés Montoya",esp:"Celulares y tablets · microsoldadura",ini:"AM"},{id:"dp",nombre:"Diana Pérez",esp:"Portátiles y PC · software",ini:"DP"},{id:"jr",nombre:"Julián Rojas",esp:"Consolas y audio",ini:"JR"}];
+var CLI=[
+ {id:"c1",nombre:"Laura Gómez",doc:"CC 1.020.456.789",tel:"300 555 0142",mail:"laura.gomez@correo.com"},
+ {id:"c2",nombre:"Felipe Castaño",doc:"CC 80.123.456",tel:"311 555 0188",mail:"fcastano@correo.com"},
+ {id:"c3",nombre:"María José Vargas",doc:"CC 1.032.998.120",tel:"315 555 0103",mail:"mjvargas@correo.com"},
+ {id:"c4",nombre:"Santiago Herrera",doc:"CC 1.015.443.210",tel:"320 555 0176",mail:"santi.h@correo.com"},
+ {id:"c5",nombre:"Paula Cárdenas",doc:"CC 52.887.301",tel:"301 555 0119",mail:"pcardenas@correo.com"},
+ {id:"c6",nombre:"Óscar Medina",doc:"NIT 901.234.567-1",tel:"310 555 0150",mail:"compras@medinaasociados.co"}];
+var REP=[
+ {cod:"REP-PAN-IP13",nombre:"Pantalla OLED iPhone 13",cat:"Pantallas",stock:3,min:2,costo:420000},
+ {cod:"REP-PAN-A54",nombre:"Pantalla Samsung A54",cat:"Pantallas",stock:1,min:2,costo:260000},
+ {cod:"REP-BAT-IP11",nombre:"Batería iPhone 11",cat:"Baterías",stock:2,min:4,costo:95000},
+ {cod:"REP-BAT-RN12",nombre:"Batería Redmi Note 12",cat:"Baterías",stock:6,min:3,costo:70000},
+ {cod:"REP-PIN-USBC",nombre:"Pin de carga USB-C",cat:"Conectores",stock:18,min:8,costo:12000},
+ {cod:"REP-TEC-MBA",nombre:"Teclado MacBook Air M1 (ES)",cat:"Teclados",stock:0,min:1,costo:380000},
+ {cod:"REP-SSD-512",nombre:"SSD NVMe 512 GB",cat:"Almacenamiento",stock:5,min:2,costo:190000},
+ {cod:"REP-HDMI-PS5",nombre:"Puerto HDMI PS5",cat:"Conectores",stock:4,min:2,costo:45000},
+ {cod:"REP-PAS-TER",nombre:"Pasta térmica 4 g",cat:"Insumos",stock:22,min:10,costo:18000},
+ {cod:"REP-VEN-LEN",nombre:"Ventilador Lenovo IdeaPad 3",cat:"Refrigeración",stock:1,min:2,costo:85000}];
+var PROD=[
+ {sku:"EQ-IP15-128",nombre:"iPhone 15 128 GB",cat:"Celulares",precio:3899000,stock:4,cond:"Nuevo",icon:"celular",tag:"Más vendido"},
+ {sku:"EQ-A55-256",nombre:"Samsung Galaxy A55 256 GB",cat:"Celulares",precio:1749000,stock:7,cond:"Nuevo",icon:"celular"},
+ {sku:"EQ-RN13-256",nombre:"Redmi Note 13 Pro 256 GB",cat:"Celulares",precio:1299000,stock:9,cond:"Nuevo",icon:"celular",tag:"Oferta"},
+ {sku:"EQ-IP12-R",nombre:"iPhone 12 64 GB reacondicionado",cat:"Celulares",precio:1390000,stock:2,cond:"Reacondicionado",icon:"celular"},
+ {sku:"EQ-IDP5",nombre:"Lenovo IdeaPad Slim 5 Ryzen 7",cat:"Portátiles",precio:3299000,stock:3,cond:"Nuevo",icon:"portatil"},
+ {sku:"EQ-MBA-M2",nombre:"MacBook Air M2 13\"",cat:"Portátiles",precio:4999000,stock:1,cond:"Nuevo",icon:"portatil"},
+ {sku:"EQ-TABS9",nombre:"Galaxy Tab S9 FE",cat:"Tablets",precio:1899000,stock:5,cond:"Nuevo",icon:"tablet",tag:"Oferta"},
+ {sku:"EQ-PS5S",nombre:"PlayStation 5 Slim",cat:"Consolas",precio:2599000,stock:2,cond:"Nuevo",icon:"consola"},
+ {sku:"EQ-W9",nombre:"Apple Watch Series 9 41 mm",cat:"Accesorios",precio:1899000,stock:0,cond:"Nuevo",icon:"reloj"},
+ {sku:"EQ-BUDS",nombre:"Audífonos JBL Tune 520BT",cat:"Accesorios",precio:229000,stock:15,cond:"Nuevo",icon:"audio"}];
+var SVC=[
+ {id:"pantalla",nombre:"Cambio de pantalla",desc:"Celulares y tablets. Pantalla original u OLED compatible.",desde:180000,tiempo:"1 a 2 días",icon:"pantalla"},
+ {id:"bateria",nombre:"Cambio de batería",desc:"Recupera la autonomía; incluye prueba de salud de batería.",desde:90000,tiempo:"Mismo día",icon:"bateria"},
+ {id:"carga",nombre:"Puerto de carga",desc:"Limpieza o reemplazo del conector USB-C / Lightning.",desde:60000,tiempo:"Mismo día",icon:"carga"},
+ {id:"agua",nombre:"Daño por líquido",desc:"Desarme, limpieza ultrasónica y diagnóstico de placa.",desde:120000,tiempo:"2 a 4 días",icon:"agua"},
+ {id:"software",nombre:"Software y formateo",desc:"Sistema operativo, respaldo de información y desbloqueos legales.",desde:70000,tiempo:"1 día",icon:"software"},
+ {id:"limpieza",nombre:"Mantenimiento preventivo",desc:"Portátiles y consolas: limpieza interna y pasta térmica.",desde:110000,tiempo:"1 día",icon:"limpieza"}];
+
+function H(estado,fecha,nota,user){return {estado:estado,fecha:fecha,nota:nota,user:user}}
+var ORD=[
+ {id:"OT-2026-00184",cli:"c1",tipo:"celular",equipo:"iPhone 13 128 GB",serie:"IMEI 356938035643809",servicio:"Cambio de pantalla",falla:"Se cayó; pantalla con líneas verdes y el táctil no responde en la parte inferior.",tec:"am",ingreso:"16 nov",entrega:"20 nov",estado:"reparacion",
+  recepcion:{acc:["Cargador","Funda"],danos:"Rayón en esquina superior derecha del marco; vidrio trasero sin daños.",enciende:"Sí",bloqueo:"Patrón entregado por el cliente",obs:"Cliente pide conservar protector de cámara."},
+  diag:"Panel OLED fracturado internamente. Face ID y cámara frontal funcionan. Se recomienda cambio de pantalla OLED.",cotizacion:520000,aprobada:true,
+  acts:[{t:"Desarme y prueba de flex de pantalla",f:"16 nov, 3:05 p. m.",u:"Andrés M."},{t:"Instalación pantalla OLED",f:"19 nov, 9:40 a. m.",u:"Andrés M."}],
+  reps:[{cod:"REP-PAN-IP13",cant:1}],
+  hist:[H("ingresado","Lun 16 nov, 10:20 a. m.","Recibido con cargador y funda.","Carolina R."),H("revision","Lun 16 nov, 3:05 p. m.","Diagnóstico: pantalla OLED dañada. Cotización enviada: $520.000.","Andrés M."),H("repuesto","Mar 17 nov, 11:00 a. m.","Cliente aprobó. Pantalla pedida al proveedor.","Carolina R."),H("reparacion","Jue 19 nov, 9:40 a. m.","Pantalla recibida, en instalación.","Andrés M.")],entregaReg:null,entregadoEl:null},
+ {id:"OT-2026-00179",cli:"c2",tipo:"celular",equipo:"Samsung Galaxy A54",serie:"IMEI 351234567890123",servicio:"Cambio de batería",falla:"La batería dura menos de 4 horas y se calienta.",tec:"am",ingreso:"13 nov",entrega:"18 nov",estado:"listo",
+  recepcion:{acc:["Cable"],danos:"Sin daños visibles.",enciende:"Sí",bloqueo:"Sin bloqueo",obs:""},diag:"Batería al 71 % de salud, hinchada levemente.",cotizacion:185000,aprobada:true,
+  acts:[{t:"Cambio de batería y sellado de tapa",f:"17 nov",u:"Andrés M."},{t:"Prueba de carga y ciclo de 2 h",f:"18 nov",u:"Andrés M."}],reps:[],
+  hist:[H("ingresado","Vie 13 nov, 4:10 p. m.","","Carolina R."),H("revision","Sáb 14 nov, 10:00 a. m.","Batería hinchada. Cotización $185.000.","Andrés M."),H("reparacion","Mar 17 nov, 2:00 p. m.","","Andrés M."),H("reparado","Mié 18 nov, 11:30 a. m.","Pruebas OK.","Andrés M."),H("listo","Mié 18 nov, 12:00 m.","Cliente notificado por WhatsApp.","Carolina R.")],entregaReg:null,entregadoEl:null},
+ {id:"OT-2026-00190",cli:"c3",tipo:"portatil",equipo:"Lenovo IdeaPad 3 15\"",serie:"S/N PF3XK21L",servicio:"Mantenimiento preventivo",falla:"Se apaga solo al jugar y hace mucho ruido.",tec:"dp",ingreso:"18 nov",entrega:"21 nov",estado:"revision",
+  recepcion:{acc:["Cargador"],danos:"Bisagra izquierda floja. Tecla F5 faltante.",enciende:"Sí",bloqueo:"Contraseña Windows entregada",obs:"Respaldar carpeta Documentos."},diag:"",cotizacion:null,aprobada:false,acts:[],reps:[],
+  hist:[H("ingresado","Mié 18 nov, 9:15 a. m.","Recibido con cargador.","Carolina R."),H("revision","Jue 19 nov, 8:30 a. m.","","Diana P.")],entregaReg:null,entregadoEl:null},
+ {id:"OT-2026-00171",cli:"c4",tipo:"consola",equipo:"PlayStation 5",serie:"S/N F12345678",servicio:"Puerto HDMI",falla:"No da imagen en el televisor.",tec:"jr",ingreso:"3 nov",entrega:"7 nov",estado:"entregado",
+  recepcion:{acc:["Control","Cable de poder"],danos:"Carcasa lateral con rayones.",enciende:"Sí (sin imagen)",bloqueo:"—",obs:""},diag:"Puerto HDMI con pines doblados.",cotizacion:210000,aprobada:true,
+  acts:[{t:"Reemplazo de puerto HDMI",f:"6 nov",u:"Julián R."}],reps:[{cod:"REP-HDMI-PS5",cant:1}],
+  hist:[H("ingresado","Mar 3 nov","",""),H("revision","Mar 3 nov","",""),H("reparacion","Vie 6 nov","",""),H("reparado","Vie 6 nov","",""),H("listo","Vie 6 nov","",""),H("entregado","Sáb 7 nov, 11:20 a. m.","Entregado a Santiago Herrera. Probado frente al cliente.","Carolina R.")],entregaReg:"Funciona con imagen 4K. Mismos rayones laterales de la recepción.",entregadoEl:"2026-11-07"},
+ {id:"OT-2026-00192",cli:"c5",tipo:"celular",equipo:"Xiaomi Redmi Note 12",serie:"IMEI 860123450987654",servicio:"Puerto de carga",falla:"Carga solo si se mueve el cable.",tec:"am",ingreso:"19 nov",entrega:"19 nov",estado:"ingresado",
+  recepcion:{acc:[],danos:"Pantalla con protector roto (no la pantalla).",enciende:"Sí",bloqueo:"Sin bloqueo",obs:""},diag:"",cotizacion:null,aprobada:false,acts:[],reps:[],
+  hist:[H("ingresado","Jue 19 nov, 8:50 a. m.","Recibido sin accesorios.","Carolina R.")],entregaReg:null,entregadoEl:null},
+ {id:"OT-2026-00188",cli:"c6",tipo:"portatil",equipo:"MacBook Air M1 2020",serie:"S/N C02F1234Q6L4",servicio:"Daño por líquido",falla:"Se le regó café; varias teclas no funcionan.",tec:"dp",ingreso:"17 nov",entrega:"24 nov",estado:"repuesto",
+  recepcion:{acc:["Cargador USB-C"],danos:"Residuos de líquido bajo el teclado. Golpe leve en esquina inferior.",enciende:"Sí",bloqueo:"Usuario invitado habilitado",obs:"Equipo corporativo: entregar factura a nombre de Medina & Asociados."},
+  diag:"Placa sin corrosión tras limpieza. Teclado dañado (12 teclas). Requiere teclado completo.",cotizacion:640000,aprobada:true,
+  acts:[{t:"Limpieza ultrasónica de placa",f:"17 nov",u:"Diana P."}],reps:[],
+  hist:[H("ingresado","Mar 17 nov, 10:00 a. m.","",""),H("revision","Mar 17 nov, 2:00 p. m.","Limpieza OK, teclado dañado.","Diana P."),H("repuesto","Mié 18 nov, 9:00 a. m.","Teclado ES pedido. Llega lunes 23.","Carolina R.")],entregaReg:null,entregadoEl:null},
+ {id:"OT-2026-00165",cli:"c1",tipo:"tablet",equipo:"iPad 9.ª gen",serie:"S/N DMPX12345",servicio:"Cambio de batería",falla:"Se descarga rápido.",tec:"am",ingreso:"21 oct",entrega:"23 oct",estado:"entregado",
+  recepcion:{acc:["Cargador"],danos:"Sin daños.",enciende:"Sí",bloqueo:"—",obs:""},diag:"Batería al 68 %.",cotizacion:230000,aprobada:true,acts:[{t:"Cambio de batería",f:"22 oct",u:"Andrés M."}],reps:[],
+  hist:[H("ingresado","21 oct","",""),H("revision","21 oct","",""),H("reparacion","22 oct","",""),H("reparado","22 oct","",""),H("listo","23 oct","",""),H("entregado","Vie 23 oct","","")],entregaReg:"Batería al 100 %.",entregadoEl:"2026-10-23"},
+ {id:"OT-2026-00131",cli:"c2",tipo:"celular",equipo:"Samsung Galaxy S21",serie:"IMEI 359876543210987",servicio:"Cambio de pantalla",falla:"Pantalla rota.",tec:"am",ingreso:"5 ago",entrega:"8 ago",estado:"entregado",
+  recepcion:{acc:[],danos:"Pantalla rota.",enciende:"Sí",bloqueo:"—",obs:""},diag:"Pantalla.",cotizacion:450000,aprobada:true,acts:[],reps:[],
+  hist:[H("ingresado","5 ago","",""),H("entregado","8 ago","","")],entregaReg:"OK",entregadoEl:"2026-08-08"}];
+var nextNum=193;
+var TODAY=new Date("2026-11-19T12:00:00");
+
+function cli(id){return CLI.filter(function(c){return c.id===id})[0]}
+function tec(id){return TEC.filter(function(t){return t.id===id})[0]||{nombre:"Sin asignar",ini:"—"}}
+function rep(cod){return REP.filter(function(r){return r.cod===cod})[0]}
+function ord(id){id=(id||"").trim().toUpperCase();return ORD.filter(function(o){return o.id===id})[0]}
+function vence(o){if(!o.entregadoEl)return null;var d=new Date(o.entregadoEl+"T12:00:00");d.setDate(d.getDate()+90);return d}
+function fmtD(d){return d.toLocaleDateString("es-CO",{day:"numeric",month:"short",year:"numeric"})}
+
+/* ---------- top-level views ---------- */
+function go(view){
+  $$(".seg button").forEach(function(b){b.setAttribute("aria-selected",b.dataset.view===view)});
+  $$(".view").forEach(function(v){v.classList.toggle("hidden",v.id!=="v-"+view)});
+  $("#bnavPortal").hidden=view!=="portal";$("#bnavAdmin").hidden=view!=="admin";
+  window.scrollTo(0,0);
+  if(view==="portal")renderPortal();if(view==="admin")renderAdmin();
+}
+$$(".seg button").forEach(function(b){b.onclick=function(){go(b.dataset.view)}});
+$$("[data-go]").forEach(function(b){b.onclick=function(){go(b.dataset.go)}});
+
+/* theme */
+var themeBtn=$("#themeBtn");
+function setTheme(t){document.documentElement.dataset.theme=t;themeBtn.innerHTML=ic(t==="dark"?"sun":"moon");$$(".logo-swap").forEach(function(u){u.setAttribute("href",t==="dark"?"#logo-inv":"#logo")})}
+themeBtn.onclick=function(){setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark")};
+setTheme("light");
+
+/* ---------- identity ---------- */
+(function(){
+  var sw=[["Azul noche","navy","#09213D","Marca taller · barra lateral"],["Azul eléctrico","blue","#0074F9","Marca cliente · logo"],["Azul acción","blue-strong","#005FD1","Botones, enlaces, foco"],["Chispa","spark","#FF8A1F","Ofertas, notificación"],["Tinta","ink","#09213D","Texto principal"],["Tinta suave","ink-muted","#4B5D75","Texto secundario"],["Superficie","surface","#F5F8FC","Fondo de página"],["Línea","line","#D6DFEA","Bordes y divisores"]];
+  $("#swatches").innerHTML=sw.map(function(s){return '<div class="swatch"><div class="c" style="background:var(--'+s[1]+')"></div><div class="i"><b>'+s[0]+'</b><span class="mono muted">'+s[2]+'</span><div class="small muted">'+s[3]+'</div></div></div>'}).join("");
+  $("#estadosRow").innerHTML=ESTADOS.map(estado).join("");
+  var k=0;function tick(){$("#idProgress").innerHTML=prog(ESTADOS[k]).replace('<div class="progress" aria-hidden="true">','').replace(/<\/div>$/,'');k=(k+1)%7}tick();setInterval(tick,1100);
+  $("#idTraza").innerHTML=traza(ord("OT-2026-00184"));
+})();
+
+function traza(o){
+  var k=ESTADOS.indexOf(o.estado),map={};o.hist.forEach(function(h){map[h.estado]=h});
+  return ESTADOS.map(function(e,i){
+    if(e==="repuesto"&&!map.repuesto&&i<k)return ""; // skipped step
+    var cls=i<k?"hecho":i===k?"actual":"pendiente",h=map[e];
+    return '<li class="paso '+cls+'"'+(i===k?' aria-current="step"':'')+'><span class="punto">'+ic(e)+'</span><span class="paso-t">'+NOM[e]+'</span>'+(h?'<span class="paso-m">'+esc(h.fecha)+(h.nota?' · '+esc(h.nota):'')+'</span>':'')+'</li>';
+  }).join("");
+}
+
+/* ---------- PORTAL ---------- */
+var pTab="inicio",catFilter="Todos";
+function pgo(t){pTab=t;$$("#bnavPortal button").forEach(function(b){if(b.dataset.pgo===t)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});$$("#portalTabs .tab").forEach(function(b){b.setAttribute("aria-selected",b.dataset.p===t)});$$(".pv").forEach(function(v){v.classList.toggle("hidden",v.id!=="p-"+t)});renderPortal();window.scrollTo(0,0)}
+$$("#portalTabs .tab").forEach(function(b){b.onclick=function(){pgo(b.dataset.p)}});
+document.addEventListener("click",function(e){var a=e.target.closest("[data-pgo]");if(a){e.preventDefault();pgo(a.dataset.pgo)}var g=e.target.closest("[data-ago]");if(g){e.preventDefault();ago(g.dataset.ago)}var t=e.target.closest("[data-track]");if(t){e.preventDefault();$("#trackInput").value=t.dataset.track;pgo("seguimiento")}});
+
+function prodCard(p){return '<div class="prod click" data-prod="'+p.sku+'" style="cursor:pointer"><div class="ph">'+ic(p.icon)+(p.tag?'<span class="tag '+(p.tag==="Oferta"?"tag-spark":"")+'">'+p.tag+'</span>':'')+'</div><div class="bd"><span class="small muted">'+p.cat+' · '+p.cond+'</span><b>'+esc(p.nombre)+'</b><span class="price">'+cop(p.precio)+'</span><span class="small '+(p.stock?"muted":"")+'" style="'+(p.stock?"":"color:var(--danger)")+'">'+(p.stock?p.stock+" disponibles":"Agotado")+'</span><div style="margin-top:auto;padding-top:8px"><button class="btn btn-sm '+(p.stock?"btn-primary":"")+'" '+' data-prod="'+p.sku+'">'+(p.stock?"Ver y apartar":"Avisarme")+'</button></div></div></div>'}
+
+
+function labelTables(){$$(".rcards table").forEach(function(t){var hs=$$("thead th",t).map(function(h){return h.textContent});$$("tbody tr",t).forEach(function(r){$$("td",r).forEach(function(d,i){if(hs[i]&&!d.hasAttribute("colspan"))d.dataset.l=hs[i]})})})}
+function renderPortal(){setTimeout(labelTables,0);
+  var mine=ORD.filter(function(o){return o.cli==="c1"});
+  if(pTab==="inicio"){
+    $("#myActive").innerHTML=mine.filter(function(o){return o.estado!=="entregado"}).concat(mine.filter(function(o){return o.estado==="entregado"}).slice(0,1)).map(function(o){
+      return '<div class="card" style="box-shadow:var(--shadow-card)"><div class="row between"><div class="row" style="gap:12px"><div class="svc"><div class="ic">'+ic(o.tipo)+'</div></div><div><b>'+esc(o.equipo)+'</b><div class="mono muted">'+o.id+'</div></div></div>'+estado(o.estado)+'</div>'+prog(o.estado)+'<div class="row between" style="margin-top:14px"><span class="small muted">'+(o.estado==="entregado"?"Entregado el "+o.entrega:"Entrega estimada: "+o.entrega)+'</span><a href="#" data-track="'+o.id+'">Ver seguimiento</a></div></div>'}).join("");
+    $("#featured").innerHTML=PROD.filter(function(p){return p.tag}).concat(PROD.slice(4,5)).slice(0,4).map(prodCard).join("");
+  }
+  if(pTab==="catalogo"){
+    var cats=["Todos"].concat(PROD.map(function(p){return p.cat}).filter(function(c,i,a){return a.indexOf(c)===i}));
+    $("#catChips").innerHTML=cats.map(function(c){return '<button class="chip" aria-pressed="'+(c===catFilter)+'" data-cat="'+c+'">'+c+'</button>'}).join("");
+    $$("#catChips .chip").forEach(function(b){b.onclick=function(){catFilter=b.dataset.cat;renderPortal()}});
+    var q=($("#catSearch").value||"").toLowerCase();
+    var list=PROD.filter(function(p){return (catFilter==="Todos"||p.cat===catFilter)&&p.nombre.toLowerCase().indexOf(q)>-1});
+    $("#catGrid").innerHTML=list.length?list.map(prodCard).join(""):'<p class="muted">No encontramos productos con ese nombre.</p>';
+  }
+  if(pTab==="servicios"){
+    $("#svcGrid").innerHTML=SVC.map(function(s){return '<div class="card"><div class="svc"><div class="ic">'+ic(s.icon)+'</div><div><h3>'+s.nombre+'</h3><p class="muted small" style="margin-top:4px">'+s.desc+'</p></div></div><div class="row between" style="margin-top:16px"><div><div class="small muted">Desde</div><span class="price">'+cop(s.desde)+'</span></div><div style="text-align:right"><div class="small muted">Tiempo</div><b class="small">'+s.tiempo+'</b></div></div><button class="btn btn-sm" style="margin-top:14px;width:100%;justify-content:center" data-svc="'+s.id+'">Agendar este servicio</button></div>'}).join("");
+    $$("[data-svc]").forEach(function(b){b.onclick=function(){pgo("agendar");$("#fServ").value=b.dataset.svc;updResumen()}});
+  }
+  if(pTab==="agendar")initAgendar();
+  if(pTab==="seguimiento")renderTrack();
+  if(pTab==="historial"){
+    $("#histBody").innerHTML=mine.map(function(o){var v=vence(o),g=v?(v>TODAY?'<span class="tag tag-ok">Vigente hasta '+fmtD(v)+'</span>':'<span class="tag">Vencida</span>'):'<span class="muted small">Al entregar</span>';
+      return '<tr><td class="mono">'+o.id+'</td><td><b>'+esc(o.equipo)+'</b></td><td>'+o.servicio+'</td><td>'+o.ingreso+'</td><td>'+estado(o.estado)+'</td><td>'+g+'</td><td><a href="#" data-track="'+o.id+'">Detalle</a></td></tr>'}).join("");
+  }
+  if(pTab==="notificaciones"){
+    var n=[["reparacion","Tu iPhone 13 pasó a En reparación","Hoy, 9:41 a. m. · OT-2026-00184"],["repuesto","Pedimos la pantalla OLED para tu iPhone 13","Mar 17 nov · llega el miércoles 18"],["revision","Diagnóstico listo: cotización de $520.000","Lun 16 nov, 3:05 p. m. · aprobada por ti"],["ingresado","Recibimos tu iPhone 13 con cargador y funda","Lun 16 nov, 10:20 a. m."],["entregado","Entregamos tu iPad. Garantía hasta el 21 ene 2027","Vie 23 oct"]];
+    $("#notifList").innerHTML=n.map(function(x){return '<div class="notif"><div class="ic e-'+x[0]+'">'+ic(x[0])+'</div><div><b class="small" style="font-size:14px">'+x[1]+'</b><div class="small muted">'+x[2]+'</div></div></div>'}).join("");
+  }
+}
+$("#catSearch").oninput=renderPortal;
+$("#heroTrack").onclick=function(){$("#trackInput").value=$("#heroOrder").value;pgo("seguimiento")};
+$("#trackForm").onsubmit=function(e){e.preventDefault();renderTrack()};
+
+function renderTrack(){
+  var o=ord($("#trackInput").value),out=$("#trackOut");
+  if(!o){out.innerHTML='<div class="card" style="text-align:center;padding:48px"><h3>No encontramos esa orden</h3><p class="muted" style="margin-top:6px">Revisa el número en tu recibo. Tiene la forma <span class="mono">OT-2026-00000</span>.</p></div>';return}
+  var c=cli(o.cli),t=tec(o.tec),repsTot=o.reps.reduce(function(s,r){var x=rep(r.cod);return s+(x?x.costo*r.cant:0)},0);
+  var msg={ingresado:"Recibimos tu equipo. Pronto un técnico lo revisa.",revision:"Un técnico está revisando tu equipo. Te enviamos el diagnóstico y el valor para aprobar.",repuesto:"Estamos esperando un repuesto para tu equipo.",reparacion:"Tu equipo está en reparación.",reparado:"La reparación terminó y estamos haciendo las pruebas finales.",listo:"¡Tu equipo está listo! Puedes recogerlo en la tienda.",entregado:"Entregamos tu equipo. Tienes 90 días de garantía."}[o.estado];
+  var nt={repuesto:"notice-warn",listo:"notice-ok",entregado:"notice-ok"}[o.estado]||"notice-info";
+  out.innerHTML='<div class="grid" style="grid-template-columns:1.3fr 1fr;align-items:start" id="trkGrid">'+
+   '<div class="stack"><div class="card"><div class="row between"><div class="row" style="gap:12px"><div class="svc"><div class="ic">'+ic(o.tipo)+'</div></div><div><h2>'+esc(o.equipo)+'</h2><div class="mono muted">'+o.id+' · '+esc(o.serie)+'</div></div></div>'+estado(o.estado)+'</div>'+prog(o.estado)+
+   '<div class="notice '+nt+'" style="margin-top:16px">'+ic(o.estado)+'<span>'+msg+(o.estado!=="entregado"?' Entrega estimada: <b>'+o.entrega+'</b>.':'')+'</span></div></div>'+
+   '<div class="card"><h3 style="margin-bottom:16px">Recorrido de tu equipo</h3><ol class="traza">'+traza(o)+'</ol></div></div>'+
+   '<div class="stack"><div class="card"><h3 style="margin-bottom:12px">Así lo recibimos</h3><dl class="kv"><dt>Accesorios</dt><dd>'+(o.recepcion.acc.length?o.recepcion.acc.join(", "):"Ninguno")+'</dd><dt>Estado físico</dt><dd>'+esc(o.recepcion.danos)+'</dd><dt>Encendía</dt><dd>'+o.recepcion.enciende+'</dd><dt>Falla reportada</dt><dd>'+esc(o.falla)+'</dd></dl></div>'+
+   (o.diag?'<div class="card"><h3 style="margin-bottom:12px">Diagnóstico</h3><p>'+esc(o.diag)+'</p>'+(o.cotizacion?'<div class="row between" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)"><span class="muted">Valor aprobado</span><span class="price">'+cop(o.cotizacion)+'</span></div>':'')+'</div>':'<div class="card"><h3>Diagnóstico</h3><p class="muted" style="margin-top:8px">Aún en revisión. Te avisaremos por WhatsApp.</p></div>')+
+   '<div class="card-flat row" style="gap:12px"><div class="avatar">'+t.ini+'</div><div><div class="small muted">Técnico a cargo</div><b>'+t.nombre+'</b></div></div>'+
+   (o.entregaReg?'<div class="card"><h3 style="margin-bottom:8px">Así lo entregamos</h3><p>'+esc(o.entregaReg)+'</p></div>':'')+
+   '</div></div>';
+}
+
+var agInit=false,diaSel=0,slotSel=null;
+function initAgendar(){
+  if(agInit)return;agInit=true;
+  $("#fServ").innerHTML=SVC.map(function(s){return '<option value="'+s.id+'">'+s.nombre+' · desde '+cop(s.desde)+'</option>'}).join("")+'<option value="otro">No sé / Diagnóstico general</option>';
+  var dias=[];for(var i=1;i<=6;i++){var d=new Date(TODAY);d.setDate(d.getDate()+i);if(d.getDay()!==0)dias.push(d)}
+  $("#fDias").innerHTML=dias.slice(0,5).map(function(d,i){return '<button type="button" class="chip" aria-pressed="'+(i===0)+'" data-dia="'+i+'">'+d.toLocaleDateString("es-CO",{weekday:"short",day:"numeric",month:"short"})+'</button>'}).join("");
+  window.__dias=dias;
+  function slots(){var hs=["8:00 a. m.","9:00 a. m.","10:00 a. m.","11:00 a. m.","2:00 p. m.","3:00 p. m.","4:00 p. m.","5:00 p. m."];$("#fSlots").innerHTML=hs.map(function(h,i){var off=(i+diaSel)%3===0;return '<button type="button" class="slot" '+(off?"disabled":"")+' aria-pressed="'+(slotSel===h)+'">'+h+'</button>'}).join("");$$("#fSlots .slot").forEach(function(b){b.onclick=function(){slotSel=b.textContent;slots();updResumen()}})}
+  $$("#fDias .chip").forEach(function(b){b.onclick=function(){diaSel=+b.dataset.dia;slotSel=null;$$("#fDias .chip").forEach(function(x){x.setAttribute("aria-pressed",x===b)});slots();updResumen()}});
+  slots();
+  $$("#fAcc .chip").forEach(function(b){b.onclick=function(){b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")!=="true");updResumen()}});
+  ["#fTipo","#fModelo","#fServ"].forEach(function(s){$(s).oninput=updResumen});
+  $("#agendarForm").onsubmit=function(e){e.preventDefault();
+    if(!slotSel){toast("Elige una hora para tu cita");return}
+    var s=SVC.filter(function(x){return x.id===$("#fServ").value})[0];
+    var tipoMap={"Celular":"celular","Portátil":"portatil","Tablet":"tablet","Consola":"consola","Smartwatch":"reloj"};
+    var id="OT-2026-00"+(nextNum++),d=window.__dias[diaSel],ds=d.toLocaleDateString("es-CO",{weekday:"short",day:"numeric",month:"short"});
+    var acc=$$("#fAcc .chip").filter(function(b){return b.getAttribute("aria-pressed")==="true"}).map(function(b){return b.textContent});
+    ORD.unshift({id:id,cli:"c1",tipo:tipoMap[$("#fTipo").value],equipo:$("#fModelo").value||$("#fTipo").value,serie:"Por registrar en recepción",servicio:s?s.nombre:"Diagnóstico general",falla:$("#fFalla").value,tec:"",ingreso:d.getDate()+" nov",entrega:"Por definir",estado:"ingresado",
+      recepcion:{acc:acc,danos:"Se registra cuando traigas el equipo.",enciende:"—",bloqueo:"—",obs:"Cita agendada desde el portal: "+ds+", "+slotSel},diag:"",cotizacion:null,aprobada:false,acts:[],reps:[],
+      hist:[H("ingresado",ds+", "+slotSel,"Cita agendada desde el portal.","Portal")],entregaReg:null,entregadoEl:null});
+    $("#agendarResumen").innerHTML='<div class="notice notice-ok">'+ic("check")+'<span><b>Cita confirmada.</b> Te esperamos el '+ds+' a las '+slotSel+'.</span></div><div style="margin-top:16px"><div class="small muted">Tu número de orden</div><div class="mono" style="font-size:20px;margin-top:4px">'+id+'</div></div><button class="btn btn-primary" style="margin-top:16px" data-track="'+id+'">Ver seguimiento</button><p class="small muted" style="margin-top:12px">La orden ya aparece en el panel administrativo.</p>';
+    toast("Cita confirmada · "+id);
+  };
+  updResumen();
+}
+function updResumen(){
+  if(!$("#fServ").value)return;var s=SVC.filter(function(x){return x.id===$("#fServ").value})[0],d=window.__dias&&window.__dias[diaSel];
+  var acc=$$("#fAcc .chip").filter(function(b){return b.getAttribute("aria-pressed")==="true"}).map(function(b){return b.textContent});
+  $("#agendarResumen").innerHTML='<h3>Resumen</h3><dl class="kv" style="margin-top:12px"><dt>Equipo</dt><dd>'+esc($("#fTipo").value)+' '+esc($("#fModelo").value)+'</dd><dt>Servicio</dt><dd>'+(s?s.nombre:"Diagnóstico general")+'</dd><dt>Desde</dt><dd><b>'+(s?cop(s.desde):"Gratis")+'</b></dd><dt>Accesorios</dt><dd>'+(acc.length?acc.join(", "):"Ninguno")+'</dd><dt>Cita</dt><dd>'+(d?d.toLocaleDateString("es-CO",{weekday:"long",day:"numeric",month:"long"}):"")+(slotSel?", "+slotSel:' <span class="muted">· elige hora</span>')+'</dd></dl>';
+}
+
+/* ---------- ADMIN ---------- */
+var aTab="dashboard",ordFilter="activas",invTab="rep";
+function ago(t){aTab=t;$$("#bnavAdmin button").forEach(function(b){if(b.dataset.ago===t||(b.id==="moreBtn"&&["clientes","tecnicos","garantias"].indexOf(t)>-1))b.setAttribute("aria-current","page");else b.removeAttribute("aria-current")});$$("#adminNav a[data-a]").forEach(function(a){if(a.dataset.a===t)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});$$(".av").forEach(function(v){v.classList.toggle("hidden",v.id!=="a-"+t)});if($("#v-admin").classList.contains("hidden"))go("admin");else renderAdmin();window.scrollTo(0,0)}
+$$("#adminNav a[data-a]").forEach(function(a){a.tabIndex=0;a.onclick=function(){ago(a.dataset.a)};a.onkeydown=function(e){if(e.key==="Enter")ago(a.dataset.a)}});
+function kpi(l,v,d,cls){return '<div class="card-flat kpi"><div class="label">'+l+'</div><div class="v">'+v+'</div><div class="d '+(cls||"muted")+'">'+d+'</div></div>'}
+function stockCell(r){var cls=r.stock===0?"out":r.stock<r.min?"low":"";var pct=Math.min(100,r.stock/(r.min*3)*100);return '<div class="stock '+cls+'"><div class="m"><i style="width:'+Math.max(pct,r.stock?8:0)+'%"></i></div><b>'+r.stock+'</b></div>'}
+
+function renderAdmin(){setTimeout(labelTables,0);
+  var act=ORD.filter(function(o){return o.estado!=="entregado"});
+  $("#cntOrd").textContent=act.length;
+  if(aTab==="dashboard"){
+    var low=REP.filter(function(r){return r.stock<r.min});
+    $("#kpis").innerHTML=kpi("Órdenes activas",act.length,"+3 esta semana","up")+kpi("Listas para entrega",ORD.filter(function(o){return o.estado==="listo"}).length,"Avisar al cliente")+kpi("Ingresos del mes","$18,4 M","+12 % vs. octubre","up")+kpi("Repuestos bajo mínimo",low.length,"Revisar pedidos",low.length?"down":"");
+    $("#pipeline").innerHTML=ESTADOS.map(function(e){var n=ORD.filter(function(o){return o.estado===e}).length;return '<div class="col"><span class="estado e-'+e+'" style="padding:0 5px">'+ic(e)+'</span><div class="small muted" style="margin-top:6px">'+NOM[e]+'</div><b>'+n+'</b></div>'}).join("");
+    
+    $("#todayList").innerHTML=ORD.filter(function(o){return o.estado==="listo"||o.entrega==="19 nov"||o.entrega==="20 nov"}).map(function(o){return '<div class="notif click" style="cursor:pointer" data-open="'+o.id+'"><div class="ic e-'+o.estado+'">'+ic(o.estado)+'</div><div style="flex:1"><b style="font-size:14px">'+esc(o.equipo)+'</b> <span class="mono muted">'+o.id+'</span><div class="small muted">'+cli(o.cli).nombre+' · entrega '+o.entrega+'</div></div><span class="end">'+estado(o.estado)+'</span></div>'}).join("");
+    $("#stockAlerts").innerHTML=low.map(function(r){return '<div class="notif"><div class="ic '+(r.stock?"e-repuesto":"")+'" style="'+(r.stock?"":"background:var(--danger-soft);color:var(--danger)")+'">'+ic("warn")+'</div><div style="flex:1"><b style="font-size:14px">'+r.nombre+'</b><div class="small muted mono">'+r.cod+'</div></div><div style="text-align:right"><span class="tag '+(r.stock?"tag-warn":"tag-danger")+'">'+(r.stock?"Quedan "+r.stock:"Agotado")+'</span><div class="small muted">mínimo '+r.min+'</div></div></div>'}).join("");
+  }
+  if(aTab==="ordenes"){
+    var f=[["activas","Activas"],["todas","Todas"]].concat(ESTADOS.slice(0,6).map(function(e){return [e,NOM[e]]}));
+    $("#ordChips").innerHTML=f.map(function(x){return '<button class="chip" aria-pressed="'+(x[0]===ordFilter)+'" data-of="'+x[0]+'">'+x[1]+'</button>'}).join("");
+    $$("#ordChips .chip").forEach(function(b){b.onclick=function(){ordFilter=b.dataset.of;renderAdmin()}});
+    var q=($("#ordSearch").value||"").toLowerCase();
+    var list=ORD.filter(function(o){var okF=ordFilter==="todas"||(ordFilter==="activas"?o.estado!=="entregado":o.estado===ordFilter);var c=cli(o.cli);return okF&&(o.id+o.equipo+c.nombre).toLowerCase().indexOf(q)>-1});
+    $("#ordBody").innerHTML=list.map(function(o){var t=tec(o.tec);return '<tr class="click" data-open="'+o.id+'" tabindex="0"><td class="mono">'+o.id+'</td><td>'+cli(o.cli).nombre+'</td><td><b>'+esc(o.equipo)+'</b><div class="small muted">'+o.servicio+'</div></td><td><div class="row" style="gap:8px;flex-wrap:nowrap"><div class="avatar" style="width:26px;height:26px;font-size:10px">'+t.ini+'</div>'+t.nombre.split(" ")[0]+'</div></td><td>'+o.ingreso+'</td><td>'+o.entrega+'</td><td>'+estado(o.estado)+'</td></tr>'}).join("")||'<tr><td colspan="7" class="muted" style="text-align:center;padding:32px">Sin órdenes con ese filtro.</td></tr>';
+  }
+  if(aTab==="inventario"){
+    $$("#invTabs .tab").forEach(function(b){b.setAttribute("aria-selected",b.dataset.inv===invTab);b.onclick=function(){invTab=b.dataset.inv;renderAdmin()}});
+    if(invTab==="rep"){$("#invHead").innerHTML="<tr><th>Código</th><th>Repuesto</th><th>Categoría</th><th>Existencias</th><th>Mínimo</th><th>Costo</th><th>Estado</th></tr>";
+      $("#invBody").innerHTML=REP.map(function(r){return '<tr class="click" tabindex="0" data-item="'+r.cod+'"><td class="mono">'+r.cod+'</td><td><b>'+r.nombre+'</b></td><td>'+r.cat+'</td><td>'+stockCell(r)+'</td><td>'+r.min+'</td><td>'+cop(r.costo)+'</td><td>'+(r.stock===0?'<span class="tag tag-danger">Agotado</span>':r.stock<r.min?'<span class="tag tag-warn">Bajo mínimo</span>':'<span class="tag tag-ok">OK</span>')+'</td></tr>'}).join("")}
+    else{$("#invHead").innerHTML="<tr><th>SKU</th><th>Producto</th><th>Categoría</th><th>Condición</th><th>Precio</th><th>Existencias</th><th>Portal</th></tr>";
+      $("#invBody").innerHTML=PROD.map(function(p){return '<tr class="click" tabindex="0" data-item="'+p.sku+'"><td class="mono">'+p.sku+'</td><td><b>'+esc(p.nombre)+'</b></td><td>'+p.cat+'</td><td>'+p.cond+'</td><td>'+cop(p.precio)+'</td><td>'+stockCell({stock:p.stock,min:2})+'</td><td>'+(p.stock?'<span class="tag tag-ok">Publicado</span>':'<span class="tag">Oculto</span>')+'</td></tr>'}).join("")}
+  }
+  if(aTab==="clientes"){
+    $("#cliBody").innerHTML=CLI.map(function(c){var os=ORD.filter(function(o){return o.cli===c.id});return '<tr class=\"click\" tabindex=\"0\" data-cli=\"'+c.id+'\"><td><div class="row" style="gap:10px;flex-wrap:nowrap"><div class="avatar">'+c.nombre.split(" ").map(function(w){return w[0]}).slice(0,2).join("")+'</div><b>'+c.nombre+'</b></div></td><td class="mono">'+c.doc+'</td><td>'+c.tel+'</td><td>'+c.mail+'</td><td>'+os.length+'</td><td>'+(os[0]?os[0].ingreso:"—")+'</td></tr>'}).join("");
+  }
+  if(aTab==="tecnicos"){
+    $("#tecGrid").innerHTML=TEC.map(function(t){var os=ORD.filter(function(o){return o.tec===t.id&&o.estado!=="entregado"});var done=ORD.filter(function(o){return o.tec===t.id&&o.estado==="entregado"}).length+[38,31,22][TEC.indexOf(t)];
+      return '<div class="card"><div class="row" style="gap:12px"><div class="avatar" style="width:44px;height:44px;font-size:14px">'+t.ini+'</div><div><h3>'+t.nombre+'</h3><div class="small muted">'+t.esp+'</div></div></div><div class="grid g2" style="margin-top:16px"><div><div class="label">Activas</div><div class="price">'+os.length+'</div></div><div><div class="label">Entregadas (mes)</div><div class="price">'+done+'</div></div></div><div style="margin-top:14px;display:flex;flex-direction:column;gap:8px">'+os.map(function(o){return '<div class="row between click" style="cursor:pointer" data-open="'+o.id+'"><span class="small"><span class="mono">'+o.id.slice(-5)+'</span> · '+esc(o.equipo)+'</span>'+estado(o.estado)+'</div>'}).join("")+(os.length?"":'<span class="small muted">Sin órdenes activas.</span>')+'</div></div>'}).join("");
+  }
+  if(aTab==="garantias"){
+    var del=ORD.filter(function(o){return o.entregadoEl});
+    var vig=del.filter(function(o){return vence(o)>TODAY});
+    $("#garKpis").innerHTML=kpi("Garantías vigentes",vig.length,"de "+del.length+" entregas")+kpi("Reclamos abiertos","1","OT-2026-00131 · revisión","down")+kpi("Tasa de reclamo","2,1 %","Meta: menos de 3 %","up");
+    $("#garBody").innerHTML=del.map(function(o){var v=vence(o),ok=v>TODAY,dias=Math.round((v-TODAY)/864e5);return '<tr><td class="mono">'+o.id+'</td><td>'+cli(o.cli).nombre+'</td><td>'+esc(o.equipo)+'</td><td>'+o.servicio+'</td><td>'+fmtD(new Date(o.entregadoEl+"T12:00:00"))+'</td><td>'+fmtD(v)+'</td><td>'+(ok?'<span class="tag tag-ok">Vigente · '+dias+' días</span>':'<span class="tag tag-danger">Vencida</span>')+'</td><td><button class="btn btn-sm" data-open="'+o.id+'">Ver</button></td></tr>'}).join("");
+  }
+  if(aTab==="reportes"){
+    $("#repKpis").innerHTML=kpi("Órdenes atendidas","412","+18 % vs. semestre anterior","up")+kpi("Tiempo promedio","2,6 días","−0,4 días","up")+kpi("Ticket promedio","$214.000","+6 %","up")+kpi("Satisfacción","4,7 / 5","182 encuestas");
+    var m=["Jun","Jul","Ago","Sep","Oct","Nov"],o=[54,61,66,70,78,83],ing=[12.1,13.4,14.0,15.6,16.4,18.4];
+    function bars(v,fmt){var mx=Math.max.apply(null,v);return v.map(function(x,i){return '<div class="b '+(i===v.length-1?"cur":"")+'"><span style="color:var(--ink);font-weight:600">'+fmt(x)+'</span><i style="height:'+(x/mx*120)+'px"></i><span>'+m[i]+'</span></div>'}).join("")}
+    $("#chartOrd").innerHTML=bars(o,function(x){return x});$("#chartIng").innerHTML=bars(ing,function(x){return x.toString().replace(".",",")});
+    var tf=[["Pantalla",34],["Batería",22],["Puerto de carga",15],["Daño por líquido",11],["Software",10],["Mantenimiento",8]];
+    $("#topFallas").innerHTML=tf.map(function(x){return '<div class="hbar"><span>'+x[0]+'</span><div class="t"><i style="width:'+(x[1]/34*100)+'%"></i></div><b>'+x[1]+'%</b></div>'}).join("");
+    var ti=[["revision","0,4 d"],["repuesto","1,8 d"],["reparacion","0,7 d"],["listo","0,9 d"]];
+    $("#tiempos").innerHTML=ti.map(function(x){return '<div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)">'+estado(x[0])+'<b>'+x[1]+'</b></div>'}).join("")+'<p class="small muted" style="margin-top:12px">Esperar repuestos es el paso más lento: subir el stock mínimo de pantallas acortaría las entregas.</p>';
+  }
+}
+$("#ordSearch").oninput=renderAdmin;
+$("#moreBtn").onclick=function(){var d=document.createElement("div");d.className="more-sheet";d.innerHTML='<div class="sh" role="menu"><span class="grab"></span>'+[["clientes","Clientes",'<circle cx="9" cy="8" r="3.5"/><path d="M3 19c.8-3 3.2-5 6-5s5.2 2 6 5"/>'],["tecnicos","Técnicos",'<circle cx="12" cy="8" r="4"/><path d="M5 20c1-3.5 3.8-6 7-6s6 2.5 7 6"/>'],["garantias","Garantías",'<path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/><path d="m9 12 2 2 4-4"/>']].map(function(x){return '<button role="menuitem" data-m="'+x[0]+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'+x[2]+'</svg>'+x[1]+'</button>'}).join("")+'</div>';d.onclick=function(e){var b=e.target.closest("[data-m]");d.remove();if(b)ago(b.dataset.m)};document.body.appendChild(d)};
+document.addEventListener("click",function(e){var r=e.target.closest("[data-open]");if(r){openOrder(r.dataset.open)}});
+document.addEventListener("keydown",function(e){
+  var d=e.target.dataset||{};
+  if(e.key==="Enter"&&e.target.tagName==="TR"&&(d.open||d.cli||d.item)){e.target.click()}
+  if(e.key==="Escape"){if($(".more-sheet"))$(".more-sheet").remove();else closeDrawer()}
+  if(e.key==="Tab"&&$("#drawerRoot .drawer")){var f=$$('#drawerRoot button:not([disabled]),#drawerRoot input,#drawerRoot select,#drawerRoot textarea,#drawerRoot [tabindex="0"]');if(!f.length)return;var a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}else if(!$("#drawerRoot").contains(document.activeElement)){e.preventDefault();a.focus()}}
+});
+/* ---------- drawer system: todo se abre en un drawer ---------- */
+var DSTACK=[],DIRTY=false,lastFocus=null,dTab="recepcion",curId=null;
+function openD(fn){if(!DSTACK.length)lastFocus=document.activeElement;DSTACK.push(fn);DIRTY=false;fn()}
+function replaceD(fn){DSTACK.pop();DSTACK.push(fn);DIRTY=false;fn()}
+function backD(){if(guard(function(){DIRTY=false;backD()}))return;DSTACK.pop();DIRTY=false;var f=DSTACK[DSTACK.length-1];if(f)f();else closeDrawer(true)}
+function closeDrawer(force){if(!$("#drawerRoot .drawer"))return;if(force!==true&&guard(function(){closeDrawer(true)}))return;$("#drawerRoot").innerHTML="";DSTACK=[];DIRTY=false;curId=null;if(lastFocus&&lastFocus.focus&&document.contains(lastFocus))lastFocus.focus()}
+function guard(proceed){
+  if(!DIRTY)return false;if($(".drawer-confirm"))return true;
+  var bar=document.createElement("div");bar.className="drawer-confirm";bar.setAttribute("role","alert");
+  bar.innerHTML='<span><b>¿Descartar los cambios?</b> Lo que escribiste no se ha guardado.</span><button class="btn btn-sm" type="button">Seguir editando</button><button class="btn btn-sm btn-danger" type="button">Descartar</button>';
+  var f=$(".drawer-foot");if(f)f.parentNode.insertBefore(bar,f);else $(".drawer").appendChild(bar);
+  var bs=bar.querySelectorAll("button");bs[0].onclick=function(){bar.remove()};bs[1].onclick=function(){DIRTY=false;proceed()};bs[0].focus();return true;
+}
+function frame(o){
+  var had=!!$("#drawerRoot .drawer"),back=DSTACK.length>1;
+  $("#drawerRoot").innerHTML='<div class="scrim'+(had?' still':'')+'" id="scrim"><div class="drawer '+(o.size||"lg")+'" role="dialog" aria-modal="true" aria-labelledby="dTitle">'+
+    '<div class="drawer-h"><div class="row" style="gap:10px;flex-wrap:nowrap;align-items:flex-start;min-width:0">'+(back?'<button class="icon-btn" id="backD" aria-label="Volver">'+ic("back")+'</button>':'')+
+    '<div style="min-width:0">'+(o.kicker?'<div class="kicker">'+o.kicker+'</div>':'')+'<h2 id="dTitle">'+o.title+'</h2>'+(o.sub?'<div class="small muted" style="margin-top:2px">'+o.sub+'</div>':'')+'</div></div>'+
+    '<button class="icon-btn" id="closeD" aria-label="Cerrar">'+ic("x")+'</button></div>'+
+    '<div class="drawer-b">'+o.body+'</div>'+(o.foot?'<div class="drawer-foot">'+o.foot+'</div>':'')+'</div></div>';
+  $("#closeD").onclick=function(){closeDrawer()};if($("#backD"))$("#backD").onclick=backD;
+  $$("#drawerRoot [data-close]").forEach(function(b){b.onclick=function(){closeDrawer()}});
+  $("#scrim").onclick=function(e){if(e.target.id==="scrim")closeDrawer()};
+  if(o.form||o.track){$(".drawer-b").addEventListener("input",function(){DIRTY=true});$(".drawer-b").addEventListener("change",function(){DIRTY=true})}
+  if(!had){var f=o.form&&$(".drawer-b input:not([type=hidden]), .drawer-b textarea");(f||$("#closeD")).focus()}
+  setTimeout(labelTables,0);
+}
+function fld(l,ctrl){return '<label class="field"><span style="font-size:13px;font-weight:600">'+l+'</span>'+ctrl+'</label>'}
+function chipsHtml(id,arr,sel){return '<div class="chips" id="'+id+'">'+arr.map(function(a){return '<button type="button" class="chip" aria-pressed="'+((sel||[]).indexOf(a)>-1)+'">'+a+'</button>'}).join("")+'</div>'}
+function bindChips(id){$$("#"+id+" .chip").forEach(function(b){b.onclick=function(){b.setAttribute("aria-pressed",b.getAttribute("aria-pressed")!=="true");DIRTY=true}})}
+function chipVals(id){return $$("#"+id+" .chip").filter(function(b){return b.getAttribute("aria-pressed")==="true"}).map(function(b){return b.textContent})}
+function formErr(msg){var e=$("#formErr");if(e)e.remove();var d=document.createElement("div");d.id="formErr";d.className="notice notice-warn";d.style.marginBottom="16px";d.innerHTML=ic("warn")+'<span>'+msg+'</span>';$(".drawer-b").prepend(d);$(".drawer-b").scrollTop=0}
+function val(id){var e=$("#"+id);return e?e.value.trim():""}
+var TIPOS=[["celular","Celular"],["portatil","Portátil"],["tablet","Tablet"],["consola","Consola"],["reloj","Smartwatch"]];
+
+function openOrder(id,tab){dTab=tab||"recepcion";openD(function(){curId=id;drawDrawer()})}
+
+/* Nueva orden (formulario) */
+function newOrder(cliId){openD(function(){
+  frame({size:"sm",form:true,kicker:"Nueva orden · OT-2026-00"+nextNum,title:"Recepción del equipo",sub:"Registra cómo llega el equipo antes de recibirlo.",
+    body:'<div class="stack">'+fld("Cliente",'<select class="input" id="nCli">'+CLI.map(function(c){return '<option value="'+c.id+'"'+(c.id===cliId?" selected":"")+'>'+esc(c.nombre)+' · '+c.tel+'</option>'}).join("")+'</select>')+
+      '<div class="grid g2">'+fld("Tipo",'<select class="input" id="nTipo">'+TIPOS.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>'}).join("")+'</select>')+fld("Marca y modelo",'<input class="input" id="nEq" placeholder="Ej. iPhone 14 Pro">')+'</div>'+
+      fld("IMEI o número de serie",'<input class="input mono" id="nSerie" placeholder="356938035643809">')+
+      fld("Servicio",'<select class="input" id="nServ">'+SVC.map(function(x){return '<option>'+x.nombre+'</option>'}).join("")+'<option>Diagnóstico general</option></select>')+
+      fld("Falla reportada",'<textarea class="input" id="nFalla" placeholder="Lo que cuenta el cliente"></textarea>')+
+      '<div class="field"><span style="font-size:13px;font-weight:600">Accesorios recibidos</span>'+chipsHtml("nAcc",["Cargador","Cable","Funda","Memoria SD","SIM","Caja"])+'</div>'+
+      fld("Daños físicos visibles",'<textarea class="input" id="nDan" placeholder="Ej. Rayón en la esquina superior derecha"></textarea>')+
+      '<div class="grid g2">'+fld("¿Enciende?",'<select class="input" id="nEnc"><option>Sí</option><option>No</option><option>Con fallas</option></select>')+fld("Técnico",'<select class="input" id="nTec">'+TEC.map(function(t){return '<option value="'+t.id+'">'+t.nombre+'</option>'}).join("")+'</select>')+'</div></div>',
+    foot:'<button class="btn grow" data-close>Cancelar</button><button class="btn btn-primary" id="nSave">Crear orden</button>'});
+  bindChips("nAcc");
+  $("#nSave").onclick=function(){
+    if(!val("nEq")||!val("nFalla")){formErr("Falta la marca y modelo o la falla reportada.");return}
+    var id="OT-2026-00"+(nextNum++),t=$("#nTipo");
+    ORD.unshift({id:id,cli:val("nCli"),tipo:t.value,equipo:val("nEq"),serie:val("nSerie")||"Sin registrar",servicio:val("nServ"),falla:val("nFalla"),tec:val("nTec"),ingreso:"19 nov",entrega:"Por definir",estado:"ingresado",
+      recepcion:{acc:chipVals("nAcc"),danos:val("nDan")||"Sin daños visibles.",enciende:val("nEnc"),bloqueo:"—",obs:""},diag:"",cotizacion:null,aprobada:false,acts:[],reps:[],
+      hist:[H("ingresado","Jue 19 nov, "+new Date().toLocaleTimeString("es-CO",{hour:"numeric",minute:"2-digit"}),"Orden creada en recepción.","Carolina R.")],entregaReg:null,entregadoEl:null});
+    toast("Orden "+id+" creada · cliente notificado");renderAdmin();
+    DSTACK=[];DIRTY=false;openOrder(id);
+  };
+})}
+
+/* Ficha de cliente (registro) */
+function cliDrawer(id){openD(function(){
+  var c=cli(id),os=ORD.filter(function(o){return o.cli===id}),vig=os.filter(function(o){return o.entregadoEl&&vence(o)>TODAY}).length;
+  frame({size:"lg",kicker:"Cliente · "+c.doc,title:esc(c.nombre),sub:c.tel+" · "+c.mail,
+    body:'<div class="grid g3 kpis">'+kpi("Órdenes",os.length,"desde 2026")+kpi("Activas",os.filter(function(o){return o.estado!=="entregado"}).length,"en el taller")+kpi("Garantías vigentes",vig,"90 días")+'</div>'+
+      '<h3 style="margin:24px 0 12px">Equipos y órdenes</h3><div class="table-wrap rcards"><table><thead><tr><th>Orden</th><th>Equipo</th><th>Servicio</th><th>Ingreso</th><th>Estado</th></tr></thead><tbody>'+
+      (os.map(function(o){return '<tr class="click" tabindex="0" data-open="'+o.id+'"><td class="mono">'+o.id+'</td><td><b>'+esc(o.equipo)+'</b></td><td>'+o.servicio+'</td><td>'+o.ingreso+'</td><td>'+estado(o.estado)+'</td></tr>'}).join("")||'<tr><td colspan="5" class="muted" style="text-align:center;padding:24px">Aún no tiene órdenes.</td></tr>')+'</tbody></table></div>'+
+      '<p class="small muted" style="margin-top:10px">Abre una orden para verla aquí mismo; usa la flecha para volver a la ficha.</p>',
+    foot:'<button class="btn grow" data-close>Cerrar</button><button class="btn btn-primary" id="cliNew">Nueva orden para '+esc(c.nombre.split(" ")[0])+'</button>'});
+  $("#cliNew").onclick=function(){newOrder(id)};
+})}
+
+/* Registrar cliente / técnico (formularios) */
+function addCli(){openD(function(){
+  frame({size:"sm",form:true,kicker:"Clientes",title:"Registrar cliente",sub:"Con su celular le llegan los avisos por WhatsApp.",
+    body:'<div class="stack">'+fld("Nombre completo",'<input class="input" id="cNom" placeholder="Ej. Camila Torres">')+fld("Documento",'<input class="input mono" id="cDoc" placeholder="CC 1.000.000.000">')+'<div class="grid g2">'+fld("Celular (WhatsApp)",'<input class="input" id="cTel" placeholder="300 000 0000">')+fld("Correo",'<input class="input" id="cMail" placeholder="nombre@correo.com">')+'</div>'+
+      '<label class="row" style="gap:8px;font-size:14px"><input type="checkbox" checked> Acepta recibir avisos de sus órdenes por WhatsApp</label></div>',
+    foot:'<button class="btn grow" data-close>Cancelar</button><button class="btn btn-primary" id="cSave">Registrar cliente</button>'});
+  $("#cSave").onclick=function(){if(!val("cNom")||!val("cTel")){formErr("El nombre y el celular son obligatorios.");return}
+    var id="c"+(CLI.length+1);CLI.push({id:id,nombre:val("cNom"),doc:val("cDoc")||"—",tel:val("cTel"),mail:val("cMail")||"—"});toast("Cliente registrado");renderAdmin();DIRTY=false;replaceD(function(){var f=DSTACK.pop();cliDrawer(id)});};
+})}
+function addTec(){openD(function(){
+  frame({size:"sm",form:true,kicker:"Técnicos",title:"Agregar técnico",
+    body:'<div class="stack">'+fld("Nombre completo",'<input class="input" id="tNom" placeholder="Ej. Sergio Díaz">')+fld("Especialidad",'<input class="input" id="tEsp" placeholder="Ej. Portátiles y microsoldadura">')+fld("Celular",'<input class="input" id="tTel" placeholder="300 000 0000">')+'</div>',
+    foot:'<button class="btn grow" data-close>Cancelar</button><button class="btn btn-primary" id="tSave">Agregar técnico</button>'});
+  $("#tSave").onclick=function(){if(!val("tNom")){formErr("Escribe el nombre del técnico.");return}var n=val("tNom");TEC.push({id:"t"+TEC.length,nombre:n,esp:val("tEsp")||"General",ini:n.split(" ").map(function(w){return w[0]}).slice(0,2).join("").toUpperCase()});toast("Técnico agregado");renderAdmin();closeDrawer(true)};
+})}
+
+/* Inventario: agregar ítem y ajustar existencias */
+function addItem(){openD(function(){
+  frame({size:"sm",form:true,kicker:"Inventario",title:"Agregar ítem",sub:"Repuestos para el taller o equipos para la venta.",
+    body:'<div class="stack">'+fld("Tipo",'<select class="input" id="iTipo"><option value="rep">Repuesto o pieza</option><option value="prod">Equipo para la venta</option></select>')+fld("Nombre",'<input class="input" id="iNom" placeholder="Ej. Pantalla iPhone 14">')+
+      '<div class="grid g2">'+fld("Código / SKU",'<input class="input mono" id="iCod" placeholder="REP-PAN-IP14">')+fld("Categoría",'<input class="input" id="iCat" placeholder="Pantallas">')+'</div>'+
+      '<div class="grid g2">'+fld("Existencias",'<input class="input" id="iStock" type="number" min="0" value="1">')+fld("Mínimo",'<input class="input" id="iMin" type="number" min="0" value="2">')+'</div>'+fld("Costo o precio (COP)",'<input class="input" id="iCosto" inputmode="numeric" placeholder="250000">')+'</div>',
+    foot:'<button class="btn grow" data-close>Cancelar</button><button class="btn btn-primary" id="iSave">Agregar al inventario</button>'});
+  $("#iSave").onclick=function(){if(!val("iNom")||!val("iCod")){formErr("El nombre y el código son obligatorios.");return}
+    var n=+val("iStock")||0,c=parseInt(val("iCosto").replace(/\D/g,""))||0;
+    if(val("iTipo")==="rep")REP.unshift({cod:val("iCod").toUpperCase(),nombre:val("iNom"),cat:val("iCat")||"General",stock:n,min:+val("iMin")||1,costo:c});
+    else PROD.unshift({sku:val("iCod").toUpperCase(),nombre:val("iNom"),cat:val("iCat")||"Accesorios",precio:c,stock:n,cond:"Nuevo",icon:"celular"});
+    invTab=val("iTipo");toast("Ítem agregado al inventario");renderAdmin();closeDrawer(true)};
+})}
+function itemDrawer(code){openD(function(){
+  var r=rep(code),isRep=!!r,x=r||PROD.filter(function(p){return p.sku===code})[0];if(!x)return;var min=isRep?x.min:2,adj=0;
+  var used=ORD.filter(function(o){return o.reps.some(function(y){return y.cod===code})});
+  function draw(){
+    var n=x.stock+adj,st=n===0?'<span class="tag tag-danger">Agotado</span>':n<min?'<span class="tag tag-warn">Bajo mínimo</span>':'<span class="tag tag-ok">OK</span>';
+    frame({size:"sm",track:true,kicker:code+" · "+(isRep?"Repuesto":"Equipo para la venta"),title:esc(x.nombre),sub:x.cat+" · "+(isRep?"Costo "+cop(x.costo):"Precio "+cop(x.precio)),
+      body:'<div class="card-flat"><div class="row between"><div><div class="label">Existencias</div><div class="price" style="font-size:32px;line-height:40px">'+n+'</div><div class="small muted">Mínimo '+min+'</div></div>'+st+'</div></div>'+
+        '<div class="card-flat" style="margin-top:16px"><div class="label" style="margin-bottom:10px">Ajustar existencias</div><div class="row" style="flex-wrap:nowrap"><button class="icon-btn" id="aMinus" aria-label="Restar una unidad">'+ic("minus")+'</button><span class="price" style="min-width:56px;text-align:center">'+(adj>0?"+":"")+adj+'</span><button class="icon-btn" id="aPlus" aria-label="Sumar una unidad">'+ic("plus")+'</button>'+
+        '<select class="input" id="aMot" aria-label="Motivo"><option>Compra a proveedor</option><option>Conteo físico</option><option>Daño o pérdida</option><option>Devolución</option></select></div></div>'+
+        (isRep?'<div class="card-flat" style="margin-top:16px"><div class="label" style="margin-bottom:10px">Usado en órdenes</div>'+(used.map(function(o){return '<div class="row between click" style="cursor:pointer;padding:6px 0" data-open="'+o.id+'"><span class="small"><span class="mono">'+o.id+'</span> · '+esc(o.equipo)+'</span>'+estado(o.estado)+'</div>'}).join("")||'<p class="small muted">Todavía no se ha usado.</p>')+'</div>':''),
+      foot:'<button class="btn grow" data-close>Cancelar</button><button class="btn btn-primary" id="aSave" '+(adj?"":"disabled")+'>Guardar ajuste</button>'});
+    $("#aMinus").onclick=function(){if(x.stock+adj>0){adj--;DIRTY=true;draw();DIRTY=adj!==0}};
+    $("#aPlus").onclick=function(){adj++;draw();DIRTY=adj!==0};
+    $("#aSave").onclick=function(){x.stock+=adj;toast("Existencias actualizadas: "+x.stock+" · "+$("#aMot").value);adj=0;DIRTY=false;renderAdmin();draw()};
+  }
+  draw();
+})}
+
+/* Portal: producto y notificaciones */
+function prodDrawer(sku){openD(function(){
+  var p=PROD.filter(function(x){return x.sku===sku})[0];if(!p)return;
+  frame({size:"sm",kicker:p.cat+" · "+p.cond,title:esc(p.nombre),sub:p.stock?p.stock+" disponibles en tienda":"Agotado por ahora",
+    body:'<div class="prod" style="box-shadow:none"><div class="ph" style="height:180px">'+ic(p.icon)+(p.tag?'<span class="tag '+(p.tag==="Oferta"?"tag-spark":"")+'">'+p.tag+'</span>':'')+'</div></div>'+
+      '<div class="price" style="font-size:30px;line-height:38px;margin-top:16px">'+cop(p.precio)+'</div>'+
+      '<dl class="kv" style="margin-top:16px"><dt>Condición</dt><dd>'+p.cond+'</dd><dt>Garantía</dt><dd>'+(p.cond==="Nuevo"?"12 meses con el fabricante":"6 meses con TecnoTaller")+'</dd><dt>Referencia</dt><dd class="mono">'+p.sku+'</dd><dt>Pago</dt><dd>Efectivo, tarjeta o transferencia en tienda</dd></dl>'+
+      '<div class="notice notice-info" style="margin-top:16px">'+ic("clock")+'<span>Al apartarlo lo guardamos 24 horas a tu nombre. Pagas cuando lo recojas.</span></div>',
+    foot:'<button class="btn grow" data-close>Cerrar</button>'+(p.stock?'<button class="btn btn-primary" id="pAp">Apartar por 24 h</button>':'<button class="btn btn-primary" id="pAv">Avisarme cuando llegue</button>')});
+  if($("#pAv"))$("#pAv").onclick=function(){toast("Te avisaremos por WhatsApp cuando llegue");closeDrawer(true)};
+  if($("#pAp"))$("#pAp").onclick=function(){p.stock--;var code="AP-"+(4100+Math.floor(Math.random()*800));
+    frame({size:"sm",kicker:"Apartado confirmado",title:esc(p.nombre),sub:"A nombre de Laura Gómez",
+      body:'<div class="notice notice-ok">'+ic("check")+'<span><b>Listo, lo guardamos hasta mañana a esta hora.</b> Te enviamos el código por WhatsApp.</span></div><div style="margin-top:20px"><div class="small muted">Código de apartado</div><div class="mono" style="font-size:24px;margin-top:4px">'+code+'</div></div><dl class="kv" style="margin-top:20px"><dt>Total a pagar</dt><dd><b>'+cop(p.precio)+'</b></dd><dt>Horario</dt><dd>Lunes a sábado, 8:00 a. m. a 6:30 p. m.</dd></dl>',
+      foot:'<button class="btn btn-primary" data-close>Entendido</button>'});
+    toast("Apartado "+code);renderPortal()};
+})}
+var NOTIF=[["reparacion","Tu iPhone 13 pasó a En reparación","Hoy, 9:41 a. m. · OT-2026-00184"],["repuesto","Pedimos la pantalla OLED para tu iPhone 13","Mar 17 nov · llegó el miércoles 18"],["revision","Diagnóstico listo: cotización de $520.000","Lun 16 nov, 3:05 p. m. · aprobada por ti"],["ingresado","Recibimos tu iPhone 13 con cargador y funda","Lun 16 nov, 10:20 a. m."],["entregado","Entregamos tu iPad. Garantía hasta el 21 ene 2027","Vie 23 oct"]];
+function notifDrawer(){openD(function(){
+  frame({size:"sm",kicker:"Laura Gómez",title:"Notificaciones",sub:"También te llegan por WhatsApp.",
+    body:NOTIF.map(function(x,i){return '<div class="notif'+(i===0?' click':'')+'" '+(i===0?'data-gotrack="OT-2026-00184" style="cursor:pointer"':'')+'><div class="ic e-'+x[0]+'">'+ic(x[0])+'</div><div><b style="font-size:14px">'+x[1]+'</b><div class="small muted">'+x[2]+'</div></div></div>'}).join("")+
+      '<div class="label" style="margin:24px 0 10px">Así se ve en WhatsApp</div><div class="wa"><b>TecnoTaller</b><br>Hola Laura 👋 Tu <b>iPhone 13</b> (orden OT-2026-00184) pasó a <b>En reparación</b>. Técnico: Andrés M. Te avisamos cuando esté listo.<div style="text-align:right;font-size:11px;opacity:.6">9:41 a. m.</div></div>',
+    foot:'<button class="btn grow" data-close>Cerrar</button><button class="btn btn-primary" id="nRead">Marcar como leídas</button>'});
+  $("#nRead").onclick=function(){var d=$(".badge-dot");if(d)d.remove();toast("Notificaciones leídas");closeDrawer(true)};
+  var g=$("[data-gotrack]");if(g)g.onclick=function(){closeDrawer(true);$("#trackInput").value=g.dataset.gotrack;pgo("seguimiento")};
+})}
+
+/* bindings */
+$("#newOrderBtn").onclick=function(){newOrder()};$("#newOrderBtn2").onclick=function(){newOrder()};
+$("#addItemBtn").onclick=addItem;$("#addCliBtn").onclick=addCli;$("#addTecBtn").onclick=addTec;$("#bellBtn").onclick=notifDrawer;
+$("#demoRecord").onclick=function(){openOrder("OT-2026-00184")};$("#demoForm").onclick=function(){newOrder("c1")};
+document.addEventListener("click",function(e){
+  var c=e.target.closest("[data-cli]");if(c&&!$("#drawerRoot").contains(c)){cliDrawer(c.dataset.cli);return}
+  var it=e.target.closest("[data-item]");if(it){itemDrawer(it.dataset.item);return}
+  var pr=e.target.closest("[data-prod]");if(pr&&!$("#drawerRoot").contains(pr)){prodDrawer(pr.dataset.prod);return}
+});
+
+/* order drawer (registro) */
+function drawDrawer(){
+  var o=ord(curId);if(!o)return;var c=cli(o.cli),t=tec(o.tec),k=ESTADOS.indexOf(o.estado),next=ESTADOS[k+1];
+  if(o.estado==="revision"&&!o.aprobada)next="repuesto";
+  var tabs=[["recepcion","Recepción"],["diag","Diagnóstico"],["reps","Repuestos"],["hist","Historial"],["entrega","Entrega y garantía"]];
+  var body="";
+  if(dTab==="recepcion")body='<div class="grid g2" style="align-items:start"><div class="card-flat"><div class="label" style="margin-bottom:10px">Cliente</div><b>'+c.nombre+'</b><div class="small muted">'+c.doc+'</div><div class="small" style="margin-top:6px">'+c.tel+' · '+c.mail+'</div></div><div class="card-flat"><div class="label" style="margin-bottom:10px">Equipo</div><b>'+esc(o.equipo)+'</b><div class="mono muted">'+esc(o.serie)+'</div><div class="small" style="margin-top:6px">Servicio: '+o.servicio+'</div></div></div>'+
+    '<div class="card-flat" style="margin-top:16px"><div class="label" style="margin-bottom:12px">Estado de recepción</div><div class="dmg"><svg viewBox="0 0 120 200" style="width:110px;color:var(--ink-muted)"><rect x="18" y="6" width="84" height="188" rx="16" fill="none" stroke="currentColor" stroke-width="2"/><rect x="26" y="20" width="68" height="150" rx="4" fill="var(--surface-sunken)"/><circle cx="92" cy="14" r="9" fill="var(--danger)" opacity=".85"/><text x="92" y="18" text-anchor="middle" font-size="11" fill="#fff" font-family="Inter">1</text></svg><dl class="kv"><dt>Falla reportada</dt><dd>'+esc(o.falla)+'</dd><dt>Daños físicos</dt><dd>'+esc(o.recepcion.danos)+'</dd><dt>Accesorios</dt><dd>'+(o.recepcion.acc.length?o.recepcion.acc.map(function(a){return '<span class="tag" style="margin:0 4px 4px 0">'+a+'</span>'}).join(""):"Ninguno")+'</dd><dt>Enciende</dt><dd>'+o.recepcion.enciende+'</dd><dt>Bloqueo</dt><dd>'+o.recepcion.bloqueo+'</dd><dt>Observaciones</dt><dd>'+(esc(o.recepcion.obs)||"—")+'</dd></dl></div><div class="row" style="margin-top:12px"><span class="small muted">'+ic("doc",'style="width:16px;height:16px;vertical-align:-3px"')+' Acta de recepción firmada por el cliente · 3 fotos adjuntas</span></div></div>';
+  if(dTab==="diag")body='<div class="card-flat"><div class="label" style="margin-bottom:8px">Diagnóstico</div>'+(o.diag?'<p>'+esc(o.diag)+'</p>':'<textarea class="input" id="diagIn" placeholder="Describe el diagnóstico técnico…"></textarea><div class="row" style="margin-top:8px"><input class="input" id="cotIn" placeholder="Valor cotizado (COP)" style="max-width:220px"><button class="btn btn-sm" id="diagSave">Guardar y enviar al cliente</button></div>')+(o.cotizacion?'<div class="row between" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)"><span class="muted">Cotización</span><span class="row"><b>'+cop(o.cotizacion)+'</b>'+(o.aprobada?'<span class="tag tag-ok">Aprobada por el cliente</span>':'<span class="tag tag-warn">Pendiente</span>')+'</span></div>':'')+'</div>'+
+    '<div class="card-flat" style="margin-top:16px"><div class="row between" style="margin-bottom:12px"><div class="label">Actividades realizadas</div></div><div class="log">'+(o.acts.map(function(a){return '<div class="it"><b style="font-size:14px">'+esc(a.t)+'</b><div class="small muted">'+a.f+' · '+a.u+'</div></div>'}).join("")||'<p class="muted small">Aún no hay actividades.</p>')+'</div><div class="row" style="margin-top:8px;flex-wrap:nowrap"><input class="input" id="actIn" placeholder="Ej. Cambio de flex de carga"><button class="btn btn-sm" id="actAdd">'+ic("plus")+'Registrar</button></div></div>';
+  if(dTab==="reps"){var tot=0;body='<div class="table-wrap rcards"><table><thead><tr><th>Código</th><th>Repuesto</th><th>Cant.</th><th>Costo</th></tr></thead><tbody>'+(o.reps.map(function(r){var x=rep(r.cod);tot+=x.costo*r.cant;return '<tr><td class="mono">'+r.cod+'</td><td>'+x.nombre+'</td><td>'+r.cant+'</td><td>'+cop(x.costo*r.cant)+'</td></tr>'}).join("")||'<tr><td colspan="4" class="muted" style="text-align:center;padding:24px">Sin repuestos asociados.</td></tr>')+'</tbody></table></div>'+(tot?'<div class="row between" style="margin-top:10px"><span class="muted">Total repuestos</span><b>'+cop(tot)+'</b></div>':'')+
+    '<div class="card-flat" style="margin-top:16px"><div class="label" style="margin-bottom:8px">Asociar repuesto del inventario</div><div class="row" style="flex-wrap:nowrap"><select class="input" id="repSel">'+REP.map(function(r){return '<option value="'+r.cod+'" '+(r.stock?"":"disabled")+'>'+r.nombre+' — '+(r.stock?r.stock+" en stock":"agotado")+'</option>'}).join("")+'</select><button class="btn btn-sm" id="repAdd">Asociar</button></div><p class="small muted" style="margin-top:8px">Al asociarlo se descuenta 1 unidad del inventario automáticamente.</p></div>';}
+  if(dTab==="hist")body='<div class="log">'+o.hist.slice().reverse().map(function(h){return '<div class="it"><div class="row" style="gap:8px">'+estado(h.estado)+'<span class="small muted">'+esc(h.fecha)+(h.user?' · '+esc(h.user):'')+'</span></div>'+(h.nota?'<p class="small" style="margin-top:6px">'+esc(h.nota)+'</p>':'')+'</div>'}).join("")+'</div>';
+  if(dTab==="entrega"){var v=vence(o);body=o.estado==="entregado"?'<div class="notice notice-ok">'+ic("check")+'<span>Entregado. Garantía hasta <b>'+fmtD(v)+'</b>.</span></div><div class="card-flat" style="margin-top:16px"><div class="label" style="margin-bottom:8px">Estado al entregar</div><p>'+esc(o.entregaReg)+'</p></div><div class="card-flat" style="margin-top:16px"><div class="label" style="margin-bottom:8px">Comparación con la recepción</div><dl class="kv"><dt>Al recibir</dt><dd>'+esc(o.recepcion.danos)+'</dd><dt>Al entregar</dt><dd>'+esc(o.entregaReg)+'</dd></dl></div>':
+    '<div class="card-flat"><div class="label" style="margin-bottom:8px">Registrar estado de entrega</div><textarea class="input" id="entIn" placeholder="Ej. Pantalla funciona, táctil OK, mismos rayones de la recepción."></textarea><div class="row" style="margin-top:10px"><span class="small muted">'+(o.estado==="listo"?"Al entregar se activa la garantía de 90 días.":"Disponible cuando la orden esté Lista para entrega.")+'</span></div></div>';}
+  var foot=o.estado==="listo"?'<button class="btn grow" data-close>Cerrar</button><button class="btn btn-primary" id="entBtn">Entregar al cliente</button>':next?'<button class="btn grow" data-close>Cerrar</button><button class="btn btn-primary" id="advBtn">Pasar a '+NOM[next]+'</button>':'<button class="btn btn-primary" data-close>Cerrar</button>';
+  DIRTY=false;
+  frame({size:"lg",track:true,kicker:'<span>'+o.id+'</span>'+estado(o.estado),title:esc(o.equipo),sub:c.nombre+' · Técnico: '+t.nombre+' · Entrega '+o.entrega,
+    body:'<div style="margin-bottom:20px">'+prog(o.estado)+'</div><div class="subtabs" role="tablist">'+tabs.map(function(x){return '<button class="tab" role="tab" aria-selected="'+(x[0]===dTab)+'" data-dt="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div>'+body,foot:foot});
+  $$("[data-dt]").forEach(function(b){b.onclick=function(){dTab=b.dataset.dt;drawDrawer()}});
+  var now=function(){return "Jue 19 nov, "+new Date().toLocaleTimeString("es-CO",{hour:"numeric",minute:"2-digit"})};
+  if($("#advBtn"))$("#advBtn").onclick=function(){o.estado=next;o.hist.push(H(next,now(),"","Carolina R."));toast(NOM[next]+" · cliente notificado por WhatsApp");drawDrawer();renderAdmin()};
+  if($("#actAdd"))$("#actAdd").onclick=function(){var v=$("#actIn").value.trim();if(!v)return;o.acts.push({t:v,f:now(),u:"Carolina R."});toast("Actividad registrada");drawDrawer()};
+  if($("#diagSave"))$("#diagSave").onclick=function(){var v=$("#diagIn").value.trim();if(!v)return;o.diag=v;o.cotizacion=parseInt(($("#cotIn").value||"0").replace(/\D/g,""))||null;o.hist.push(H(o.estado,now(),"Diagnóstico registrado"+(o.cotizacion?". Cotización "+cop(o.cotizacion):""),"Carolina R."));toast("Diagnóstico enviado al cliente");drawDrawer()};
+  if($("#repAdd"))$("#repAdd").onclick=function(){var cod=$("#repSel").value,r=rep(cod);if(!r||!r.stock)return;r.stock--;var ex=o.reps.filter(function(x){return x.cod===cod})[0];if(ex)ex.cant++;else o.reps.push({cod:cod,cant:1});o.hist.push(H(o.estado,now(),"Repuesto asociado: "+r.nombre+" (quedan "+r.stock+")","Carolina R."));toast("Inventario actualizado: quedan "+r.stock+" · "+r.nombre);drawDrawer();renderAdmin()};
+  if($("#entBtn"))$("#entBtn").onclick=function(){if(dTab!=="entrega"){dTab="entrega";drawDrawer();$("#entIn").focus();return}o.estado="entregado";o.entregaReg=$("#entIn").value.trim()||"Entregado funcionando, probado frente al cliente.";o.entregadoEl="2026-11-19";o.hist.push(H("entregado",now(),"Entregado. Garantía activa por 90 días.","Carolina R."));toast("Entregado · garantía activa");drawDrawer();renderAdmin()};
+}
+})();
+</script>
+</body>
+</html>

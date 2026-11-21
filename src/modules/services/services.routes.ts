@@ -4,6 +4,7 @@ import { ServiceService } from './services.service';
 import { ServiceRepository } from './services.repository';
 import { asyncHandler } from '../../shared/utils/async-handler';
 import { authMiddleware } from '../../shared/middlewares/auth';
+import { resolveTenantMiddleware } from '../../shared/middlewares/resolve-tenant';
 import { authorizeRoles } from '../../shared/middlewares/authorize-roles';
 import { ROLES } from '../../shared/types';
 
@@ -14,8 +15,8 @@ export function createServicesRouter(): Router {
 
   const router = Router();
 
-  router.get('/', asyncHandler(controller.listPublic.bind(controller)));
-  router.post('/quote', asyncHandler(controller.quote.bind(controller)));
+  router.get('/', resolveTenantMiddleware, asyncHandler(controller.listPublic.bind(controller)));
+  router.post('/quote', resolveTenantMiddleware, asyncHandler(controller.quote.bind(controller)));
 
   router.use(authMiddleware);
 

@@ -1,0 +1,9 @@
+<!-- @dsCard group="Órdenes" height=110 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>EstadoOrden</title></head>
+<body><div id="root" class="tt-row"></div>
+<script>
+var T = window.TecnoTaller, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(React.Fragment, null,
+  T.ESTADOS.map(function (e) { return h(T.EstadoOrden, { key: e, estado: e }); })));
+</script></body></html>

@@ -1,4 +1,5 @@
 import { supabase } from '../../config/supabase';
+import { getCurrentTenantId, requireCurrentTenantId } from '../../shared/context/tenant-context';
 import { CreateDiagnosticInput, DiagnosticRow, UpdateDiagnosticInput } from './diagnostics.types';
 
 export interface IDiagnosticRepository {
@@ -11,10 +12,15 @@ export interface IDiagnosticRepository {
 
 export class DiagnosticRepository implements IDiagnosticRepository {
   async listByWorkOrder(workOrderId: string): Promise<DiagnosticRow[]> {
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('diagnostics')
       .select('*')
-      .eq('work_order_id', workOrderId)
+      .eq('work_order_id', workOrderId);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query
       .order('created_at', { ascending: false });
     if (error) {
       if (error.code === '22P02' || error.code === 'PGRST116') return [];
@@ -24,11 +30,15 @@ export class DiagnosticRepository implements IDiagnosticRepository {
   }
 
   async findById(id: string): Promise<DiagnosticRow | null> {
-    const { data, error } = await supabase
+    const tenantId = getCurrentTenantId();
+    let query = supabase
       .from('diagnostics')
       .select('*')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
+    if (tenantId) {
+      query = query.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await query.single();
     if (error) {
       if (error.code === 'PGRST116' || error.code === '22P02') return null;
       throw error;
@@ -42,6 +52,7 @@ export class DiagnosticRepository implements IDiagnosticRepository {
     const { data, error } = await supabase
       .from('diagnostics')
       .insert({
+        tenant_id: requireCurrentTenantId(),
         work_order_id: workOrderId,
         technician_id: validTechnicianId,
         observations: input.observations,
@@ -60,19 +71,27 @@ export class DiagnosticRepository implements IDiagnosticRepository {
       ...(input.faults !== undefined && { faults: input.faults }),
       ...(input.recommendedActions !== undefined && { recommended_actions: input.recommendedActions }),
     };
+    const tenantId = getCurrentTenantId();
     if (Object.keys(patch).length === 0) {
-      const { data, error } = await supabase
+      let findQuery = supabase
         .from('diagnostics')
         .select('*')
-        .eq('id', id)
-        .single();
+        .eq('id', id);
+      if (tenantId) {
+        findQuery = findQuery.eq('tenant_id', tenantId);
+      }
+      const { data, error } = await findQuery.single();
       if (error) throw error;
       return data as DiagnosticRow;
     }
-    const { data, error } = await supabase
+    let updateQuery = supabase
       .from('diagnostics')
       .update(patch)
-      .eq('id', id)
+      .eq('id', id);
+    if (tenantId) {
+      updateQuery = updateQuery.eq('tenant_id', tenantId);
+    }
+    const { data, error } = await updateQuery
       .select('*')
       .single();
     if (error) throw error;
@@ -82,7 +101,12 @@ export class DiagnosticRepository implements IDiagnosticRepository {
   async setActive(id: string, active: boolean): Promise<DiagnosticRow> {
     const existing = await this.findById(id);
     if (!active && existing) {
-      await supabase.from('diagnostics').delete().eq('id', id);
+      const tenantId = getCurrentTenantId();
+      let delQuery = supabase.from('diagnostics').delete().eq('id', id);
+      if (tenantId) {
+        delQuery = delQuery.eq('tenant_id', tenantId);
+      }
+      await delQuery;
     }
     return existing ?? ({ id, active } as any);
   }

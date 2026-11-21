@@ -1,0 +1,12 @@
+<!-- @dsCard group="Órdenes" height=380 -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>TrazaOrden</title></head>
+<body><div id="root"></div>
+<script>
+var T = window.TecnoTaller, h = React.createElement;
+ReactDOM.createRoot(document.getElementById('root')).render(h(T.TrazaOrden, { estado: 'reparacion', fechas: {
+  ingresado: 'Lun 16 nov, 10:20 a. m. · Recibido con cargador, pantalla rayada',
+  revision: 'Lun 16 nov, 3:05 p. m. · Diagnóstico: falla de pantalla',
+  repuesto: 'Mar 17 nov · Pantalla OLED pedida al proveedor',
+  reparacion: 'Jue 19 nov, 9:40 a. m. · Técnico: Andrés M.' } }));
+</script></body></html>

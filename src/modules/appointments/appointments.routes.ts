@@ -7,6 +7,7 @@ import { WorkOrderRepository } from '../work-orders/work-orders.repository';
 import { CustomerRepository } from '../customers/customers.repository';
 import { asyncHandler } from '../../shared/utils/async-handler';
 import { authMiddleware } from '../../shared/middlewares/auth';
+import { resolveTenantMiddleware } from '../../shared/middlewares/resolve-tenant';
 import { authorizeRoles } from '../../shared/middlewares/authorize-roles';
 import { ROLES } from '../../shared/types';
 import { guidGenerator } from '../../shared/utils/guid';
@@ -27,7 +28,7 @@ export function createAppointmentsRouter(): Router {
   const router = Router();
 
   // Endpoint público para crear citas (clientes desde la web)
-  router.post('/', asyncHandler(controller.create.bind(controller)));
+  router.post('/', resolveTenantMiddleware, asyncHandler(controller.create.bind(controller)));
 
   router.use(authMiddleware);
   

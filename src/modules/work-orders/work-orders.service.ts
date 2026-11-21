@@ -1,4 +1,6 @@
 import { ForbiddenError, NotFoundError } from '../../shared/errors/app-error';
+import { getCurrentTenantId } from '../../shared/context/tenant-context';
+import { planLimitService } from '../../shared/services/plan-limits.service';
 import { IWorkOrderRepository } from './work-orders.repository';
 import { GuidGenerator } from '../../shared/utils/guid';
 import { AuthorizationFilterFactory } from '../../shared/authorization/filters/authorization-filter-factory';
@@ -56,6 +58,10 @@ export class WorkOrderService {
   }
 
   async create(input: CreateWorkOrderInput, initialStatus: 'PENDIENTE' | 'ACEPTADA' = 'ACEPTADA', appointmentId?: string): Promise<WorkOrder> {
+    const tenantId = getCurrentTenantId();
+    if (tenantId) {
+      await planLimitService.assertCanCreateWorkOrder(tenantId);
+    }
     const guideNumber = this.guid.generate().slice(0, 8).toUpperCase();
     return WorkOrder.fromRow(await this.repository.create(input, guideNumber, initialStatus, appointmentId));
   }

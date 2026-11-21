@@ -1,0 +1,195 @@
+{
+  "manifestVersion": 3,
+  "name": "TecnoTaller",
+  "namespace": "TecnoTaller",
+  "files": [
+    "assets/Icons/README.md",
+    "assets/Logos/README.md",
+    "components/Button/README.md",
+    "components/Drawer/README.md",
+    "components/EstadoOrden/README.md",
+    "components/TrazaOrden/README.md",
+    "components/bundle.css",
+    "components/bundle.js",
+    "components/index.d.ts",
+    "tokens.css"
+  ],
+  "libraries": [
+    {
+      "name": "react",
+      "version": "18",
+      "global": "React"
+    },
+    {
+      "name": "react-dom",
+      "version": "18",
+      "global": "ReactDOM"
+    }
+  ],
+  "components": [
+    {
+      "name": "Button",
+      "group": "Acciones",
+      "summary": "Botón de acción del portal y del panel; un solo primary (blue-strong) por vista, para la acción a la que sirve la pantalla (\"Crear orden\", \"Agendar servicio\").…"
+    },
+    {
+      "name": "EstadoOrden",
+      "group": "Órdenes",
+      "summary": "Etiqueta en píldora con el ícono y el nombre de uno de los siete estados de una orden de servicio; colores fijos (ver README, \"El sistema de estados\"). Úsala e…"
+    },
+    {
+      "name": "TrazaOrden",
+      "group": "Órdenes",
+      "summary": "Línea de tiempo vertical con los siete estados de la orden, para que el cliente vea en qué va su equipo sin llamar al taller."
+    },
+    {
+      "name": "Drawer",
+      "group": "Estructura",
+      "summary": "Contenedor lateral obligatorio para todo detalle, formulario o acción secundaria; en TecnoTaller nunca se usan modales centrados ni páginas nuevas para ver, cr…"
+    }
+  ],
+  "assetGroups": [
+    {
+      "name": "Logos",
+      "tile": "l",
+      "order": [
+        "tecnotaller-logo-original.png",
+        "tecnotaller-isotipo.svg",
+        "tecnotaller-isotipo-mono.svg",
+        "tecnotaller-icono-app.svg"
+      ],
+      "files": [
+        {
+          "path": "assets/Logos/tecnotaller-logo-original.png",
+          "id": "19fc024ae33811338c17b34d56bbdba1"
+        },
+        {
+          "path": "assets/Logos/tecnotaller-isotipo.svg",
+          "id": "bd0a1a239203461fcaacd5f1f1181d92"
+        },
+        {
+          "path": "assets/Logos/tecnotaller-isotipo-mono.svg",
+          "id": "8e5fbec1c96e1994514109e30f765fd8"
+        },
+        {
+          "path": "assets/Logos/tecnotaller-icono-app.svg",
+          "id": "aeccd2e41f478e023d1860c17cebce93"
+        }
+      ]
+    },
+    {
+      "name": "Icons",
+      "tile": "s",
+      "order": [
+        "estado-ingresado.svg",
+        "estado-en-revision.svg",
+        "estado-esperando-repuesto.svg",
+        "estado-en-reparacion.svg",
+        "estado-reparado.svg",
+        "estado-listo-entrega.svg",
+        "estado-entregado.svg"
+      ],
+      "files": [
+        {
+          "path": "assets/Icons/estado-ingresado.svg",
+          "id": "58793eed1922e0ef4ccd81b16541ccbf"
+        },
+        {
+          "path": "assets/Icons/estado-en-revision.svg",
+          "id": "0105bc6d024518a238381ae24b8f4eae"
+        },
+        {
+          "path": "assets/Icons/estado-esperando-repuesto.svg",
+          "id": "b4f6f3271f7921b1d640c43c972e0ba7"
+        },
+        {
+          "path": "assets/Icons/estado-en-reparacion.svg",
+          "id": "724689363f43dc5bdb53ab8ab7a7bfdb"
+        },
+        {
+          "path": "assets/Icons/estado-reparado.svg",
+          "id": "05bc8496002dae9849a592aaa81aedef"
+        },
+        {
+          "path": "assets/Icons/estado-listo-entrega.svg",
+          "id": "11ef3cf4a8747c5e66154f1732f3a337"
+        },
+        {
+          "path": "assets/Icons/estado-entregado.svg",
+          "id": "131f8392b79a69eff79bb586237a0599"
+        }
+      ]
+    }
+  ],
+  "storage": {
+    "files": {
+      "assets/Icons/estado-en-reparacion.svg": {
+        "store": "blob",
+        "id": "724689363f43dc5bdb53ab8ab7a7bfdb",
+        "bytes": 345,
+        "type": "image/svg+xml"
+      },
+      "assets/Icons/estado-en-revision.svg": {
+        "store": "blob",
+        "id": "0105bc6d024518a238381ae24b8f4eae",
+        "bytes": 244,
+        "type": "image/svg+xml"
+      },
+      "assets/Icons/estado-entregado.svg": {
+        "store": "blob",
+        "id": "131f8392b79a69eff79bb586237a0599",
+        "bytes": 266,
+        "type": "image/svg+xml"
+      },
+      "assets/Icons/estado-esperando-repuesto.svg": {
+        "store": "blob",
+        "id": "b4f6f3271f7921b1d640c43c972e0ba7",
+        "bytes": 251,
+        "type": "image/svg+xml"
+      },
+      "assets/Icons/estado-ingresado.svg": {
+        "store": "blob",
+        "id": "58793eed1922e0ef4ccd81b16541ccbf",
+        "bytes": 268,
+        "type": "image/svg+xml"
+      },
+      "assets/Icons/estado-listo-entrega.svg": {
+        "store": "blob",
+        "id": "11ef3cf4a8747c5e66154f1732f3a337",
+        "bytes": 230,
+        "type": "image/svg+xml"
+      },
+      "assets/Icons/estado-reparado.svg": {
+        "store": "blob",
+        "id": "05bc8496002dae9849a592aaa81aedef",
+        "bytes": 236,
+        "type": "image/svg+xml"
+      },
+      "assets/Logos/tecnotaller-icono-app.svg": {
+        "store": "blob",
+        "id": "aeccd2e41f478e023d1860c17cebce93",
+        "bytes": 646,
+        "type": "image/svg+xml"
+      },
+      "assets/Logos/tecnotaller-isotipo-mono.svg": {
+        "store": "blob",
+        "id": "8e5fbec1c96e1994514109e30f765fd8",
+        "bytes": 230,
+        "type": "image/svg+xml"
+      },
+      "assets/Logos/tecnotaller-isotipo.svg": {
+        "store": "blob",
+        "id": "bd0a1a239203461fcaacd5f1f1181d92",
+        "bytes": 543,
+        "type": "image/svg+xml"
+      },
+      "assets/Logos/tecnotaller-logo-original.png": {
+        "store": "blob",
+        "id": "19fc024ae33811338c17b34d56bbdba1",
+        "bytes": 1024016,
+        "type": "image/png"
+      }
+    },
+    "blobBytesUsed": 1027275
+  }
+}
