@@ -24,7 +24,10 @@ export interface IWorkOrderRepository {
 export class WorkOrderRepository implements IWorkOrderRepository {
   async findById(id: string): Promise<WorkOrderRow | null> {
     const tenantId = getCurrentTenantId();
-    let query = supabase.from('work_orders').select('*').eq('id', id);
+    let query = supabase
+      .from('work_orders')
+      .select('*, customers(id, full_name, phone, email)')
+      .eq('id', id);
     if (tenantId) query = query.eq('tenant_id', tenantId);
     const { data, error } = await query.single();
     if (error) {

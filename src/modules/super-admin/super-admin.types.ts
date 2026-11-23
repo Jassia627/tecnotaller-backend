@@ -10,6 +10,7 @@ export const createPlanSchema = z.object({
   maxMonthlyOrders: z.coerce.number().int().min(1),
   maxProducts: z.coerce.number().int().min(1),
   priceMonthly: z.coerce.number().min(0),
+  aiEnabled: z.boolean().optional().default(false),
 });
 
 export const updatePlanSchema = createPlanSchema.partial().extend({

@@ -1,5 +1,6 @@
 import { supabase } from '../../config/supabase';
 import { getCurrentTenantId, requireCurrentTenantId } from '../../shared/context/tenant-context';
+import { BadRequestError } from '../../shared/errors/app-error';
 import { Photo, PhotoRow } from './photos.types';
 
 function mapRow(row: PhotoRow): Photo {
@@ -11,7 +12,7 @@ function mapRow(row: PhotoRow): Photo {
     kind: row.kind,
     storagePath: row.storage_path,
     publicUrl,
-    uploadedAt: row.uploaded_at,
+    uploadedAt: row.created_at,
   };
 }
 
@@ -24,7 +25,8 @@ export interface IPhotoRepository {
 export class PhotoRepository implements IPhotoRepository {
   async upload(workOrderId: string, kind: 'inicial' | 'final', fileBuffer: Buffer, fileName: string): Promise<Photo> {
     const tenantId = requireCurrentTenantId();
-    const storagePath = `${tenantId}/${workOrderId}/${kind}/${Date.now()}-${fileName}`;
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storagePath = `${tenantId}/${workOrderId}/${kind}/${Date.now()}-${safeFileName}`;
     
     const { error: uploadError } = await supabase.storage
       .from('work-order-photos')
@@ -33,7 +35,9 @@ export class PhotoRepository implements IPhotoRepository {
         upsert: false,
       });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) {
+      throw new BadRequestError(`No se pudo subir la foto: ${uploadError.message}`);
+    }
 
     const { data, error } = await supabase
       .from('order_photos')
@@ -43,7 +47,7 @@ export class PhotoRepository implements IPhotoRepository {
         kind,
         storage_path: storagePath,
       })
-      .select('id, work_order_id, kind, storage_path, uploaded_at')
+      .select('id, work_order_id, kind, storage_path, created_at')
       .single();
 
     if (error) throw error;
@@ -54,9 +58,9 @@ export class PhotoRepository implements IPhotoRepository {
     const tenantId = getCurrentTenantId();
     let query = supabase
       .from('order_photos')
-      .select('id, work_order_id, kind, storage_path, uploaded_at')
+      .select('id, work_order_id, kind, storage_path, created_at')
       .eq('work_order_id', workOrderId)
-      .order('uploaded_at', { ascending: true });
+      .order('created_at', { ascending: true });
     if (tenantId) query = query.eq('tenant_id', tenantId);
 
     const { data, error } = await query;
@@ -68,10 +72,10 @@ export class PhotoRepository implements IPhotoRepository {
     const tenantId = getCurrentTenantId();
     let query = supabase
       .from('order_photos')
-      .select('id, work_order_id, kind, storage_path, uploaded_at')
+      .select('id, work_order_id, kind, storage_path, created_at')
       .eq('work_order_id', workOrderId)
       .eq('kind', kind)
-      .order('uploaded_at', { ascending: true });
+      .order('created_at', { ascending: true });
     if (tenantId) query = query.eq('tenant_id', tenantId);
 
     const { data, error } = await query;

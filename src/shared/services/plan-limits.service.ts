@@ -4,6 +4,7 @@ import { ForbiddenError } from '../errors/app-error';
 export interface TenantPlanUsage {
   planName: string;
   planSlug: string;
+  aiEnabled: boolean;
   limits: {
     maxTechnicians: number;
     maxMonthlyOrders: number;
@@ -25,6 +26,7 @@ interface TenantPlanRow {
     max_technicians: number;
     max_monthly_orders: number;
     max_products: number;
+    ai_enabled: boolean;
   } | null;
 }
 
@@ -32,7 +34,7 @@ export class PlanLimitService {
   private async getTenantPlan(tenantId: string): Promise<NonNullable<TenantPlanRow['plans']>> {
     const { data, error } = await supabase
       .from('tenants')
-      .select('id, active, plans(name, slug, max_technicians, max_monthly_orders, max_products)')
+      .select('id, active, plans(name, slug, max_technicians, max_monthly_orders, max_products, ai_enabled)')
       .eq('id', tenantId)
       .maybeSingle();
 
@@ -115,6 +117,15 @@ export class PlanLimitService {
     }
   }
 
+  async assertCanUseAi(tenantId: string): Promise<void> {
+    const plan = await this.getTenantPlan(tenantId);
+    if (!plan.ai_enabled) {
+      throw new ForbiddenError(
+        `Las funciones de Inteligencia Artificial no están incluidas en el plan ${plan.name}. Actualiza al plan Profesional o Empresarial.`,
+      );
+    }
+  }
+
   async getTenantUsage(tenantId: string): Promise<TenantPlanUsage> {
     const plan = await this.getTenantPlan(tenantId);
 
@@ -148,6 +159,7 @@ export class PlanLimitService {
     return {
       planName: plan.name,
       planSlug: plan.slug,
+      aiEnabled: Boolean(plan.ai_enabled),
       limits: {
         maxTechnicians: plan.max_technicians,
         maxMonthlyOrders: plan.max_monthly_orders,

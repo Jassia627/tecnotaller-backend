@@ -28,6 +28,7 @@ export class SuperAdminService {
       maxMonthlyOrders: p.max_monthly_orders,
       maxProducts: p.max_products,
       priceMonthly: Number(p.price_monthly),
+      aiEnabled: Boolean(p.ai_enabled),
       active: p.active,
       createdAt: p.created_at,
     }));
@@ -43,6 +44,7 @@ export class SuperAdminService {
         max_monthly_orders: input.maxMonthlyOrders,
         max_products: input.maxProducts,
         price_monthly: input.priceMonthly,
+        ai_enabled: input.aiEnabled ?? false,
       })
       .select('*')
       .single();
@@ -65,6 +67,7 @@ export class SuperAdminService {
     if (input.maxMonthlyOrders !== undefined) updates.max_monthly_orders = input.maxMonthlyOrders;
     if (input.maxProducts !== undefined) updates.max_products = input.maxProducts;
     if (input.priceMonthly !== undefined) updates.price_monthly = input.priceMonthly;
+    if (input.aiEnabled !== undefined) updates.ai_enabled = input.aiEnabled;
     if (input.active !== undefined) updates.active = input.active;
 
     const { data, error } = await supabase

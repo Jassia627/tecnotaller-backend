@@ -50,6 +50,12 @@ export interface WorkOrderRow {
   current_status: OrderStatus;
   created_at: string;
   appointment_id: string | null;
+  customers?: {
+    id: string;
+    full_name: string;
+    phone: string | null;
+    email: string | null;
+  } | null;
 }
 
 export interface StatusHistoryRow {
@@ -85,6 +91,12 @@ export class WorkOrder implements IPrototype<WorkOrder> {
     private _currentStatus: OrderStatus,
     readonly createdAt: string,
     readonly appointmentId: string | null,
+    readonly customer?: {
+      id: string;
+      fullName: string;
+      phone: string | null;
+      email: string | null;
+    } | null,
   ) {}
 
   static fromRow(row: WorkOrderRow): WorkOrder {
@@ -103,6 +115,14 @@ export class WorkOrder implements IPrototype<WorkOrder> {
       row.current_status,
       row.created_at,
       row.appointment_id,
+      row.customers
+        ? {
+            id: row.customers.id,
+            fullName: row.customers.full_name,
+            phone: row.customers.phone,
+            email: row.customers.email,
+          }
+        : null,
     );
   }
 
@@ -211,6 +231,7 @@ export class WorkOrder implements IPrototype<WorkOrder> {
       currentStatus: this._currentStatus,
       createdAt: this.createdAt,
       appointmentId: this.appointmentId,
+      customer: this.customer ?? null,
     };
   }
 }

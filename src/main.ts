@@ -1,6 +1,7 @@
 import { createApp } from './app';
 import { env } from './config/env';
 import { logger } from './shared/utils/logger';
+import { telegramService } from './modules/telegram/telegram.service';
 import { 
   testPostgresConnection, 
   closePostgresPool, 
@@ -46,6 +47,7 @@ async function main(): Promise<void> {
       },
       `API escuchando en http://localhost:${env.port}`
     );
+    telegramService.startPolling();
   });
 
   // Manejo de apagado ordenado

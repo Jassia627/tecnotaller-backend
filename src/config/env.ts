@@ -72,4 +72,13 @@ export const env = {
      */
     caBundlePath: process.env.RDS_CA_BUNDLE_PATH ?? '',
   },
+  ai: {
+    geminiApiKey: process.env.GEMINI_API_KEY ?? '',
+    geminiModel: process.env.GEMINI_MODEL ?? 'gemini-3.8-flash',
+  },
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN ?? '',
+    botUsername: process.env.TELEGRAM_BOT_USERNAME ?? '',
+  },
+  frontendUrl: process.env.FRONTEND_URL ?? 'http://localhost:5173',
 } as const;

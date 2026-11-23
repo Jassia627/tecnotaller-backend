@@ -14,7 +14,7 @@ export interface PhotoRow {
   work_order_id: string;
   kind: 'inicial' | 'final';
   storage_path: string;
-  uploaded_at: string;
+  created_at: string;
 }
 
 export const uploadPhotoSchema = z.object({
